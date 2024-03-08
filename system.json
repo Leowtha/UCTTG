@@ -46,7 +46,7 @@
   "primaryTokenAttribute": "wounds",
   "secondaryTokenAttribute": "strain",
   "url": "https://github.com/StarWarsFoundryVTT/StarWarsFFG",
-  "manifest": "https://github.com/Leowtha/UCTTG/releases/latest/download/system.json",
-  "download": "https://github.com/Leowtha/UCTTG/releases/download/v1.806/ucttg.zip",
+  "manifest": "https://github.com/Leowtha/UCTTG/system.json",
+  "download": "https://github.com/Leowtha/UCTTG/archive/refs/heads/main.zip",
   "license": "LICENSE.txt"
 }
