@@ -8,7 +8,7 @@
     "verified": 11
   },
   "templateVersion": 1,
-  "authors": [{"name": "Leowtha"}, {"name": "Chimey"}, {"name": "Emma"}, {"name": "Hatter"}],
+  "authors": [{"name": "Leowtha"}, {"name": "Chimney"}, {"name": "Emma"}, {"name": "Hatter"}],
   "esmodules": ["modules/dice-pool-ffg.js", "modules/swffg-main.js"],
   "styles": ["styles/starwarsffg.css", "lib/select2/select2.min.css", "lib/pure/grids-min.css"],
   "scripts": ["lib/select2/select2.min.js", "lib/jszip/jszip.min.js", "lib/jxon/jxon.min.js"],
