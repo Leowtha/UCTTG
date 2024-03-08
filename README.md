@@ -20,9 +20,8 @@ The system for Foundry VTT contains no rules or proprietary content from the var
 5. Click Install, after a few seconds the system should be installed.
 
 # Getting Started
-Check out our getting started guides over on the wiki...
-* Star Wars: https://github.com/StarWarsFoundryVTT/StarWarsFFG/wiki/Getting-started
-* Genesys: https://github.com/StarWarsFoundryVTT/StarWarsFFG/wiki/Getting-Started-with-Genesys
+
+TBA
 
 # Contributing
 
@@ -30,4 +29,4 @@ TBA
 
 # Changelog
 
-Release `CHANGELOG` can be found TBA
+TBA
