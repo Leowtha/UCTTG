@@ -117,14 +117,6 @@
             "type": "Combat",
             "max": 6
           },
-          "Lightsaber": {
-            "rank": 0,
-            "characteristic": "Brawn",
-            "groupskill": false,
-            "careerskill": false,
-            "type": "Combat",
-            "max": 6
-          },
           "Melee": {
             "rank": 0,
             "characteristic": "Brawn",
