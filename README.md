@@ -16,7 +16,7 @@ The system for Foundry VTT contains no rules or proprietary content from the var
 2. Go to the "Game Systems" Tab
 3. Click the "Install System" button
 4. Copy the Following link into the "Manifest URL" section:
-   LINK HERE
+   [LINK HERE](https://raw.githubusercontent.com/Leowtha/UCTTG/main/system.json?token=GHSAT0AAAAAACPDYZOWAKZIBULCGPYFJ4RWZPLOJ3Q)
 5. Click Install, after a few seconds the system should be installed.
 
 # Getting Started
