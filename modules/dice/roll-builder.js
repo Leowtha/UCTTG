@@ -14,10 +14,10 @@ export default class RollBuilderFFG extends FormApplication {
 
   /** @override */
   static get defaultOptions() {
-    return mergeObject(super.defaultOptions, {
+    return foundry.utils.mergeObject(super.defaultOptions, {
       id: "roll-builder",
-      classes: ["starwarsffg", "roll-builder-dialog"],
-      template: "systems/starwarsffg/templates/dice/roll-options-ffg.html",
+      classes: ["ucttg", "roll-builder-dialog"],
+      template: "systems/ucttg/templates/dice/roll-options-ffg.html",
       width: 350
     });
   }
@@ -31,15 +31,26 @@ export default class RollBuilderFFG extends FormApplication {
   async getData() {
     //get all possible sounds
     let sounds = [];
+    const diceSymbols = {
+      advantage: await TextEditor.enrichHTML("[AD]"),
+      success: await TextEditor.enrichHTML("[SU]"),
+      threat: await TextEditor.enrichHTML("[TH]"),
+      failure: await TextEditor.enrichHTML("[FA]"),
+      upgrade: await TextEditor.enrichHTML("[PR]"),
+      triumph: await TextEditor.enrichHTML("[TR]"),
+      despair: await TextEditor.enrichHTML("[DE]"),
+      light: await TextEditor.enrichHTML("[LI]"),
+      dark: await TextEditor.enrichHTML("[DA]"),
+    };
 
-    let canUserAddAudio = await game.settings.get("starwarsffg", "allowUsersAddRollAudio");
+    let canUserAddAudio = await game.settings.get("ucttg", "allowUsersAddRollAudio");
     let canUserAddFlavor = game.user.isGM || !this?.roll?.flavor;
 
     if (game.user.isGM) {
       game.playlists.contents.forEach((playlist) => {
         playlist.sounds.forEach((sound) => {
           let selected = false;
-          const s = this.roll?.sound ?? this.roll?.item?.flags?.starwarsffg?.ffgsound;
+          const s = this.roll?.sound ?? this.roll?.item?.flags?.ucttg?.ffgsound;
           if (s === sound.path) {
             selected = true;
           }
@@ -47,13 +58,13 @@ export default class RollBuilderFFG extends FormApplication {
         });
       });
     } else if (canUserAddAudio) {
-      const playlistId = await game.settings.get("starwarsffg", "allowUsersAddRollAudioPlaylist");
+      const playlistId = await game.settings.get("ucttg", "allowUsersAddRollAudioPlaylist");
       const playlist = await game.playlists.get(playlistId);
 
       if (playlist) {
         playlist.sounds.forEach((sound) => {
           let selected = false;
-          const s = this.roll?.sound ?? this.roll?.item?.flags?.starwarsffg?.ffgsound;
+          const s = this.roll?.sound ?? this.roll?.item?.flags?.ucttg?.ffgsound;
           if (s === sound.path) {
             selected = true;
           }
@@ -74,10 +85,10 @@ export default class RollBuilderFFG extends FormApplication {
       });
     }
 
-    const enableForceDie = game.settings.get("starwarsffg", "enableForceDie");
+    const enableForceDie = game.settings.get("ucttg", "enableForceDie");
     const labels = {
-      light: game.settings.get("starwarsffg", "destiny-pool-light"),
-      dark: game.settings.get("starwarsffg", "destiny-pool-dark"),
+      light: game.settings.get("ucttg", "destiny-pool-light"),
+      dark: game.settings.get("ucttg", "destiny-pool-dark"),
     };
 
     return {
@@ -88,6 +99,7 @@ export default class RollBuilderFFG extends FormApplication {
       users,
       enableForceDie,
       labels,
+      diceSymbols,
     };
   }
 
@@ -107,13 +119,13 @@ export default class RollBuilderFFG extends FormApplication {
           if (this?.roll?.item) {
             let entity;
             let entityData;
-            if (!this?.roll?.item?.flags?.starwarsffg?.uuid) {
+            if (!this?.roll?.item?.flags?.ucttg?.uuid) {
               entity = game.actors.get(this.roll.data.actor._id);
               entityData = {
                 _id: this.roll.item.id,
               };
             } else {
-              const parts = this.roll.item.flags.starwarsffg?.uuid.split(".");
+              const parts = this.roll.item.flags.ucttg?.uuid.split(".");
               const [sceneName, sceneId, entityName, entityId, embeddedName, embeddedId] = parts;
               entity = game.actors.tokens[entityId].items.get(embeddedId);
               if (parts.length === 6) {
@@ -122,7 +134,7 @@ export default class RollBuilderFFG extends FormApplication {
                 };
               }
             }
-            setProperty(entityData, "flags.starwarsffg.ffgsound", sound);
+            setProperty(entityData, "flags.ucttg.ffgsound", sound);
             entity.update(entityData);
           }
         }
@@ -136,10 +148,10 @@ export default class RollBuilderFFG extends FormApplication {
       }
 
       // validate that required data is present
-      if (this.roll.item?.uuid && !this.roll.item.flags?.starwarsffg?.uuid) {
+      if (this.roll.item?.uuid && !this.roll.item.flags?.ucttg?.uuid) {
         // uuid flag is missing, look up the item and set it, so it's fixed going forward
         const tmp_item = await fromUuid(this.roll.item.uuid);
-        await tmp_item.setFlag("starwarsffg", "uuid", this.roll.item.uuid);
+        await tmp_item.setFlag("ucttg", "uuid", this.roll.item.uuid);
       }
 
       const sentToPlayer = html.find(".user-selection")?.[0]?.value;
@@ -157,7 +169,7 @@ export default class RollBuilderFFG extends FormApplication {
           user: game.user.id,
           content: messageText,
           flags: {
-            starwarsffg: {
+            ucttg: {
               roll: this.roll,
               dicePool: this.dicePool,
               description: this.description,
@@ -177,7 +189,7 @@ export default class RollBuilderFFG extends FormApplication {
         const roll = new game.ffg.RollFFG(this.dicePool.renderDiceExpression(), this.roll.item, this.dicePool, this.roll.flavor);
         // check if this is a crew roll - and it's a roll for a weapon
         if (this.roll.item && this.roll.item.hasOwnProperty('crew') && Object.keys(this.roll.item).length > 1) {
-          await this.roll.item.update({"flags": {"starwarsffg": {"crew": this.roll.item.crew}}})
+          await this.roll.item.update({"flags": {"ucttg": {"crew": this.roll.item.crew}}})
         }
         await roll.toMessage({
           user: game.user.id,

@@ -1,4 +1,4 @@
-export default class ActorOptions {
+export default class ItemOptions {
   constructor(data, html) {
     this.data = data;
     this.options = {};
@@ -6,16 +6,16 @@ export default class ActorOptions {
   }
 
   init(html) {
-      const options = $(`.ucttg.sheet.actor[data-appid='${this.data.appId}'] .ffg-sheet-options`);
+      const options = $(`.ucttg.sheet.item[data-appid='${this.data.appId}'] .ffg-sheet-options`);
       if (options.length === 0) {
         const button = $(`<a class="ffg-sheet-options"><i class="fas fa-wrench"></i>${game.i18n.localize("SWFFG.SheetOptions")}</a>`);
-        button.insertBefore(`.ucttg.sheet.actor[data-appid='${this.data.appId}'] header a:first`);
+        button.insertBefore(`.ucttg.sheet.item[data-appid='${this.data.appId}'] header a:first`);
         button.on("click", this.handler.bind(this));
       }
   }
 
   handler(event) {
-    const title = `${game.i18n.localize("SWFFG.CharacterSheet")} ${game.i18n.localize("SWFFG.Options")}: ${this.data.actor.name}`;
+    const title = `${game.i18n.localize("SWFFG.ItemSheet")} ${game.i18n.localize("SWFFG.Options")}: ${this.data.item.name}`;
 
     new Dialog(
       {

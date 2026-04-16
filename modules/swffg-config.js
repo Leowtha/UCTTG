@@ -1,9 +1,19 @@
 import { itemstatus } from "./config/ffg-itemstatus.js";
 import { personal_ranges, configureVehicleRange, sensor_ranges } from "./config/ffg-ranges.js";
-import { general_modifiers, weapon_modifiers, vehicle_modifiers, modifier_types, itemmodifier_modifiertypes, itemmodifier_rollmodifiers, itemmodifier_resultmodifiers, itemmodifier_dicemodifiers } from "./config/ffg-modifiers.js";
+import {
+  general_modifiers,
+  weapon_modifiers,
+  vehicle_modifiers,
+  modifier_types,
+  itemmodifier_modifiertypes,
+  itemmodifier_rollmodifiers,
+  itemmodifier_resultmodifiers,
+  itemmodifier_dicemodifiers,
+  modTypeToModMap, itemTypeToModTypeMap
+} from "./config/ffg-modifiers.js";
 import { pool_results, configureDice } from "./config/ffg-dice.js";
 import { vehicle_stats, vehicle_firingarcs } from "./config/ffg-vehicles.js";
-import { character_characteristics, character_stats } from "./config/ffg-characters.js";
+import { character_characteristics, character_stats, rival_stats, ace_stats } from "./config/ffg-characters.js";
 import { skills, skills_knowledge_stripped, skills_combat } from "./config/ffg-skills.js";
 import { sheet_defaults } from "./config/ffg-sheetdefaults.js";
 import { weapon_stats } from "./config/ffg-weapons.js";
@@ -14,7 +24,9 @@ import { difficulty } from "./config/ffg-difficulty.js";
 export const FFG = {};
 
 FFG.activations = talent_activations;
+FFG.ace_stats = ace_stats;
 FFG.character_stats = character_stats;
+FFG.rival_stats = rival_stats;
 FFG.characteristics = character_characteristics;
 FFG.combat_skills = skills_combat;
 FFG.diceresults = pool_results;
@@ -38,4 +50,6 @@ FFG.itemmodifier_rollmodifiers = itemmodifier_rollmodifiers;
 FFG.itemmodifier_dicemodifiers = itemmodifier_dicemodifiers;
 FFG.itemmodifier_resultmodifiers = itemmodifier_resultmodifiers;
 FFG.armor_stats = armor_stats;
+FFG.modTypeToModMap = modTypeToModMap;
+FFG.itemTypeToModTypeMap = itemTypeToModTypeMap;
 FFG.configureDice = configureDice;

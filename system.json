@@ -1,52 +1,36 @@
 {
   "id": "ucttg",
-  "title": "Mobile Suit Gundam UCTTG",
-  "description": "A system for playing Mobile Suit Gundam games.",
-  "version": "1.806",
+  "title": "UC Tabletop Game",
+  "description": "A tabletop game system set in the Universal Century, built on the Genesys/FFG narrative dice engine.",
+  "version": "0.1.0",
   "compatibility": {
-    "minimum": 10,
-    "verified": 11
+    "minimum": 12,
+    "verified": 12
   },
-  "templateVersion": 1,
-  "authors": [{"name": "Leowtha"}, {"name": "Chimney"}, {"name": "Emma"}, {"name": "Hatter"}],
+  "authors": [
+    {"name": "Leowtha Schuzac"}
+  ],
   "esmodules": ["modules/dice-pool-ffg.js", "modules/swffg-main.js"],
-  "styles": ["styles/starwarsffg.css", "lib/select2/select2.min.css", "lib/pure/grids-min.css"],
+  "styles": ["styles/ucttg.css", "lib/select2/select2.min.css", "lib/pure/grids-min.css"],
   "scripts": ["lib/select2/select2.min.js", "lib/jszip/jszip.min.js", "lib/jxon/jxon.min.js"],
   "socket": true,
   "packs": [],
+  "packFolders": [],
   "languages": [
     {
       "lang": "en",
       "name": "English",
       "path": "lang/en.json"
-    },
-    {
-      "lang": "de",
-      "name": "Deutsch (German)",
-      "path": "lang/de.json"
-    },
-    {
-      "lang": "fr",
-      "name": "Français (French)",
-      "path": "lang/fr.json"
-    },
-    {
-      "lang": "es",
-      "name": "Español (Spanish)",
-      "path": "lang/es.json"
-    },
-    {
-      "lang": "pt-BR",
-      "name": "Português (BR)",
-      "path": "lang/pt-BR.json"
     }
   ],
-  "gridDistance": 1,
-  "gridUnits": "rb",
+  "grid": {
+    "distance": 5,
+    "units": "ft"
+  },
   "primaryTokenAttribute": "wounds",
   "secondaryTokenAttribute": "strain",
-  "url": "https://github.com/Leowtha/UCTTG",
-  "manifest": "https://github.com/Leowtha/UCTTG/releases/latest/download/system.json",
-  "download": "https://github.com/Leowtha/UCTTG/releases/download/v1.0/UCTTGv1.0.zip",
+  "url": "",
+  "manifest": "",
+  "download": "",
   "license": "LICENSE.txt"
 }

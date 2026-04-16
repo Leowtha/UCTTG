@@ -10,12 +10,12 @@ export default class EmbeddedItemHelpers {
    */
   static async _getRealItem(temporaryItem) {
     // NOTE: If data is no-op update, there was previous logic here to not populate parents. We think that's dead, but leaving a note to be removed before commit in case that turned out to be important.
-    // https://github.com/StarWarsFoundryVTT/StarWarsFFG/blob/3721dd62caeb7b18e3b9907dfb5ec0342e4dd3ac/modules/helpers/embeddeditem-helpers.js#L14-L16
+    // https://github.com/StarWarsFoundryVTT/ucttg/blob/3721dd62caeb7b18e3b9907dfb5ec0342e4dd3ac/modules/helpers/embeddeditem-helpers.js#L14-L16
 
     // NOTE: Previously, only add the ffgParent from flags to parents if NOT in the compendium. Don't think we want or need that anymore.
-    // https://github.com/StarWarsFoundryVTT/StarWarsFFG/blob/3721dd62caeb7b18e3b9907dfb5ec0342e4dd3ac/modules/helpers/embeddeditem-helpers.js#L17-L20
+    // https://github.com/StarWarsFoundryVTT/ucttg/blob/3721dd62caeb7b18e3b9907dfb5ec0342e4dd3ac/modules/helpers/embeddeditem-helpers.js#L17-L20
 
-    let flags = temporaryItem.flags.starwarsffg;
+    let flags = temporaryItem.flags.ucttg;
     let flagHierarchy = [flags];
     let uuid;
     if (flags.ffgUuid) {
@@ -28,7 +28,7 @@ export default class EmbeddedItemHelpers {
         ui.notifications.warn("We think this code path is dead, let us know that it's not! (parent is empty)");
         CONFIG.logger.error("FFG parent is empty");
       }
-      flags = flags.ffgParent.starwarsffg;
+      flags = flags.ffgParent.ucttg;
       if (Object.keys(flags).includes("ffgUuid")) {
         uuid = flags.ffgUuid;
       }
@@ -107,7 +107,7 @@ export default class EmbeddedItemHelpers {
       }
     });
     CONFIG.logger.debug("Final dataPointer", dataPointer);
-    await mergeObject(
+    await foundry.utils.mergeObject(
         temporaryItem,
         ItemHelpers.normalizeDataStructure(data),
         {
@@ -117,20 +117,20 @@ export default class EmbeddedItemHelpers {
         },
     );
 
-    mergeObject(dataPointer, {...temporaryItem, ...ItemHelpers.normalizeDataStructure(data)});
-    mergeObject(dataPointer.flags, temporaryItem.flags);
+    foundry.utils.mergeObject(dataPointer, {...temporaryItem, ...ItemHelpers.normalizeDataStructure(data)});
+    foundry.utils.mergeObject(dataPointer.flags, temporaryItem.flags);
 
     let formData;
     if (reconstruct.length === 1) {
       // this fucks up on activating stuff because activate is called on the attachment but it's trying to set data on the mod, not the attachment
       formData = {
         system: {
-          [temporaryItem.flags.starwarsffg.ffgTempItemType]: realItem.system[temporaryItem.flags.starwarsffg.ffgTempItemType]
+          [temporaryItem.flags.ucttg.ffgTempItemType]: realItem.system[temporaryItem.flags.ucttg.ffgTempItemType]
         },
       };
     } else if (reconstruct.length === 2) {
       // update the attachment list with our updated dataPointer data, so we can add it to the formData
-      realItem.system[reconstruct[0].type][reconstruct[0].index].system[temporaryItem.flags.starwarsffg.ffgTempItemType][temporaryItem.flags.starwarsffg.ffgTempItemIndex] = dataPointer;
+      realItem.system[reconstruct[0].type][reconstruct[0].index].system[temporaryItem.flags.ucttg.ffgTempItemType][temporaryItem.flags.ucttg.ffgTempItemIndex] = dataPointer;
 
       formData = {
         system: {
@@ -199,7 +199,9 @@ export default class EmbeddedItemHelpers {
         },
       };
 
-      let readonlyItemJournalEntry = await JournalEntry.create(readonlyItem, {temporary: true});
+      let readonlyItemJournalEntry = await new JournalEntry(readonlyItem, {
+        temporary: true,
+      });
       readonlyItemJournalEntry.sheet.render(true)
     } catch (err) {
       ui.notifications.warn(`The item or quality has been removed or can not be found!`);
@@ -243,7 +245,7 @@ export default class EmbeddedItemHelpers {
           item = a.system[modifierType][modifierIndex];
           rename_item = {
             flags: {
-              starwarsffg: {
+              ucttg: {
                 ffgTempItemType: "itemattachment",
                 ffgTempItemIndex: index,
                 ffgTempId: itemId,
@@ -257,7 +259,7 @@ export default class EmbeddedItemHelpers {
     const temp = {
       ...item,
       flags: {
-        starwarsffg: {
+        ucttg: {
           ffgTempId: itemId,
           ffgTempItemType: modifierType,
           ffgTempItemIndex: modifierIndex,
@@ -271,7 +273,7 @@ export default class EmbeddedItemHelpers {
 
     delete temp._id;
     delete temp.id;
-    let tempItem = await Item.create(temp, {temporary: true});
+    let tempItem = await new Item(temp, { temporary: true });
     tempItem.sheet.render(true);
   }
 
@@ -281,7 +283,7 @@ export default class EmbeddedItemHelpers {
       name: "",
       type,
       flags: {
-        starwarsffg: {
+        ucttg: {
           ffgTempItemType: type,
           ffgTempItemIndex: -1,
           ...flags,
@@ -290,11 +292,11 @@ export default class EmbeddedItemHelpers {
       data,
     };
 
-    let tempItem = await Item.create(temp, {temporary: true});
+    let tempItem = await new Item(temp, { temporary: true });
 
     tempItem.data._id = temp.id;
     if (!temp.id) {
-      tempItem.data._id = randomID();
+      tempItem.data._id = foundry.utils.randomID();
     }
 
     return tempItem;

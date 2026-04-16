@@ -6,6 +6,45 @@ import ModifierHelpers from "../helpers/modifiers.js";
  * @extends {Actor}
  */
 export class ActorFFG extends Actor {
+
+  static async create(data, options) {
+    const createData = data;
+
+    // Only apply defaults for newly created actors
+    if (!(typeof data.system === "undefined")) {
+      return super.create(createData, options);
+    }
+
+    switch (createData.type) {
+      case "minion":
+        createData.prototypeToken = {
+          actorLink: false,
+          disposition: CONST.TOKEN_DISPOSITIONS.HOSTILE,
+        };
+        break;
+      case "character":
+        createData.prototypeToken = {
+          actorLink: true,
+          disposition: CONST.TOKEN_DISPOSITIONS.FRIENDLY,
+        };
+        break;
+      case "rival":
+        createData.prototypeToken = {
+          actorLink: false,
+          disposition: CONST.TOKEN_DISPOSITIONS.HOSTILE,
+          prependAdjective: game.settings.get("ucttg", "RivalTokenPrepend"),
+        };
+        break;
+      case "nemesis":
+        createData.prototypeToken = {
+          actorLink: true,
+          disposition: CONST.TOKEN_DISPOSITIONS.HOSTILE,
+        };
+        break;
+    }
+    return super.create(createData, options);
+  }
+
   /**
    * Augment the basic actor data with additional dynamic data.
    */
@@ -22,7 +61,7 @@ export class ActorFFG extends Actor {
     if (data.skills) {
       let skills = JSON.parse(JSON.stringify(CONFIG.FFG.skills));
 
-      data.skills = mergeObject(skills, data.skills);
+      data.skills = foundry.utils.mergeObject(skills, data.skills);
 
       // Filter out skills that are not custom (manually added) or part of the current system skill list
       Object.keys(data.skills)
@@ -39,16 +78,27 @@ export class ActorFFG extends Actor {
         return { type: item, label: game.i18n.localize(`SWFFG.Skills${item}`) === `SWFFG.Skills${item}` ? item : game.i18n.localize(`SWFFG.Skills${item}`) };
       });
     }
+
+    // add values for above threshold
+    if (["character", "nemesis", "ace"].includes(actor.type)) {
+      data.stats.woundsOverThreshold = data.stats.wounds.value - data.stats.wounds.max;
+      data.stats.strainOverThreshold = data.stats.strain.value - data.stats.strain.max;
+    } else if (["rival", "minion"].includes(actor.type)) {
+      data.stats.woundsOverThreshold = data.stats.wounds.value - data.stats.wounds.max;
+    } else if (["vehicle"].includes(actor.type)) {
+      data.stats.hullOverThreshold = data.stats.hullTrauma.value - data.stats.hullTrauma.max;
+      data.stats.systemStrainOverThreshold = data.stats.systemStrain.value - data.stats.systemStrain.max;
+    }
+
     this._prepareSharedData.bind(this);
     this._prepareSharedData(actor);
     if (actor.type === "minion") this._prepareMinionData(actor);
-    if (actor.type === "character") this._prepareCharacterData(actor);
+    if (["character", "nemesis", "rival", "ace"].includes(actor.type)) this._prepareCharacterData(actor);
   }
 
   _prepareSharedData(actorData) {
     const data = actorData.system;
     //data.biography = PopoutEditor.replaceRollTags(data.biography, actorData);
-    data.biography = PopoutEditor.renderDiceImages(data.biography, actorData);
 
     // localize characteristic names
     if (actorData.type !== "vehicle" && actorData.type !== "homestead") {
@@ -74,13 +124,13 @@ export class ActorFFG extends Actor {
       }
     }
 
-    if (actorData.type === "minion" || actorData.type === "character") {
+    if (["character", "nemesis", "rival", "minion", "ace"].includes(actorData.type)) {
       this._applyModifiers.bind(this);
       this._applyModifiers(actorData);
-      if (game.settings.get("starwarsffg", "enableSoakCalc")) {
+      if (game.settings.get("ucttg", "enableSoakCalc")) {
         this._calculateDerivedValues(actorData);
       }
-    } else if (actorData.type === "vehicle") {
+    } else if (["vehicle"].includes(actorData.type)) {
       this._applyVehicleModifiers(actorData);
       this._calculateDerivedValues(actorData);
     }
@@ -100,7 +150,7 @@ export class ActorFFG extends Actor {
     }
 
     //Calculate the number of alive minions
-    data.quantity.value = Math.min(data.quantity.max, data.quantity.max - Math.floor((data.stats.wounds.value - 1) / data.unit_wounds.value));
+    data.quantity.value = Math.max(Math.min(data.quantity.max, data.quantity.max - Math.floor((data.stats.wounds.value - 1) / data.unit_wounds.value)), 0);
 
     // Loop through Skills, and where groupskill = true, set the rank to 1*(quantity-1).
     for (let [key, skill] of Object.entries(data.skills)) {
@@ -233,7 +283,12 @@ export class ActorFFG extends Actor {
         activation: element.system?.activation?.value,
         activationLabel: element.system?.activation?.label,
         isRanked: element.system?.ranks?.ranked,
-        source: [{ type: "talent", typeLabel: "SWFFG.Talent", name: element.name, id: element.id }],
+        source: [{
+          type: element?.flags?.ucttg?.fromSpecies ? "species" : "talent",
+          typeLabel: element?.flags?.ucttg?.fromSpecies ? "SWFFG.Species" : "SWFFG.Talent",
+          name: element.name,
+          id: element.id,
+        }],
       };
 
       if (item.isRanked) {
@@ -253,7 +308,12 @@ export class ActorFFG extends Actor {
       if (index < 0 || !item.isRanked) {
         globalTalentList.push(item);
       } else {
-        globalTalentList[index].source.push({ type: "talent", typeLabel: "SWFFG.Talent", name: element.name, id: element.id });
+        globalTalentList[index].source.push({
+          type: element?.flags?.ucttg?.fromSpecies ? "species" : "talent",
+          typeLabel: element?.flags?.ucttg?.fromSpecies ? "SWFFG.Species" : "SWFFG.Talent",
+          name: element.name,
+          id: element.id,
+        });
         globalTalentList[index].rank += element.system.ranks.current;
         if (CONFIG.FFG.theme !== "starwars") {
           globalTalentList[index].tier = Math.abs(parseInt(globalTalentList[index].rank) + (parseInt(element.system?.tier, 10) - 1));
@@ -284,7 +344,7 @@ export class ActorFFG extends Actor {
     }
 
     // enable talent sorting if global to true and sheet is set to inherit or sheet is set to true.
-    if ((game.settings.get("starwarsffg", "talentSorting") && (!actorData.flags?.config?.talentSorting || actorData.flags?.config?.talentSorting === "0")) || actorData.flags?.config?.talentSorting === "1") {
+    if ((game.settings.get("ucttg", "talentSorting") && (!actorData.flags?.config?.talentSorting || actorData.flags?.config?.talentSorting === "0")) || actorData.flags?.config?.talentSorting === "1") {
       data.talentList = globalTalentList.slice().reverse().sort(this._sortTalents);
     } else {
       data.talentList = globalTalentList;
@@ -447,7 +507,7 @@ export class ActorFFG extends Actor {
           value = [data[name][k].fore, data[name][k].port, data[name][k].starboard, data[name][k].aft];
         } else if (key === "Soak") {
           try {
-            if ((typeof actorData.flags?.starwarsffg?.config?.enableAutoSoakCalculation === undefined && game.settings.get("starwarsffg", "enableSoakCalc")) || actorData.flags?.starwarsffg?.config?.enableAutoSoakCalculation) {
+            if ((typeof actorData.flags?.ucttg?.config?.enableAutoSoakCalculation === undefined && game.settings.get("ucttg", "enableSoakCalc")) || actorData.flags?.ucttg?.config?.enableAutoSoakCalculation) {
               value = 0;
             }
           } catch (err) {
@@ -521,13 +581,19 @@ export class ActorFFG extends Actor {
       let total = 0;
       total += data.attributes[key].value;
       total += ModifierHelpers.getCalculatedValueFromItems(items, key, "Characteristic");
-      data.characteristics[key].value = total > 7 ? 7 : total;
+      data.characteristics[key].value = total > game.settings.get("ucttg", "maxAttribute") ? game.settings.get("ucttg", "maxAttribute") : total;
     });
 
     /* Stats */
-    this._setModifiers(actorData, CONFIG.FFG.character_stats, "stats", "Stat");
-    Object.keys(CONFIG.FFG.character_stats).forEach((k) => {
-      const key = CONFIG.FFG.character_stats[k].value;
+    let stats;
+    if (actorData.type === "rival") {
+      stats = CONFIG.FFG.rival_stats;
+    } else {
+      stats = CONFIG.FFG.character_stats;
+    }
+    this._setModifiers(actorData, stats, "stats", "Stat");
+    Object.keys(stats).forEach((k) => {
+      const key = stats[k].value;
 
       let total = 0;
 
@@ -554,7 +620,10 @@ export class ActorFFG extends Actor {
       total += ModifierHelpers.getCalculatedValueFromItems(items, key, "Stat");
 
       if (key === "Soak") {
-        data.stats[k].value = total;
+        const enableAutoSoakCalc = (typeof this.flags?.ucttg?.config?.enableAutoSoakCalculation === "undefined" && game.settings.get("ucttg", "enableSoakCalc")) || this.flags.ucttg?.config.enableAutoSoakCalculation;
+        if (enableAutoSoakCalc) {
+          data.stats[k].value = total;
+        }
       } else if (key === "Defence-Melee") {
         data.stats.defence.melee = total;
       } else if (key === "Defence-Ranged") {
@@ -631,7 +700,7 @@ export class ActorFFG extends Actor {
       data.skills[key].remsetbacksource = remsetback.sources;
 
       if (isPC) {
-        data.skills[key].rank = total > 6 ? 6 : total;
+        data.skills[key].rank = total > game.settings.get("ucttg", "maxSkill") ? game.settings.get("ucttg", "maxSkill") : total;
       } else {
         data.skills[key].rank = total;
       }
@@ -672,5 +741,30 @@ export class ActorFFG extends Actor {
         }
       }
     });
+  }
+
+  /** @override **/
+  /*
+    This function is identical to the overridden function except that it does not enforce a maximum value for the update
+  */
+  async modifyTokenAttribute(attribute, value, isDelta, isBar) {
+    const attr = foundry.utils.getProperty(this.system, attribute);
+    const current = isBar ? attr.value : attr;
+    const update = isDelta ? current + value : value;
+    if ( update === current ) return this;
+
+    // Determine the updates to make to the actor data
+    let updates;
+    if (isBar && attribute === "stats.wounds") {
+      updates = {[`system.${attribute}.value`]: Math.max(update, 0)};
+    } else if (isBar) {
+      updates = {[`system.${attribute}.value`]: Math.clamp(update, 0, attr.max)};
+    } else {
+      updates = {[`system.${attribute}`]: update};
+    }
+
+    // Allow a hook to override these changes
+    const allowed = Hooks.call("modifyTokenAttribute", {attribute, value, isDelta, isBar}, updates);
+    return allowed !== false ? this.update(updates) : this;
   }
 }

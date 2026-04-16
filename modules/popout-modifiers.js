@@ -9,9 +9,9 @@ export default class PopoutModifiers extends FormApplication {
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
       id: "popout-modifiers",
-      classes: ["starwarsffg", "sheet"],
+      classes: ["ucttg", "sheet"],
       title: "Pop-out Modifiers",
-      template: "systems/starwarsffg/templates/items/dialogs/ffg-popout-modifiers.html",
+      template: "systems/ucttg/templates/items/dialogs/ffg-popout-modifiers.html",
       closeOnSubmit: false,
       submitOnClose: true,
       submitOnChange: true,

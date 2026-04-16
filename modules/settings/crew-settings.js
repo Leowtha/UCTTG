@@ -1,13 +1,13 @@
 export default class CrewSettings extends FormApplication {
   /** @override */
   static get defaultOptions() {
-    return mergeObject(super.defaultOptions, {
+    return foundry.utils.mergeObject(super.defaultOptions, {
       id: "data-importer",
-      classes: ["starwarsffg", "data-import"],
+      classes: ["ucttg", "data-import"],
       title: `${game.i18n.localize("SWFFG.UISettingsLabel")}`,
       height: 265,
       resizable: true,
-      template: "systems/starwarsffg/templates/dialogs/crew-settings.html"
+      template: "systems/ucttg/templates/dialogs/crew-settings.html"
     });
   }
 
@@ -25,7 +25,7 @@ export default class CrewSettings extends FormApplication {
       if (!setting.key.includes("arrayCrewRoles") || (!canConfigure && setting.scope !== "client")) continue;
 
       // Update setting data
-      const s = duplicate(setting);
+      const s = foundry.utils.duplicate(setting);
       s.name = game.i18n.localize(s.name);
       s.hint = game.i18n.localize(s.hint);
       s.value = game.settings.get(s.namespace, s.key);
@@ -40,7 +40,7 @@ export default class CrewSettings extends FormApplication {
     }
 
     data.skills = CONFIG.FFG.skills;
-    data.initiativeRole = game.settings.get('starwarsffg', 'initiativeCrewRole');
+    data.initiativeRole = game.settings.get('ucttg', 'initiativeCrewRole');
 
     // Return data
     return {
@@ -65,8 +65,8 @@ export default class CrewSettings extends FormApplication {
    */
   _onResetDefaults(event) {
     event.preventDefault();
-    const defaults = game.settings.settings.get("starwarsffg.arrayCrewRoles").default;
-    game.settings.set("starwarsffg", "arrayCrewRoles", defaults);
+    const defaults = game.settings.settings.get("ucttg.arrayCrewRoles").default;
+    game.settings.set("ucttg", "arrayCrewRoles", defaults);
     this.close();
   }
 
@@ -75,7 +75,7 @@ export default class CrewSettings extends FormApplication {
 
   /** @override */
   async _updateObject(event, formData) {
-    const existing_settings = game.settings.get("starwarsffg", "arrayCrewRoles");
+    const existing_settings = game.settings.get("ucttg", "arrayCrewRoles");
     let new_settings = [];
     // convert the arrays into the format expected
     for (let i = 0; i < formData['role_name'].length; i++) {
@@ -88,7 +88,7 @@ export default class CrewSettings extends FormApplication {
     }
     // update the settings if they don't match the old ones
     if (existing_settings !== new_settings) {
-      await game.settings.set("starwarsffg", "arrayCrewRoles", new_settings);
+      await game.settings.set("ucttg", "arrayCrewRoles", new_settings);
     }
     const updateData = {
       "role_name":  formData['initiativeCrewRole'],
@@ -96,6 +96,6 @@ export default class CrewSettings extends FormApplication {
       "use_weapons": false,
       "use_handling": false
     };
-    await game.settings.set("starwarsffg", "initiativeCrewRole", updateData);
+    await game.settings.set("ucttg", "initiativeCrewRole", updateData);
   }
 }

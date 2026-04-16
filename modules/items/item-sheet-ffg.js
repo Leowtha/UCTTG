@@ -6,6 +6,9 @@ import ImportHelpers from "../importer/import-helpers.js";
 import DiceHelpers from "../helpers/dice-helpers.js";
 import item from "../helpers/embeddeditem-helpers.js";
 import EmbeddedItemHelpers from "../helpers/embeddeditem-helpers.js";
+import {xpLogSpend} from "../helpers/actor-helpers.js";
+import ItemOptions from "./item-ffg-options.js";
+import {itemEditor, talentEditor} from "./item-editor.js";
 
 /**
  * Extend the basic ItemSheet with some very simple modifications
@@ -14,8 +17,8 @@ import EmbeddedItemHelpers from "../helpers/embeddeditem-helpers.js";
 export class ItemSheetFFG extends ItemSheet {
   /** @override */
   static get defaultOptions() {
-    return mergeObject(super.defaultOptions, {
-      classes: ["starwarsffg", "sheet", "item"],
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      classes: ["ucttg", "sheet", "item"],
       tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "description" }],
       scrollY: [".sheet-body", ".tab"],
       action: null,
@@ -25,7 +28,7 @@ export class ItemSheetFFG extends ItemSheet {
 
   /** @override */
   get template() {
-    const path = "systems/starwarsffg/templates/items";
+    const path = "systems/ucttg/templates/items";
     return `${path}/ffg-${this.item.type}-sheet.html`;
   }
 
@@ -62,17 +65,17 @@ export class ItemSheetFFG extends ItemSheet {
 
     if (options?.action === "update" && this.object.compendium) {
       delete options.data._id;
-      data.item = mergeObject(data.item, options.data);
+      data.item = foundry.utils.mergeObject(data.item, options.data);
     } else if (options?.action === "ffgUpdate") {
       delete options?.data?.system?.description;
       if (options?.data?.data) {
-        data.data = mergeObject(data.data, options.data.data);
+        data.data = foundry.utils.mergeObject(data.data, options.data.data);
         // we are going to merge options.data into data.item and can't set data.item.data this way
         delete options.data.data;
       } else {
-        data.data = mergeObject(data.data, options.data);
+        data.data = foundry.utils.mergeObject(data.data, options.data);
       }
-      data.item = mergeObject(data.item, options.data); // some fields are read out of item, some are read out of data
+      data.item = foundry.utils.mergeObject(data.item, options.data); // some fields are read out of item, some are read out of data
     }
 
     data.classType = this.constructor.name;
@@ -87,16 +90,29 @@ export class ItemSheetFFG extends ItemSheet {
       }
     }
 
+    if (data?.data?.description) {
+      data.data.enrichedDescription = await TextEditor.enrichHTML(data.data.description);
+    }
+
+    if (data?.data?.longDesc !== undefined) {
+      data.data.enrichedLongDesc = await TextEditor.enrichHTML(data.data.longDesc);
+      data.data.hasLongDesc = true;
+    } else {
+      data.data.hasLongDesc = false;
+    }
+
     data.isTemp = false;
-    if (this.object.flags?.starwarsffg?.ffgIsOwned || this.object.flags?.starwarsffg?.ffgIsTemp) {
+    if (this.object.flags?.ucttg?.ffgIsOwned || this.object.flags?.ucttg?.ffgIsTemp) {
       data.isTemp = true;
     }
+    data.isOwned = this.object.flags?.ucttg?.ffgIsOwned;
 
     switch (this.object.type) {
       case "weapon":
       case "shipweapon":
         this.position.width = 550;
         this.position.height = 750;
+        data.data.enrichedSpecial = await PopoutEditor.renderDiceImages(data?.data?.special?.value, this.actor ? this.actor : {});
         break;
       case "itemattachment":
         this.position.width = 500;
@@ -107,8 +123,11 @@ export class ItemSheetFFG extends ItemSheet {
         this.position.height = 350;
         break;
       case "armour":
-      case "ability":
       case "gear":
+        this.position.width = 385;
+        this.position.height = 750;
+        break;
+      case "ability":
       case "shipattachment":
       case "homesteadupgrade":
         this.position.width = 385;
@@ -131,52 +150,29 @@ export class ItemSheetFFG extends ItemSheet {
           data.isEditing = false;
           data.isReadOnly = true;
         }
+        for (let x = 0; x < 16; x++) {
+          data.data.upgrades[`upgrade${x}`].enrichedDescription = await TextEditor.enrichHTML(data.data.upgrades[`upgrade${x}`].description);
+        }
         break;
       case "specialization":
-        this.position.width = 715;
+        this.position.width = 850;
+        this.position.height = 1005;
         data.isReadOnly = false;
         if (!this.options.editable) {
           data.isEditing = false;
           data.isReadOnly = true;
         }
 
-        if (!this.item.flags?.starwarsffg?.loaded) {
+        if (!this.item.flags?.ucttg?.loaded) {
           CONFIG.logger.debug(`Running Item initial load`);
-          if (!Object.keys(this.item.flags).includes('starwarsffg')) {
+          if (!Object.keys(this.item.flags).includes('ucttg')) {
               // the object is not properly set up yet; bail to let it finish
               return;
           }
-          this.item.flags.starwarsffg.loaded = true;
-
-          const specializationTalents = data.data.talents;
-
-          await ImportHelpers.asyncForEach(Object.keys(specializationTalents), async (talent) => {
-            let gameItem;
-            if (specializationTalents?.[talent]?.pack?.length) {
-              try {
-                const pack = await game.packs.get(specializationTalents[talent].pack);
-
-                // this may be a coverted specialization talent from a world to a module.
-                if (!pack) {
-                  gameItem = await ImportHelpers.findCompendiumEntityById("Item", specializationTalents[talent].itemId);
-                } else {
-                  await pack.getIndex();
-                  const entry = await pack.index.find((e) => e.id === specializationTalents[talent].itemId);
-                  if (entry) {
-                    gameItem = await pack.getEntity(entry.id);
-                  }
-                }
-              } catch (err) {
-                CONFIG.logger.warn(`Unable to load ${specializationTalents[talent].pack}`, err);
-              }
-            } else {
-              gameItem = await game.items.get(specializationTalents[talent].itemId);
-            }
-
-            if (gameItem) {
-              this._updateSpecializationTalentReference(specializationTalents[talent], gameItem);
-            }
-          });
+          this.item.flags.ucttg.loaded = true;
+        }
+        for (let x = 0; x < 20; x++) {
+          data.data.talents[`talent${x}`].enrichedDescription = await TextEditor.enrichHTML(data.data.talents[`talent${x}`].description);
         }
         break;
       case "species":
@@ -241,14 +237,39 @@ export class ItemSheetFFG extends ItemSheet {
       case "career":
         this.position.width = 500;
         this.position.height = 600;
+        if (Object.keys(this.object.system.specializations).length === 0) {
+          // handlebars sucks
+          data.data.specializations = false;
+        } else {
+          for (const specializationId of Object.keys(data.data.specializations)) {
+            if (!fromUuidSync(data.data.specializations[specializationId].source)) {
+              // this item no longer exists, tag it as broken
+              data.data.specializations[specializationId].broken = true;
+            }
+          }
+        }
+        if (Object.keys(this.object.system.signatureabilities).length === 0) {
+          // handlebars sucks
+          data.data.signatureabilities = false;
+        } else {
+          for (const signatureAbilityId of Object.keys(data.data.signatureabilities)) {
+            if (!fromUuidSync(data.data.signatureabilities[signatureAbilityId].source)) {
+              // this item no longer exists, tag it as broken
+              data.data.signatureabilities[signatureAbilityId].broken = true;
+            }
+          }
+        }
         break;
       case "signatureability": {
         this.position.width = 720;
-        this.position.height = 515;
+        this.position.height = 545;
         data.data.isReadOnly = false;
         if (!this.options.editable) {
           data.data.isEditing = false;
           data.data.isReadOnly = true;
+        }
+        for (let x = 0; x < 8; x++) {
+          data.data.upgrades[`upgrade${x}`].enrichedDescription = await TextEditor.enrichHTML(data.data.upgrades[`upgrade${x}`].description);
         }
         break;
       }
@@ -261,6 +282,94 @@ export class ItemSheetFFG extends ItemSheet {
       data.data.renderedDesc = PopoutEditor.renderDiceImages(data?.item?.system?.description, this.actor ? this.actor : {});
     }
 
+    // get summarized data for qualities (e.g. weapons)
+    data = this._getSummarizedQualities(data);
+
+    return data;
+  }
+
+  /**
+   * Summarizes the qualities of an item (drawing from both the direct qualities and those added by attachments)
+   * The goal is to provide a unified view (e.g. "Accurate 3" instead of "Accurate 1" and "Accurate 2 - from attachment")
+   * This data is intended for user viewing only; it should not be submitted back or otherwise used to update anything
+   * @param data (from getData)
+   * @returns {*}
+   * @private
+   */
+  _getSummarizedQualities(data) {
+    CONFIG.logger.debug("Summarizing qualities");
+    // enrich attachment data
+    data.data.doNotSubmit = {
+      qualities: [],
+    };
+
+    if (Object.keys(data.data).includes("itemmodifier")) {
+      for (const mod of data.data.itemmodifier) {
+        const modName = mod.name;
+        const rank = mod.system.rank;
+        const description = mod.system.description;
+        const modId = mod._id;
+        let modIndex = data.data.doNotSubmit.qualities.findIndex(i => i.name === modName);
+        if (modIndex < 0) {
+          modIndex = data.data.doNotSubmit.qualities.length;
+          data.data.doNotSubmit.qualities.push({
+            name: modName,
+            img: mod.img,
+            description: description,
+            itemIndex: modIndex,
+            totalRanks: 0,
+            modId: modId,
+            includeControls: true,
+            summarizedRanks: {
+              mods: 0,
+            }
+          });
+        }
+        data.data.doNotSubmit.qualities[modIndex].totalRanks += rank;
+        data.data.doNotSubmit.qualities[modIndex].summarizedRanks.mods += rank;
+      }
+    }
+    CONFIG.logger.debug(data.data.doNotSubmit.qualities);
+
+    CONFIG.logger.debug("Pulling qualities from attachments");
+    if (Object.keys(data.data).includes("itemattachment")) {
+      for (const attachment of data.data.itemattachment) {
+        const source = attachment.name;
+        if (Object.keys(attachment.system).includes("itemmodifier")) {
+          for (const mod of attachment.system.itemmodifier) {
+            if (!mod.system.active) {
+              // this modifier isn't active, skip processing
+              continue;
+            }
+            const modName = mod.name;
+            const rank = mod.system.rank;
+            const description = mod.system.description;
+            let modIndex = data.data.doNotSubmit.qualities.findIndex(i => i.name === modName);
+            if (modIndex < 0) {
+              modIndex = data.data.doNotSubmit.qualities.length;
+              data.data.doNotSubmit.qualities.push({
+                name: modName,
+                description: description,
+                itemIndex: modIndex,
+                totalRanks: 0,
+                includeControls: false,
+                summarizedRanks: {
+                  [source]: 0,
+                }
+              });
+            }
+            // validate this source is present in the data
+            if (!Object.keys(data.data.doNotSubmit.qualities[modIndex].summarizedRanks).includes(source)) {
+              data.data.doNotSubmit.qualities[modIndex].summarizedRanks[source] = 0;
+            }
+            // update the ranks
+            data.data.doNotSubmit.qualities[modIndex].totalRanks += rank;
+            data.data.doNotSubmit.qualities[modIndex].summarizedRanks[source] += rank;
+          }
+        }
+      }
+    }
+    CONFIG.logger.debug(data.data.doNotSubmit.qualities);
     return data;
   }
 
@@ -269,56 +378,167 @@ export class ItemSheetFFG extends ItemSheet {
   /** @override */
   activateListeners(html) {
     super.activateListeners(html);
+    html.find(".ffg-purchase").click(async (ev) => {
+      await this._handleItemBuy(ev)
+    });
+
+    // register sheet options
+    if (["gear", "weapon", "armour"].includes(this.object.type)) {
+      this.sheetoptions = new ItemOptions(this, html);
+      this.sheetoptions.register("enablePrice", {
+        name: game.i18n.localize("SWFFG.SheetOptions2.EnablePrice.Name"),
+        hint: game.i18n.localize("SWFFG.SheetOptions2.EnablePrice.Hint"),
+        type: "Boolean",
+        default: true,
+      });
+      this.sheetoptions.register("enableRarity", {
+        name: game.i18n.localize("SWFFG.SheetOptions2.enableRarity.Name"),
+        hint: game.i18n.localize("SWFFG.SheetOptions2.enableRarity.Hint"),
+        type: "Boolean",
+        default: true,
+      });
+    }
 
     // TODO: This is not needed in Foundry 0.6.0
     // Activate tabs
     let tabs = html.find(".tabs");
     let initial = this._sheetTab;
-    new TabsV2(tabs, {
+    new Tabs(tabs, {
       initial: initial,
       callback: (clicked) => (this._sheetTab = clicked.data("tab")),
     });
 
-    html.find(".specialization-talent .talent-body").on("click", async (event) => {
-      const li = event.currentTarget;
-      const parent = $(li).parents(".specialization-talent")[0];
-      const itemId = parent.dataset.itemid;
-      const packName = $(parent).find(`input[name='data.talents.${parent.id}.pack']`).val();
-      const talentName = $(parent).find(`input[name='data.talents.${parent.id}.name']`).val();
-
-      if (!itemId) {
-        ui.notifications.warn(game.i18n.localize("SWFFG.Notifications.DragAndDropFirst"));
-        return;
-      }
-
-      let item = await Helpers.getSpecializationTalent(itemId, packName);
-      if (!item) {
-        if (packName) {
-          // if we can't find the item by itemid, try by name
-          const pack = await game.packs.get(packName);
-          await pack.getIndex();
-          const entity = await pack.index.find((e) => e.name === talentName);
-          if (entity) {
-            item = await pack.getEntity(entity.id);
-
-            let updateData = {};
-            // build dataset if needed
-            if (!pack.locked) {
-              setProperty(updateData, `data.talents.${parent.id}.itemId`, entity.id);
-              this.object.update(updateData);
-            }
-          }
+    html.find(".items .item, .header-description-block .item, .injuries .item").click(async (ev) => {
+      const li = $(ev.currentTarget);
+      let itemId = li.data("itemId");
+      const itemType = li.data("itemType");
+      let item;
+      let itemDetails;
+      if (itemType === "ability") {
+        item = this.item.system.abilities[itemId];
+        itemDetails = {
+          name: item.name,
+          description: item.system.description,
+        };
+      } else if (itemType === "talent") {
+        item = await fromUuid(this.item.system.talents[itemId].source);
+        if (item) {
+          itemDetails = {
+            name: item.name,
+            description: item.system.description,
+          };
         }
       }
-      if (!item.flags["clickfromparent"]) {
-        item.flags["clickfromparent"] = [];
+      if (item) {
+        await this._itemDisplayDetails(item, ev, itemDetails);
       }
-      item.flags["clickfromparent"].push({ id: this.object.uuid, talent: parent.id });
-      item.sheet.render(true);
+    });
+
+    // Toggle attachment and mod details (not actually force powers, but we are reusing it!)
+      html.find(".expand-desc").click(async (ev) => {
+        ev.stopPropagation();
+        if (!$(ev.target).hasClass("fa-trash") && !$(ev.target).hasClass("fas") && !$(ev.target).hasClass("rollable")) {
+          CONFIG.logger.debug("Caught attachment or mod description click");
+          // expand or shrink the description
+          const li = $(ev.currentTarget);
+          let desc = li.data("desc");
+          const rarity = li.data("rarity");
+          const price = li.data("price");
+          if (price) {
+            desc = `<span class="statt" title="Price"><i class="fa-solid fa-dollar-sign"></i>${price}</span>${desc}`
+          }
+          if (rarity) {
+            desc = `<span class="stat stat-right" title="Rarity"><i class="fa-solid fa-magnifying-glass"></i>${rarity}</span>${desc}`
+          }
+
+          // if the item has embedded mods, pull the data and add it to the description
+          let modNames = li.data("mod-names");
+          let modDescs = li.data("mod-descs");
+          let modActives = li.data("mod-actives");
+          if (modNames) {
+            modNames = modNames.split("~");
+            modDescs = modDescs.split("~");
+            modActives = modActives.split("~");
+            CONFIG.logger.debug(modNames);
+            CONFIG.logger.debug(modDescs);
+            CONFIG.logger.debug(modActives);
+            let newDesc = `<hr><b>Mods</b>:<br>`;
+            for (let i = 0; i < modNames.length - 1; i++) {
+              if (modActives[i] === "true") {
+                modNames[i] = `<i class="fa-solid fa-user-check" title="Installed"></i>&nbsp;${modNames[i]}`;
+              } else {
+                modNames[i] = `<i class="fa-duotone fa-solid fa-user-xmark" title="Not Installed"></i>&nbsp;${modNames[i]}`;
+              }
+              newDesc += `<u>${modNames[i]}</u>:&nbsp;${modDescs[i]}<br>`;
+            }
+            desc+= newDesc;
+          }
+
+          await this._itemDisplayDesc(desc, ev);
+        } else {
+          if (!$(ev.target).hasClass("fa-trash")) {
+            // edit the item
+            CONFIG.logger.debug("Caught mod or attachment edit request");
+            // pull the item which the edit is on
+            const li = $(ev.currentTarget);
+            const clickedId = li.data('item-id');
+            const clickedType = li.data('item-type');
+            const parentObject = await fromUuid(this.object.uuid);
+            // locate the clicked object on the parent
+            let clickedObject = parentObject.system[clickedType].find(i => i._id === clickedId);
+            if (!clickedObject) {
+              // this is most likely a unique mod - we have to look it up by name :|
+              clickedObject = parentObject.system[clickedType].find(i => i.name === li.data('upgrade-name'));
+            }
+            CONFIG.logger.debug(clickedObject);
+            const typeChoices = {};
+            for (const key of Object.keys(CONFIG.FFG.itemmodifier_types)) {
+              const entry = CONFIG.FFG.itemmodifier_types[key];
+              typeChoices[entry.value] = game.i18n.localize(entry.label);
+            }
+            const data = {
+              sourceObject: this.object,
+              clickedObject: clickedObject,
+              typeChoices: typeChoices,
+            }
+            new itemEditor(data).render(true);
+          }
+        }
+      });
+
+    html.find(".item-delete").click(async (ev) => {
+      const li = $(ev.currentTarget);
+      let itemId = li.data("itemId");
+      const itemType = li.data("itemType");
+      if (itemType === "ability") {
+        const item = this.item.system.abilities[itemId];
+        await this._deleteAbility(item, event);
+      } else if (itemType === "talent") {
+        const item = this.item.system.talents[itemId];
+        await this._deleteTalent(item, event);
+      }
+    });
+
+    html.find(".specialization-talent .talent-body").on("click", async (event) => {
+      // pull the item which the edit is on
+      const li = $(event.currentTarget);
+      const clickedId = li.closest('.talent-block').attr('id');
+      const clickedType = 'talents';
+      const parentObject = await fromUuid(this.object.uuid);
+      // locate the clicked object on the parent
+      let clickedObject = parentObject.system[clickedType][clickedId];
+      CONFIG.logger.debug(clickedObject);
+
+      const data = {
+        sourceObject: this.object,
+        clickedObject: clickedObject,
+        talentId: clickedId,
+      }
+      new talentEditor(data).render(true);
     });
 
     if (this.object.type === "talent") {
-      if (!Hooks?.events[`closeAssociatedTalent_${this.object._id}`]?.length && typeof this._submitting === "undefined") {
+      if (!Hooks?.events[`closeAssociatedTalent_${this.object._id}`]?.length && (typeof this._submitting === "undefined" || this._priorState <= 0)) {
         Hooks.once(`closeAssociatedTalent_${this.object._id}`, (item) => {
           item.object.flags.clickfromparent = [];
           Hooks.off(`closeAssociatedTalent_${item.object._id}`);
@@ -337,7 +557,6 @@ export class ItemSheetFFG extends ItemSheet {
       html.find(".talent-action").on("click", this._onClickTalentControl.bind(this));
       html.find(".talent-actions .fa-cog").on("click", ModifierHelpers.popoutModiferWindow.bind(this));
       html.find(".talent-modifiers .fa-cog").on("click", ModifierHelpers.popoutModiferWindowUpgrade.bind(this));
-      html.find(".talent-name.talent-modifiers").on("click", ModifierHelpers.popoutModiferWindowSpecTalents.bind(this));
     }
 
     if (this.object.type === "specialization") {
@@ -350,6 +569,86 @@ export class ItemSheetFFG extends ItemSheet {
         });
 
         dragDrop.bind($(`form.editable.item-sheet-${this.object.type}`)[0]);
+      } catch (err) {
+        CONFIG.logger.debug(err);
+      }
+    } else if (this.object.type === "career") {
+      try {
+        const dragDrop = new DragDrop({
+          dragSelector: ".item",
+          dropSelector: ".tab.career",
+          permissions: { dragstart: this._canDragStart.bind(this), drop: this._canDragDrop.bind(this) },
+          callbacks: { drop: this._onDragItemCareer.bind(this) },
+        });
+
+        dragDrop.bind($(`form.editable.item-sheet-${this.object.type}`)[0]);
+      } catch (err) {
+        CONFIG.logger.debug(err);
+      }
+      // handle click events for specialization and signature ability on careers
+      html.find(".item-delete").on("click", async (event) => {
+        event.stopPropagation();
+        const itemId = $(event.target).data("specialization-id");
+        const itemType = $(event.target).data("item-type");
+        if (itemType === "specialization") {
+          const updateData = this.object.system.specializations;
+          delete updateData[itemId];
+          updateData[`-=${itemId}`] = null;
+          this.object.update({system: {specializations: updateData}})
+        } else if (itemType === "signatureability") {
+          const updateData = this.object.system.signatureabilities;
+          delete updateData[itemId];
+          updateData[`-=${itemId}`] = null;
+          this.object.update({system: {signatureabilities: updateData}})
+        }
+      });
+      // handle click events for specialization and signature ability on careers
+      html.find(".item-pill2").on("click", async (event) => {
+        event.stopPropagation();
+        const itemId = $(event.target).data("specialization-id");
+        const itemType = $(event.target).data("item-type");
+        let item = game.items.get(itemId);
+        if (!item) {
+          // it was removed or came from a compendium, try that instead
+          if (itemType === "specialization") {
+            item = await fromUuid(this.object.system.specializations[itemId].source);
+          } else if (itemType === "signatureability") {
+            item = await fromUuid(this.object.system.signatureabilities[itemId].source);
+          }
+        }
+        new Item(item).sheet.render(true);
+      });
+    } else if (this.object.type === "species") {
+      try {
+        const dragDrop = new DragDrop({
+          dragSelector: ".item",
+          dropSelector: ".tab.talents",
+          permissions: { dragstart: this._canDragStart.bind(this), drop: this._canDragDrop.bind(this) },
+          callbacks: { drop: this.onDropItemToSpecies.bind(this) },
+        });
+
+        dragDrop.bind($(`form.editable.item-sheet-${this.object.type}`)[0]);
+
+        // handle click events for talents on species
+        html.find(".item-delete").on("click", async (event) => {
+          event.stopPropagation();
+          const itemId = $(event.target).data("talent-id");
+          const itemType = $(event.target).data("item-type");
+          if (itemType === "talent") {
+            const updateData = this.object.system.talents;
+            delete updateData[itemId];
+            updateData[`-=${itemId}`] = null;
+            await this.object.update({system: {talents: updateData}})
+          }
+        });
+         // handle click events for specialization and signature ability on careers
+        html.find(".item-pill2").on("click", async (event) => {
+          event.stopPropagation();
+          const itemId = $(event.target).data("talent-id");
+          const itemType = $(event.target).data("item-type");
+          let item = await fromUuid(this.object.system.talents[itemId].source);
+          new Item(item).sheet.render(true);
+        });
       } catch (err) {
         CONFIG.logger.debug(err);
       }
@@ -430,7 +729,26 @@ export class ItemSheetFFG extends ItemSheet {
       items.splice(itemIndex, 1);
 
       let formData = {};
-      setProperty(formData, `data.${itemType}`, items);
+      foundry.utils.setProperty(formData, `data.${itemType}`, items);
+
+      this.object.update(formData);
+    });
+
+    html.find(".item-delete").on("click", (event) => {
+      CONFIG.logger.debug("Caught mod or attachment delete request");
+      event.preventDefault();
+      event.stopPropagation();
+
+      const li = event.currentTarget;
+      const parent = $(li).parent().parent()[0];
+      const itemType = parent.dataset.itemType;
+      const itemIndex = parent.dataset.itemIndex;
+
+      const items = this.object.system[itemType];
+      items.splice(itemIndex, 1);
+
+      let formData = {};
+      foundry.utils.setProperty(formData, `data.${itemType}`, items);
 
       this.object.update(formData);
     });
@@ -472,11 +790,11 @@ export class ItemSheetFFG extends ItemSheet {
                         let arrayItem = this.object.system[itemType].findIndex((i) => i._id === id);
 
                         if (arrayItem > -1) {
-                          setProperty(this.object.system[itemType][arrayItem], name, parseInt(input.val(), 10));
+                          foundry.utils.setProperty(this.object.system[itemType][arrayItem], name, parseInt(input.val(), 10));
                         }
                       });
 
-                      setProperty(formData, `data.${itemType}`, this.object.system[itemType]);
+                      foundry.utils.setProperty(formData, `data.${itemType}`, this.object.system[itemType]);
                       this.object.update(formData);
 
                       break;
@@ -494,8 +812,8 @@ export class ItemSheetFFG extends ItemSheet {
             },
           },
           {
-            classes: ["dialog", "starwarsffg"],
-            template: `systems/starwarsffg/templates/items/dialogs/ffg-edit-${itemType}.html`,
+            classes: ["dialog", "ucttg"],
+            template: `systems/ucttg/templates/items/dialogs/ffg-edit-${itemType}.html`,
           }
         ).render(true);
       }
@@ -524,7 +842,7 @@ export class ItemSheetFFG extends ItemSheet {
       let temp = {
         ...item,
         flags: {
-          starwarsffg: {
+          ucttg: {
             ffgTempId: this.object.id,
             ffgTempItemType: itemType,
             ffgTempItemIndex: itemIndex,
@@ -533,6 +851,9 @@ export class ItemSheetFFG extends ItemSheet {
             ffgParentApp: this.appId, // TODO: check if this is needed
           }
         },
+        ownership: {
+          default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER
+        },
       };
       if (this.object.isEmbedded) {
         let ownerObject = await fromUuid(this.object.uuid);
@@ -540,7 +861,7 @@ export class ItemSheetFFG extends ItemSheet {
         temp = {
           ...item,
           flags: {
-            starwarsffg: {
+            ucttg: {
               ffgTempId: this.object.id,
               ffgTempItemType: itemType,
               ffgTempItemIndex: itemIndex,
@@ -549,12 +870,18 @@ export class ItemSheetFFG extends ItemSheet {
               ffgIsOwned: this.object.isEmbedded, // TODO: check if this is needed (needed when item on actor)
             }
           },
+          ownership: {
+            default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER,
+          }
         };
       }
 
       delete temp.id;
       delete temp._id;
-      let tempItem = await Item.create(temp, { temporary: true });
+      temp.ownership = {
+        default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER,
+      }
+      let tempItem = await new Item(temp, { temporary: true });
 
       tempItem.sheet.render(true);
     });
@@ -571,11 +898,11 @@ export class ItemSheetFFG extends ItemSheet {
       const item = this.object.system[itemType][itemIndex];
       item.system.active = !item.system.active;
 
-      if (this.object.flags.starwarsffg.ffgTempId && this.object.flags.starwarsffg.ffgTempId !== this.object._id) {
+      if (this.object.flags.ucttg.ffgTempId && this.object.flags.ucttg.ffgTempId !== this.object._id) {
         // this is a temporary sheet for an embedded item
 
         item.flags = {
-          starwarsffg: {
+          ucttg: {
             ffgTempId: this.object.id,                // here, this represents the ID of the item this is on
             ffgTempItemType: itemType,                // modified item type
             ffgTempItemIndex: itemIndex,              // modified item index
@@ -588,7 +915,7 @@ export class ItemSheetFFG extends ItemSheet {
 
       } else {
         let formData = {};
-        setProperty(formData, `data.${itemType}`, this.object.system[itemType]);
+        foundry.utils.setProperty(formData, `data.${itemType}`, this.object.system[itemType]);
         this.object.update(formData);
       }
 
@@ -600,17 +927,18 @@ export class ItemSheetFFG extends ItemSheet {
       event.stopPropagation();
       const li = event.currentTarget;
       let itemType = li.dataset.acceptableType;
+      let parentModType = (["weapon", "armour", "vehicle", "all"]).includes(this.object?.system?.type) ? this.object.system?.type : "all"
 
       let temp = {
         img: "icons/svg/mystery-man.svg",
         name: "Item Mod",
         type: itemType,
         flags: {
-          starwarsffg: {
+          ucttg: {
             ffgTempId: this.object.id,                  // here, this represents the ID of the item this was added to
             ffgTempItemType: itemType,                  // added item type
             ffgTempItemIndex: -1,                       // index of the added item within the parent
-            ffgParent: this.object.flags.starwarsffg,   // flags from the parent
+            ffgParent: this.object.flags.ucttg,   // flags from the parent
             ffgIsTemp: true,                            // this is a temporary item
             ffgUuid: this.object.uuid,                  // UUID for the parent (if available) TODO: check if this is needed
             ffgParentApp: this.appId,                   // not sure what this is x.x
@@ -620,10 +948,11 @@ export class ItemSheetFFG extends ItemSheet {
         system: {
           attributes: {},
           description: "",
+          type: parentModType
         },
       };
 
-      let tempItem = await Item.create(temp, { temporary: true });
+      let tempItem = await new Item(temp, { temporary: true });
       CONFIG.logger.debug("Adding mod with the following data", tempItem);
 
       this.object.system[itemType].push(tempItem.toJSON());
@@ -636,6 +965,242 @@ export class ItemSheetFFG extends ItemSheet {
       );
       this.object.sheet.render(true);
     });
+  }
+
+  async _buyHandleClick(cost, desired_item_type) {
+    const owned = this.object.flags?.ucttg?.ffgIsOwned;
+    const type = this.object.type;
+    if (type !== desired_item_type || !owned) {
+      // you can't buy talents for any old item!
+      // you can only buy talents for owned items!
+      CONFIG.logger.warn(`Refused to buy talent for non-${desired_item_type} or unowned item`);
+      throw new Error(`Refused to buy talent for non-${desired_item_type} or unowned item`);
+    }
+    const ownerFlag = this.object.flags?.ucttg?.ffgUuid;
+    if (!ownerFlag) {
+      // bad flag data, move along, citizen
+      CONFIG.logger.warn("Refused to buy for item with no owner flag set");
+      throw new Error("Refused to buy for item with no owner flag set");
+    }
+    const ownerId = ownerFlag.split('.')[1];
+    if (!ownerId) {
+      CONFIG.logger.warn("Refused to buy for item with no owner ID");
+      throw new Error("Refused to buy for item with no owner ID");
+    }
+    const owner = game.actors.get(ownerId);
+    if (!owner) {
+      CONFIG.logger.warn("Refused to buy for item with no found owner actor");
+      throw new Error("Refused to buy for item with no found owner actor");
+    }
+    const availableXP = owner.system.experience.available;
+    const totalXP = owner.system.experience.total;
+    if (cost > availableXP) {
+      ui.notifications.warn(game.i18n.localize("SWFFG.Actors.Sheets.Purchase.NotEnoughXP"));
+      throw new Error("Not enough XP");
+    }
+    return {
+      owner: owner,
+      cost: cost,
+      availableXP: availableXP,
+      totalXP: totalXP,
+    }
+  }
+
+  async _buyTalent(li) {
+    let owner;
+    let cost;
+    let availableXP;
+    let totalXP;
+    try {
+      const basic_data = await this._buyHandleClick(li, "specialization");
+      owner = basic_data.owner;
+      cost = basic_data.cost;
+      availableXP = basic_data.availableXP;
+      totalXP = basic_data.totalXP;
+    } catch (e) {
+      return;
+    }
+    const baseName = $(li).data("base-item-name");
+    const talent = $(".talent-name", li).data("name");
+    const dialog = new Dialog(
+      {
+        title: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.Talent.ConfirmTitle"),
+        content: game.i18n.format("SWFFG.Actors.Sheets.Purchase.Talent.ConfirmText", {cost: cost, talent: talent}),
+        buttons: {
+          done: {
+            icon: '<i class="fa-regular fa-circle-up"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.ConfirmPurchase"),
+            callback: async (that) => {
+              // update the form because the fields are read when an update is performed
+              const talentId = $(li).attr("id");
+              const input = $(`[name="data.talents.${talentId}.islearned"]`, this.element)[0];
+              input.checked = true;
+              await this.object.sheet.submit();
+              owner.update({system: {experience: {available: availableXP - cost}}});
+              await xpLogSpend(owner, `specialization ${baseName} talent ${talent}`, cost, availableXP - cost, totalXP);
+            },
+          },
+          cancel: {
+            icon: '<i class="fas fa-cancel"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.CancelPurchase"),
+          },
+        },
+      },
+      {
+        classes: ["dialog", "ucttg"],
+      }
+    ).render(true);
+  }
+
+  async _handleItemBuy(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const action = $(event.target).data("buy-action");
+    if (action === "forcepower-upgrade") {
+      await this._buyForcePowerUpgrade(event);
+    } else if (action === "signatureability-upgrade") {
+      await this._buySignatureAbilityUpgrade(event);
+    } else if (action === "specialization-upgrade") {
+      await this._buySpecializationUpgrade(event);
+    }
+  }
+
+  async _buyForcePowerUpgrade(event) {
+    const element = $(event.target);
+    const cost = element.data("cost");
+    const baseName = element.data("base-item-name");
+    const upgradeName = element.data("upgrade-name");
+    const upgradeId = element.data("upgrade-id");
+    let owner;
+    let availableXP;
+    let totalXP;
+    try {
+      const basic_data = await this._buyHandleClick(cost, "forcepower");
+      owner = basic_data.owner;
+      availableXP = basic_data.availableXP;
+      totalXP = basic_data.totalXP;
+    } catch (e) {
+      return;
+    }
+    const dialog = new Dialog(
+      {
+        title: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.FP.ConfirmTitle"),
+        content: game.i18n.format("SWFFG.Actors.Sheets.Purchase.FP.ConfirmText", {cost: cost, upgrade: upgradeName}),
+        buttons: {
+          done: {
+            icon: '<i class="fa-regular fa-circle-up"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.ConfirmPurchase"),
+            callback: async (that) => {
+              // update the form because the fields are read when an update is performed
+              const input = $(`[name="data.upgrades.${upgradeId}.islearned"]`, this.element)[0];
+              input.checked = true;
+              await this.object.sheet.submit({preventClose: true});
+              owner.update({system: {experience: {available: availableXP - cost}}});
+              await xpLogSpend(owner, `force power ${baseName} upgrade ${upgradeName}`, cost, availableXP - cost, totalXP);
+            },
+          },
+          cancel: {
+            icon: '<i class="fas fa-cancel"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.CancelPurchase"),
+          },
+        },
+      },
+      {
+        classes: ["dialog", "ucttg"],
+      }
+    ).render(true);
+  }
+
+  async _buySignatureAbilityUpgrade(event) {
+    const element = $(event.target);
+    const cost = element.data("cost");
+    const baseName = element.data("base-item-name");
+    const upgradeName = element.data("upgrade-name");
+    const upgradeId = element.data("upgrade-id");
+    let owner;
+    let availableXP;
+    let totalXP;
+    try {
+      const basic_data = await this._buyHandleClick(cost, "signatureability");
+      owner = basic_data.owner;
+      availableXP = basic_data.availableXP;
+      totalXP = basic_data.totalXP;
+    } catch (e) {
+      return;
+    }
+    const dialog = new Dialog(
+      {
+        title: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.SA.ConfirmTitle"),
+        content: game.i18n.format("SWFFG.Actors.Sheets.Purchase.SA.ConfirmText", {cost: cost, upgrade: upgradeName}),
+        buttons: {
+          done: {
+            icon: '<i class="fa-regular fa-circle-up"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.ConfirmPurchase"),
+            callback: async (that) => {
+              // update the form because the fields are read when an update is performed
+              const input = $(`[name="data.upgrades.${upgradeId}.islearned"]`, this.element)[0];
+              input.checked = true;
+              await this.object.sheet.submit({preventClose: true});
+              owner.update({system: {experience: {available: availableXP - cost}}});
+              await xpLogSpend(owner, `signature ability ${baseName} upgrade ${upgradeName}`, cost, availableXP - cost, totalXP);
+            },
+          },
+          cancel: {
+            icon: '<i class="fas fa-cancel"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.CancelPurchase"),
+          },
+        },
+      },
+      {
+        classes: ["dialog", "ucttg"],
+      }
+    ).render(true);
+  }
+
+  async _buySpecializationUpgrade(event) {
+    const element = $(event.target);
+    const cost = element.data("cost");
+    const baseName = element.data("base-item-name");
+    const upgradeName = element.data("upgrade-name");
+    const upgradeId = element.data("upgrade-id");
+    let owner;
+    let availableXP;
+    let totalXP;
+    try {
+      const basic_data = await this._buyHandleClick(cost, "specialization");
+      owner = basic_data.owner;
+      availableXP = basic_data.availableXP;
+      totalXP = basic_data.totalXP;
+    } catch (e) {
+      return;
+    }
+    const dialog = new Dialog(
+      {
+        title: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.Specialization.ConfirmTitle"),
+        content: game.i18n.format("SWFFG.Actors.Sheets.Purchase.Specialization.ConfirmText", {cost: cost, upgrade: upgradeName}),
+        buttons: {
+          done: {
+            icon: '<i class="fa-regular fa-circle-up"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.ConfirmPurchase"),
+            callback: async (that) => {
+              // update the form because the fields are read when an update is performed
+              const input = $(`[name="data.talents.${upgradeId}.islearned"]`, this.element)[0];
+              input.checked = true;
+              await this.object.sheet.submit({preventClose: true});
+              owner.update({system: {experience: {available: availableXP - cost}}});
+              await xpLogSpend(owner, `specialization ${baseName} upgrade ${upgradeName}`, cost, availableXP - cost, totalXP);
+            },
+          },
+          cancel: {
+            icon: '<i class="fas fa-cancel"></i>',
+            label: game.i18n.localize("SWFFG.Actors.Sheets.Purchase.CancelPurchase"),
+          },
+        },
+      },
+      {
+        classes: ["dialog", "ucttg"],
+      }
+    ).render(true);
   }
 
   /* -------------------------------------------- */
@@ -667,6 +1232,8 @@ export class ItemSheetFFG extends ItemSheet {
       $(`input[name='data.isEditing']`).val(!currentValue);
 
       $(".talent-grid").toggleClass("talent-disable-edit");
+      $(".talent-uplink-connections").toggleClass("talent-disable-edit");
+      await this._onSubmit(event);
     }
 
     if (action === "combine") {
@@ -754,6 +1321,16 @@ export class ItemSheetFFG extends ItemSheet {
         });
         return fp.browse();
     }
+
+    if (action === "uplink") {
+      if ($(".talent-disable-edit").length === 0) {
+        const linkid = a.dataset.key;
+        const inputElement = $(`input[name='data.uplink_nodes.${linkid}']`);
+        const currentValue = inputElement.val() === "true";
+        inputElement.val(!currentValue);
+        await this._onSubmit(event);
+      }
+    }
   }
 
   _onPopoutEditor(event) {
@@ -765,7 +1342,7 @@ export class ItemSheetFFG extends ItemSheet {
     const parent = $(a.parentElement);
     const parentPosition = $(parent).offset();
 
-    const windowHeight = parseInt($(parent).height(), 10) + 100 < 200 ? 200 : parseInt($(parent).height(), 10) + 100;
+    const windowHeight = parseInt($(parent).height(), 10) + 100 < 400 ? 400 : parseInt($(parent).height(), 10) + 100;
     const windowWidth = parseInt($(parent).width(), 10) < 320 ? 320 : parseInt($(parent).width(), 10);
     const windowLeft = parseInt(parentPosition.left, 10);
     const windowTop = parseInt(parentPosition.top, 10);
@@ -842,7 +1419,7 @@ export class ItemSheetFFG extends ItemSheet {
           tree.splice(index, 1);
 
           let formData;
-          setProperty(formData, `data.trees`, tree);
+          foundry.utils.setProperty(formData, `data.trees`, tree);
           itemObject.update(formData);
 
           //itemObject.update({ [`data.trees`]: tree });
@@ -850,7 +1427,6 @@ export class ItemSheetFFG extends ItemSheet {
       }
 
       $(li).find(`input[name='data.talents.${talentId}.name']`).val(itemObject.name);
-      $(li).find(`input[name='data.talents.${talentId}.description']`).val(itemObject.system.description);
       $(li).find(`input[name='data.talents.${talentId}.activation']`).val(itemObject.system.activation.value);
       $(li).find(`input[name='data.talents.${talentId}.activationLabel']`).val(itemObject.system.activation.label);
       $(li).find(`input[name='data.talents.${talentId}.isRanked']`).val(itemObject.system.ranked);
@@ -876,13 +1452,15 @@ export class ItemSheetFFG extends ItemSheet {
 
         if (!data.pack) {
           let formData = {};
-          setProperty(formData, `data.trees`, tree);
+          foundry.utils.setProperty(formData, `data.trees`, tree);
           itemObject.update(formData);
           //itemObject.update({ [`data.trees`]: tree });
         }
       }
 
       await this._onSubmit(event);
+      await this.object.update({system: {talents: {[talentId]: {description: itemObject.system.description}}}});
+      this.render(true);
     }
   }
 
@@ -911,11 +1489,11 @@ export class ItemSheetFFG extends ItemSheet {
     }
 
     // as of v10, "id" is not passed in - instead, "uuid" is. Let's use the Foundry API to get the item Document from the uuid.
-    const itemObject = duplicate(await fromUuid(data.uuid));
+    const itemObject = foundry.utils.duplicate(await fromUuid(data.uuid));
 
     if (!itemObject) return;
 
-    itemObject.id = randomID(); // why do we do this?!
+    itemObject.id = foundry.utils.randomID(); // why do we do this?!
 
     if ((itemObject.type === "itemattachment" || itemObject.type === "itemmodifier") && ((obj.type === "shipweapon" && itemObject.system.type === "weapon") || obj.type === itemObject.system.type || itemObject.system.type === "all" || obj.type === "itemattachment")) {
       let items = obj?.system[itemObject.type];
@@ -924,7 +1502,7 @@ export class ItemSheetFFG extends ItemSheet {
       }
 
       const foundItem = items.find((i) => {
-        return i.name === itemObject.name || (i.flags?.starwarsffg?.ffgimportid?.length ? i.flags.starwarsffg.ffgimportid === itemObject.flags.starwarsffg.ffgimportid : false);
+        return i?.name === itemObject.name || (i?.flags?.ucttg?.ffgimportid?.length ? i?.flags.ucttg.ffgimportid === itemObject.flags.ucttg.ffgimportid : false);
       });
 
       switch (itemObject.type) {
@@ -954,11 +1532,172 @@ export class ItemSheetFFG extends ItemSheet {
       }
 
       let formData = {};
-      setProperty(formData, `data.${itemObject.type}`, items);
+      foundry.utils.setProperty(formData, `data.${itemObject.type}`, items);
 
       obj.update(formData);
     }
   }
 
+  /**
+   * Handles dragging specializations and signature abilities to the career sheet.
+   * This is used for purchasing (in order to determine which specializations are career specializations)
+   * @param event
+   * @returns {Promise<boolean>}
+   * @private
+   */
+  async _onDragItemCareer(event) {
+    let data;
+
+    try {
+      data = JSON.parse(event.dataTransfer.getData("text/plain"));
+      if (data.type !== "Item") return;
+    } catch (err) {
+      return false;
+    }
+
+    // as of v10, "id" is not passed in - instead, "uuid" is. Let's use the Foundry API to get the item Document from the uuid.
+    const itemObject = await fromUuid(data.uuid);
+
+    if (!itemObject) return;
+
+    if (itemObject.type === "specialization") {
+      await this.object.update({system: {specializations: {[itemObject.id]: {name: itemObject.name, source: itemObject.uuid, id: itemObject.id}}}});
+    } else if (itemObject.type === "signatureability") {
+      await this.object.update({system: {signatureabilities: {[itemObject.id]: {name: itemObject.name, source: itemObject.uuid, id: itemObject.id}}}});
+    }
+  }
+
+  /**
+   * Handles dragging talents to the species sheet.
+   * @param event
+   * @returns {Promise<boolean>}
+   */
+  async onDropItemToSpecies(event) {
+    let data;
+
+    try {
+      data = JSON.parse(event.dataTransfer.getData("text/plain"));
+      if (data.type !== "Item") return;
+    } catch (err) {
+      return false;
+    }
+
+    // as of v10, "id" is not passed in - instead, "uuid" is. Let's use the Foundry API to get the item Document from the uuid.
+    const itemObject = await fromUuid(data.uuid);
+
+    if (!itemObject) return;
+
+    if (itemObject.type === "talent") {
+      await this.object.update({system: {talents: {[itemObject.id]: {name: itemObject.name, source: itemObject.uuid, id: itemObject.id}}}});
+    } else if (itemObject.type === "ability") {
+      await this.object.update({system: {abilities: {[itemObject.id]: {name: itemObject.name, system: {description: itemObject.system.description}}}}});
+    }
+  }
+
   async _onDragItemStart(event) {}
+
+  /**
+   * Remove an talent from a species item
+   * @param item - the item data for the talent to be removed
+   * @param event - the event data from the onclick event
+   * @returns {Promise<void>}
+   * @private
+   */
+  async _deleteTalent(item, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const li = $(event.currentTarget);
+    const deleteId = li.data("item-id");
+    delete this.item.system.talents[deleteId];
+    await this.item.update({
+      system: {
+        talents: {
+          [`-=${deleteId}`]: null
+        },
+      },
+    });
+    await this.render();
+  }
+
+  /**
+   * Remove an ability from a species item
+   * @param item - the item data for the ability to be removed
+   * @param event - the event data from the onclick event
+   * @returns {Promise<void>}
+   * @private
+   */
+  async _deleteAbility(item, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const li = $(event.currentTarget);
+    const deleteId = li.data("item-id");
+    delete this.item.system.abilities[deleteId];
+    await this.item.update({
+      system: {
+        abilities: {
+          [`-=${deleteId}`]: null
+        },
+      },
+    });
+    await this.render();
+  }
+
+   /**
+   * Display details of an ability embedded in a species.
+   * @private
+   */
+  async _itemDisplayDetails(item, event, itemDetails) {
+    event.preventDefault();
+    let li = $(event.currentTarget);
+
+    // Toggle summary
+    if (li.hasClass("expanded")) {
+      let details = li.children(".item-details");
+      details.slideUp(200, () => details.remove());
+    } else {
+      let div = $(`<div class="item-details">${await PopoutEditor.renderDiceImages(itemDetails.description, this.item)}</div>`);
+      li.append(div.hide());
+      $(div)
+        .find(".rollSkillDirect")
+        .on("click", async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+
+          let data = event.currentTarget.dataset;
+          if (data) {
+            let sheet = await this.getData();
+            let skill = sheet.data.skills[data["skill"]];
+            let characteristic = sheet.data.characteristics[skill.characteristic];
+            let difficulty = data["difficulty"];
+            await DiceHelpers.rollSkillDirect(skill, characteristic, difficulty, sheet);
+          }
+        });
+
+      div.slideDown(200);
+    }
+    li.toggleClass("expanded");
+  }
+
+  /**
+   * Currently copy-pasted from _forcePowerDisplayDetails; used to render an inline description of a clicked item
+   * @param desc
+   * @param event
+   * @returns {Promise<void>}
+   * @private
+   */
+  async _itemDisplayDesc(desc, event) {
+    event.preventDefault();
+    let li = $(event.currentTarget);
+
+    // Toggle summary
+    if (li.hasClass("expanded")) {
+      let details = li.children(".item-details");
+      details.slideUp(200, () => details.remove());
+    } else {
+      let div = $(`<div class="item-details">${await TextEditor.enrichHTML(desc)}</div>`);
+      li.append(div.hide());
+      div.slideDown(200);
+    }
+    li.toggleClass("expanded");
+  }
 }

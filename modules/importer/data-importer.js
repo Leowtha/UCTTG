@@ -8,11 +8,11 @@ import OggDude from "./oggdude/oggdude.js";
 export default class DataImporter extends FormApplication {
   /** @override */
   static get defaultOptions() {
-    return mergeObject(super.defaultOptions, {
+    return foundry.utils.mergeObject(super.defaultOptions, {
       id: "data-importer",
-      classes: ["starwarsffg", "data-import"],
+      classes: ["ucttg", "data-import"],
       title: "Data Importer",
-      template: "systems/starwarsffg/templates/importer/data-importer.html",
+      template: "systems/ucttg/templates/importer/data-importer.html",
     });
   }
 
@@ -51,6 +51,7 @@ export default class DataImporter extends FormApplication {
     $(`<span class="debug"><label><input type="checkbox" /> Generate Log</label></span>`).insertBefore("#data-importer header a");
 
     html.find(".dialog-button").on("click", this._dialogButton.bind(this));
+    html.find("#importAll").on("click", this._enableImportAll.bind(this));
   }
 
   _importLog = [];
@@ -58,6 +59,14 @@ export default class DataImporter extends FormApplication {
     if ($(".debug input:checked").length > 0) {
       this._importLog.push(`[${new Date().getTime()}] ${message}`);
     }
+  }
+
+  /**
+   * Enable all checkboxes for import rather than forcing the user to click them all one at a time
+   * @private
+   */
+  _enableImportAll() {
+    $("input[type='checkbox'][name='imports']").attr("checked", true);
   }
 
   async _dialogButton(event) {
@@ -94,6 +103,7 @@ export default class DataImporter extends FormApplication {
           }
         }
 
+        $("input[id='importAll']").attr("disabled", false);
         this._enableImportSelection(zip.files, "Talents");
         this._enableImportSelection(zip.files, "Force Abilities");
         this._enableImportSelection(zip.files, "Gear");
@@ -149,6 +159,8 @@ export default class DataImporter extends FormApplication {
       const promises = [];
       let isSpecialization = false;
       let isVehicle = false;
+      let isCareer = false;
+      let isSpecies = false;
 
       let skillsFileName;
       try {
@@ -189,31 +201,52 @@ export default class DataImporter extends FormApplication {
           promises.push(OggDude.Import.Armor(xmlDoc, zip));
           promises.push(OggDude.Import.Talents(xmlDoc, zip));
           promises.push(OggDude.Import.ForcePowers(xmlDoc, zip));
-          promises.push(OggDude.Import.SignatureAbilities(xmlDoc, zip));
           promises.push(OggDude.Import.ItemAttachments(xmlDoc));
         } else {
           if (file.file.includes("/Specializations/")) {
             isSpecialization = true;
           }
           if (file.file.includes("/Careers/")) {
-            promises.push(OggDude.Import.Career(zip));
+            // delay career processing so specializations can be done first
+            isCareer = true;
           }
           if (file.file.includes("/Species/")) {
-            promises.push(OggDude.Import.Species(zip));
+            // delay species processing so talents are done first
+            isSpecies = true;
           }
           if (file.file.includes("/Vehicles/")) {
             isVehicle = true;
           }
         }
       });
-
       await Promise.all(promises);
+
+      if (isSpecies) {
+        await OggDude.Import.Species(zip);
+      }
       if (isSpecialization) {
         await OggDude.Import.Specializations(zip);
+      }
+      if (isCareer) {
+        await OggDude.Import.Career(zip);
       }
       if (isVehicle) {
         await OggDude.Import.Vehicles(zip);
       }
+
+      // import signature abilities (delayed so careers are done first)
+      ImportHelpers.clearCache();
+      const promisesPhase2 = [];
+      await this.asyncForEach(importFiles, async (file) => {
+        if (zip.files[file.file] && !zip.files[file.file].dir) {
+          const data = await zip.file(file.file).async("text");
+          const xmlDoc = ImportHelpers.stringToXml(data);
+
+          promisesPhase2.push(OggDude.Import.SignatureAbilities(xmlDoc, zip));
+
+        }
+      });
+      await Promise.all(promisesPhase2);
 
       if ($(".debug input:checked").length > 0) {
         saveDataToFile(this._importLog.join("\n"), "text/plain", "import-log.txt");

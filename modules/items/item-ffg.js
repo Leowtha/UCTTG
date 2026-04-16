@@ -57,10 +57,10 @@ export class ItemFFG extends ItemBaseFFG {
     const actor = this.actor ? this.actor : {};
     const data = item.system;
 
-    if (!item.flags.starwarsffg) {
+    if (!item.flags.ucttg) {
       await item.updateSource({
         flags: {
-          starwarsffg: {
+          ucttg: {
             isCompendium: !!this.compendium,
             ffgUuid: this.parent?.system ? this.uuid : null,
             ffgIsOwned: this.isEmbedded,
@@ -70,18 +70,18 @@ export class ItemFFG extends ItemBaseFFG {
       });
     } else {
       if (this.compendium) {
-        item.flags.starwarsffg.isCompendium = true;
+        item.flags.ucttg.isCompendium = true;
         // Temporary check on this.parent.data to avoid initialisation failing in Foundry VTT 0.8.6
-        if (this.parent?.system) item.flags.starwarsffg.ffgUuid = this.uuid;
+        if (this.uuid) item.flags.ucttg.ffgUuid = this.uuid;
       } else {
-        item.flags.starwarsffg.isCompendium = false;
-        item.flags.starwarsffg.ffgIsOwned = false;
+        item.flags.ucttg.isCompendium = false;
+        item.flags.ucttg.ffgIsOwned = false;
         if (this.isEmbedded) {
-          item.flags.starwarsffg.ffgIsOwned = true;
+          item.flags.ucttg.ffgIsOwned = true;
           // Temporary check on this.parent.data to avoid initialisation failing in Foundry VTT 0.8.6
-          if (this.parent) item.flags.starwarsffg.ffgUuid = this.uuid;
+          if (this.parent) item.flags.ucttg.ffgUuid = this.uuid;
         } else if (item._id) {
-          item.flags.starwarsffg.ffgTempId = item._id;
+          item.flags.ucttg.ffgTempId = item._id;
         }
       }
     }
@@ -371,6 +371,11 @@ export class ItemFFG extends ItemBaseFFG {
           }
         }
 
+        if (itemType === "talent") {
+          const id = parseInt(upgrade.replace("talent", ""), 10);
+          talents[upgrade].cost = (Math.trunc(id / 4) + 1) * 5;
+        }
+
         if (typeof talents[upgrade].visible === "undefined") {
           talents[upgrade].visible = true;
         }
@@ -448,15 +453,22 @@ export class ItemFFG extends ItemBaseFFG {
   /**
    * Prepare and return details of the item for display in inventory or chat.
    */
-  getItemDetails() {
-    const data = duplicate(this.system);
+  async getItemDetails() {
+    const data = foundry.utils.duplicate(this.system);
 
     // Item type specific properties
     const props = [];
+    const purchasedUpgrades = [];
+    const specializations = [];
+    const signatureAbilities = [];
 
-    data.prettyDesc = PopoutEditor.renderDiceImages(data.description, this.actor);
+    data.prettyDesc = await PopoutEditor.renderDiceImages(data.description, this.actor);
 
-    if (this.type === "forcepower") {
+    if (["weapon", "armor", "armour", "shipweapon"].includes(this.type)) {
+      data.doNotSubmit = (await this.sheet.getData()).data.doNotSubmit;
+    }
+
+    if (this.type === "forcepower" || this.type === "signatureability") {
       //Display upgrades
 
       // Get learned upgrades
@@ -464,7 +476,7 @@ export class ItemFFG extends ItemBaseFFG {
 
       const upgradeDescriptions = [];
 
-      upgrades.forEach((up) => {
+      for (const up of upgrades) {
         let index = upgradeDescriptions.findIndex((obj) => {
           return obj.name === up.name;
         });
@@ -474,24 +486,37 @@ export class ItemFFG extends ItemBaseFFG {
         } else {
           upgradeDescriptions.push({
             name: up.name,
-            description: up.description,
+            description: await TextEditor.enrichHTML(up.description),
             rank: 1,
           });
         }
-      });
+      }
 
-      upgradeDescriptions.forEach((upd) => {
+      for (const upd of upgradeDescriptions) {
         props.push(`<div class="ffg-sendtochat hover" onclick="">${upd.name} ${upd.rank}
           <div class="tooltip2">
-            ${PopoutEditor.renderDiceImages(upd.description, this?.actor?.system)}
+            ${upd.description}
           </div>
         </div>`);
-      });
+        purchasedUpgrades.push({
+          name: upd.name,
+          rank: upd.rank,
+          description: upd.description,
+        })
+      }
     }
     // General equipment properties
     else if (this.type !== "talent") {
-      if (data.hasOwnProperty("adjusteditemmodifier")) {
-        const qualities = data.adjusteditemmodifier?.map((m) => `<li class='item-pill ${m.adjusted ? "adjusted hover" : ""}' data-item-embed-type='itemmodifier' data-item-embed-name='${m.name}' data-item-embed-img='${m.img}' data-item-embed-description='${m.system.description}' data-item-embed-modifiers='${JSON.stringify(m.system.attributes)}' data-item-embed-rank='${m.system.rank_current}' data-item-embed='true'>${m.name} ${m.system?.rank_current > 0 ? m.system.rank_current : ""} ${m.adjusted ? "<div class='tooltip2'>" + game.i18n.localize("SWFFG.FromAttachment") + "</div>" : ""}</li>`);
+      if (data.hasOwnProperty("doNotSubmit")) {
+        const modifiers = data.doNotSubmit.qualities;
+        const qualities = [];
+        for (const modifier of modifiers) {
+          qualities.push(`
+          <div class='item-pill-hover hover-tooltip' data-item-type="itemmodifier" data-item-embed-name="${ modifier.name }" data-item-embed-img="${ modifier.img }" data-desc="${ (await TextEditor.enrichHTML(modifier.description)).replaceAll('"', "'") }" data-item-ranks="${ modifier.totalRanks }" data-tooltip="Loading...">
+            ${modifier.name} ${modifier.totalRanks === null || modifier.totalRanks === 0 ? "" : modifier.totalRanks}
+          </div>
+          `);
+        }
 
         props.push(`<div>${game.i18n.localize("SWFFG.ItemDescriptors")}: <ul>${qualities.join("")}<ul></div>`);
       }
@@ -504,6 +529,42 @@ export class ItemFFG extends ItemBaseFFG {
       }
       if (data.hasOwnProperty("rarity")) {
         props.push(`${game.i18n.localize("SWFFG.ItemsRarity")}: ${data.rarity?.adjusted ? data.rarity.adjusted : data.rarity.value} ${data.rarity.isrestricted ? "<span class='restricted'>" + game.i18n.localize("SWFFG.IsRestricted") + "</span>" : ""}`);
+      }
+      if (data.hasOwnProperty("talents")) {
+        for (const talentKey of Object.keys(data.talents)) {
+          const talent = data.talents[talentKey];
+          if (talent?.islearned) {
+            purchasedUpgrades.push({
+              name: talent.name,
+              rank: 0,
+              description: talent.enrichedDescription,
+            });
+          }
+        }
+      }
+      if (data.hasOwnProperty("specializations")) {
+        for (const specializationKey of Object.keys(data.specializations)) {
+          const specialization = data.specializations[specializationKey];
+          const fullSpecialization = fromUuidSync(specialization.source);
+          specializations.push({
+            name: specialization.name,
+            uuid: specialization.uuid,
+            description: fullSpecialization?.system?.description,
+            img: fullSpecialization?.img,
+          });
+        }
+      }
+      if (data.hasOwnProperty("signatureabilities")) {
+        for (const SAKey of Object.keys(data.signatureabilities)) {
+          const signatureAbility = data.signatureabilities[SAKey];
+          const fullSignatureAbility = fromUuidSync(signatureAbility.source);
+          signatureAbilities.push({
+            name: signatureAbility.name,
+            uuid: signatureAbility.uuid,
+            description: fullSignatureAbility?.system?.description,
+            img: fullSignatureAbility?.img,
+          });
+        }
       }
     }
 
@@ -526,6 +587,9 @@ export class ItemFFG extends ItemBaseFFG {
 
     // Filter properties and return
     data.properties = props.filter((p) => !!p);
+    data.textProperties = purchasedUpgrades;
+    data.specializations = specializations;
+    data.signatureAbilities = signatureAbilities;
     return data;
   }
 }

@@ -30,13 +30,33 @@ export default class SignatureAbilities {
             description: item.Description,
             attributes: {},
             upgrades: {},
+            base_cost: 0,
+            uplink_nodes: {
+              uplink0: false,
+              uplink1: false,
+              uplink2: false,
+              uplink3: false,
+            },
+            metadata: {
+              tags: [
+                "signatureability",
+              ],
+              sources: ImportHelpers.getSourcesAsArray(item?.Sources ?? item?.Source),
+            },
           };
 
-          data.data.description += ImportHelpers.getSources(item.Sources ?? item.Source);
+          //data.data.description += ImportHelpers.getSources(item.Sources ?? item.Source);
           item.AbilityRows.AbilityRow.forEach((row, i) => {
             try {
-              // skip the first row because it is the large primary ability box
-              if (i > 0) {
+              if (i === 0) {
+                try {
+                  data.data.base_cost = row.Costs.Cost[0];
+                } catch (err) {
+                  data.data.base_cost = 0;
+                }
+              }
+              else {
+                // skip the first row because it is the large primary ability box
                 row.Abilities.Key.forEach((keyName, index) => {
                   let rowAbility = {};
 
@@ -101,15 +121,60 @@ export default class SignatureAbilities {
               CONFIG.logger.error(`Error importing record : `, data.name);
             }
           });
-          let imgPath = await ImportHelpers.getImageFilename(zip, "SigAbilities", "", data.flags.starwarsffg.ffgimportid);
+
+          // populate tags
+          try {
+            if (Array.isArray(item.Categories.Category)) {
+              for (const tag of item.Categories.Category) {
+                data.data.metadata.tags.push(tag.toLowerCase());
+              }
+            } else {
+              data.data.metadata.tags.push(item.Categories.Category.toLowerCase());
+            }
+          } catch (err) {
+            CONFIG.logger.debug(`No categories found for item ${item.Key}`);
+          }
+          if (item?.Type) {
+            // the "type" can be useful as a tag as well
+            data.data.metadata.tags.push(item.Type.toLowerCase());
+          }
+
+          let imgPath = await ImportHelpers.getImageFilename(zip, "SigAbilities", "", data.flags.ucttg.ffgimportid);
           if (imgPath) {
             data.img = await ImportHelpers.importImage(imgPath.name, zip, pack);
           } else {
             data.img = `icons/svg/aura.svg`;
           }
 
-          await ImportHelpers.addImportItemToCompendium("Item", data, pack);
+          item.MatchingNodes.Node.forEach((row, i) => {
+            data.data.uplink_nodes[`uplink${i}`] = row !== "false";
+          });
+
+          const sigAbility = await ImportHelpers.addImportItemToCompendium("Item", data, pack);
           currentCount += 1;
+          // process careers
+          if (item?.Careers) {
+            for (const careerKey of Object.values(item.Careers)) {
+              let careerItem = await ImportHelpers.findCompendiumEntityByImportId("Item", careerKey, "world.oggdudecareers", "career");
+              if (!careerItem) {
+                CONFIG.logger.debug(`Could not find career item for signature ability ${sigAbility.name} in career ${careerKey}`);
+                continue;
+              }
+              const updateData = {
+                system: {
+                  signatureabilities: {
+                    [sigAbility._id]: {
+                      name: sigAbility.name,
+                      source: sigAbility.uuid, // not returned
+                      id: sigAbility._id,
+                    },
+                  },
+                },
+              }
+              CONFIG.logger.debug("Updating career item with signature ability", updateData, "(returned item: ", sigAbility, ")");
+              await careerItem.update(updateData);
+            }
+          }
 
           $(".signatureabilities .import-progress-bar")
             .width(`${Math.trunc((currentCount / totalCount) * 100)}%`)

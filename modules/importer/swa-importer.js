@@ -4,11 +4,11 @@ import ImportHelpers from "./import-helpers.js";
 export default class SWAImporter extends FormApplication {
   /** @override */
   static get defaultOptions() {
-    return mergeObject(super.defaultOptions, {
+    return foundry.utils.mergeObject(super.defaultOptions, {
       id: "swa-importer",
-      classes: ["starwarsffg", "data-import"],
+      classes: ["ucttg", "data-import"],
       title: "Adversaries Importer",
-      template: "systems/starwarsffg/templates/importer/swa-importer.html",
+      template: "systems/ucttg/templates/importer/swa-importer.html",
     });
   }
 
@@ -142,7 +142,7 @@ export default class SWAImporter extends FormApplication {
       $(".import-progress.current").toggleClass("import-hidden");
       $(".import-progress.overall").toggleClass("import-hidden");
 
-      let compendiumName = `swa.Adversaries`;
+      let compendiumName = `Star Wars Adversaries`;
 
       const filename = $("form.data-importer-window")[0].data.files[0].name;
 
@@ -151,6 +151,7 @@ export default class SWAImporter extends FormApplication {
       }
 
       let pack = await this._getCompendiumPack("Actor", compendiumName);
+      await pack.configure({locked: false});
 
       await ImportHelpers.asyncForEach(adversaryFiles, async (f) => {
         try {
@@ -362,17 +363,26 @@ export default class SWAImporter extends FormApplication {
                   },
                 };
 
-                const skilltheme = await game.settings.get("starwarsffg", "skilltheme");
+                const skilltheme = await game.settings.get("ucttg", "skilltheme");
 
                 if (skilltheme !== "starwars") {
-                  skills = JSON.parse(JSON.stringify(CONFIG.FFG.alternateskilllists.find((list) => list.id === game.settings.get("starwarsffg", "skilltheme")).skills));
+                  skills = JSON.parse(JSON.stringify(CONFIG.FFG.alternateskilllists.find((list) => list.id === game.settings.get("ucttg", "skilltheme")).skills));
+                }
+
+                let importType;
+                if (item.type === "Nemesis") {
+                  importType = "nemesis";
+                } else if (item.type === "Rival") {
+                  importType = "rival";
+                } else {
+                  importType = "minion";
                 }
 
                 let adversary = {
                   name: item.name,
-                  type: item.type === "Nemesis" ? "character" : "minion",
+                  type: importType,
                   flags: {
-                    starwarsffg: {
+                    ucttg: {
                       ffgimportid: `${f.name}-${item.type}-${item.name}`,
                       config: {
                         enableAutoSoakCalculation: false,
@@ -476,18 +486,21 @@ export default class SWAImporter extends FormApplication {
                         name: talent.name,
                         type: "talent",
                         flags: {},
-                        data: {
+                        system: {
                           attributes: {},
                           description: talent.description,
                           activation: {
                             value: "Passive",
+                          },
+                          ranks: {
+                            ranked: false,
                           },
                         },
                       };
 
                       adversary.items.push(adversaryTalent);
                     } else {
-                      const swaTalentKey = Object.keys(CONFIG.temporary.swa.talents).find((t) => talent.includes(t));
+                      const swaTalentKey = Object.keys(CONFIG.temporary.swa.talents).find((t) => talent.substr(0, talent.lastIndexOf(' ')) === t);
 
                       if (swaTalentKey) {
                         const swaTalent = CONFIG.temporary.swa.talents[swaTalentKey];
@@ -502,7 +515,7 @@ export default class SWAImporter extends FormApplication {
                           name: swaTalent.name,
                           type: "talent",
                           flags: {},
-                          data: {
+                          system: {
                             attributes: {},
                             description: swaTalent.description,
                             ranks: {
@@ -555,7 +568,7 @@ export default class SWAImporter extends FormApplication {
                       };
                       weaponData.system.skill.useBrawn = ["Melee", "Brawl", "Lightsaber"].some((element) => weaponData.system.skill.value.includes(element)) && (!weapon.damage || weapon.damage === "0");
                       if (weapon?.["plus-damage"] && parseInt(weapon["plus-damage"], 10) > 0) {
-                        weaponData.system.attributes[randomID()] = {
+                        weaponData.system.attributes[foundry.utils.randomID()] = {
                           isCheckbox: false,
                           mod: "damage",
                           modtype: "Weapon Stat",
@@ -595,7 +608,7 @@ export default class SWAImporter extends FormApplication {
                         weaponData.system.skill.useBrawn = ["Melee", "Brawl", "Lightsaber"].some((element) => weaponData.system.skill.value.includes(element)) && (!swaWeapon.damage || swaWeapon.damage === "0");
 
                         if (swaWeapon?.["plus-damage"] && parseInt(swaWeapon["plus-damage"], 10) > 0) {
-                          weaponData.system.attributes[randomID()] = {
+                          weaponData.system.attributes[foundry.utils.randomID()] = {
                             isCheckbox: false,
                             mod: "damage",
                             modtype: "Weapon Stat",
@@ -607,14 +620,14 @@ export default class SWAImporter extends FormApplication {
 
                     if (weaponData) {
                       const templatedData = weaponData;
-                      templatedData.system = mergeObject(data, weaponData.system);
+                      templatedData.system = foundry.utils.mergeObject(data, weaponData.system);
 
                       if (templatedData.system.special?.value?.length > 0) {
                         templatedData.system.special.value.split(",").forEach((w) => {
                           const wName = w.match(/^.*([^0-9\s]+)/gim);
                           const wRank = w.match(/[^\w][0-9]/gim);
 
-                          const id = randomID();
+                          const id = foundry.utils.randomID();
                           const unique = {
                             name: wName[0],
                             id: id,
@@ -634,7 +647,7 @@ export default class SWAImporter extends FormApplication {
                       }
 
                       let w = new CONFIG.Item.documentClass(templatedData, { temporary: true });
-                      adversary.items.push(duplicate(w));
+                      adversary.items.push(foundry.utils.duplicate(w));
                     }
                   });
                 }
@@ -760,19 +773,29 @@ export default class SWAImporter extends FormApplication {
                 }
 
                 if (item.abilities) {
-                  biography += `<h2>Abilities:</h2>`;
-                  item.abilities.forEach((ability) => {
+                  for (const ability of item.abilities) {
                     if (typeof ability === "object") {
-                      biography += `<p><b>${ability.name}:</b> ${ability.description}</p>`;
+                      adversary.items.push({
+                        name: ability.name,
+                        type: "ability",
+                        system: {
+                          description: ability.description,
+                        },
+                      });
                     } else {
                       const swaAbilityKey = Object.keys(CONFIG.temporary.swa.abilities).find((t) => ability.includes(t));
-
                       if (swaAbilityKey) {
                         const swaAbility = CONFIG.temporary.swa.abilities[swaAbilityKey];
-                        biography += `<p><b>${swaAbility.name}:</b> ${swaAbility.description}</p>`;
+                        adversary.items.push({
+                          name: swaAbility.name,
+                          type: "ability",
+                          system: {
+                            description: swaAbility.description,
+                          },
+                        });
                       }
                     }
-                  });
+                  }
                 }
 
                 adversary.system.biography = biography;

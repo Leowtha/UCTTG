@@ -133,27 +133,6 @@ export class ActorSheetFFG extends ActorSheet {
     }
   }
 
-  /** @override */
-  async _onDropActor(event, data) {
-    // Only handle pilot assignment for mobilesuit actors
-    if (this.actor.type !== "mobilesuit") {
-      return super._onDropActor(event, data);
-    }
-
-    const droppedActor = await Actor.implementation.fromDropData(data);
-    if (!droppedActor) return;
-
-    // Only allow character-type actors as pilots
-    const validPilotTypes = ["character", "nemesis", "rival", "ace"];
-    if (!validPilotTypes.includes(droppedActor.type)) {
-      ui.notifications.warn("Only character-type actors can be assigned as pilots.");
-      return;
-    }
-
-    await this.actor.update({ "system.pilotId": droppedActor.id });
-    ui.notifications.info(`${droppedActor.name} assigned as pilot of ${this.actor.name}.`);
-  }
-
   async calcPurchasePrice(itemData) {
     let cost = 0;
     if (itemData.type === "specialization") {
@@ -236,12 +215,11 @@ export class ActorSheetFFG extends ActorSheet {
       case "nemesis":
       case "rival":
       case "ace":
-      case "mobilesuit":
         if (data.limited) {
           this.position.height = 165;
         }
         // we need to update all specialization talents with the latest talent information
-        if (!this.actor.flags.ucttg?.loaded && this.actor.type !== "rival" && this.actor.type !== "mobilesuit") {
+        if (!this.actor.flags.ucttg?.loaded && this.actor.type !== "rival") {
           await this._updateSpecialization(data);
           await this.object._prepareCharacterData(data);
         }
@@ -250,42 +228,9 @@ export class ActorSheetFFG extends ActorSheet {
           data.data.stats.credits.value = data.data.stats.credits.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
         data.data.enrichedBio = await TextEditor.enrichHTML(this.actor.system.biography, {secrets: !data.limited});
-        if (data.data.general) {
-          data.data.general.enrichedNotes = await TextEditor.enrichHTML(this.actor.system.general?.notes) || "";
-          data.data.general.enrichedFeatures = await TextEditor.enrichHTML(this.actor.system.general?.features) || "";
-        }
+        data.data.general.enrichedNotes = await TextEditor.enrichHTML(this.actor.system.general?.notes) || "";
+        data.data.general.enrichedFeatures = await TextEditor.enrichHTML(this.actor.system.general?.features) || "";
         data.maxAttribute = game.settings.get("ucttg", "maxAttribute");
-
-        // Mobile Suit pilot linking
-        if (this.actor.type === "mobilesuit" && this.actor.system.pilotId) {
-          const pilot = game.actors.get(this.actor.system.pilotId);
-          if (pilot) {
-            data.pilot = {
-              name: pilot.name,
-              img: pilot.img,
-              id: pilot.id,
-              characteristics: pilot.system.characteristics,
-              skills: pilot.system.skills,
-              talentList: pilot.talentList || [],
-            };
-            // Overwrite MS characteristics with pilot's values for display
-            for (const [key, char] of Object.entries(pilot.system.characteristics)) {
-              if (data.data.characteristics[key]) {
-                data.data.characteristics[key].value = char.value;
-              }
-            }
-            // Overwrite MS skills with pilot's values for display
-            for (const [key, skill] of Object.entries(pilot.system.skills)) {
-              if (data.data.skills[key]) {
-                data.data.skills[key].rank = skill.rank;
-                data.data.skills[key].careerskill = skill.careerskill;
-              }
-            }
-          } else {
-            // Pilot ID is set but actor doesn't exist anymore — clear it
-            data.pilot = null;
-          }
-        }
         break;
       case "vehicle":
         data.data.enrichedBio = await TextEditor.enrichHTML(this.actor.system.biography);
@@ -411,19 +356,19 @@ export class ActorSheetFFG extends ActorSheet {
                 actor.items.get(i.id).delete();
             });
           }
-          else if (actor.type === "minion" || actor.type === "mobilesuit") {
-            ui.notifications.warn(`Item type '${item.type}' cannot be added to '${actor.type}' actor types.`);
+          else if (actor.type === "minion") {
+            ui.notifications.warn(`Item type '${item.type}' cannot be added to 'minion' actor types.`);
             return false;
           }
         }
 
-        // Critical Damage can only be added to "vehicle" actors and Critical Injury can only be added to character-type or mobilesuit actors.
+        // Critical Damage can only be added to "vehicle" actors and Critical Injury can only be added to "character" actors.
         if (item.type === "criticaldamage" && actor.type !== "vehicle") {
           ui.notifications.warn("Critical Damage can only be added to 'vehicle' actor types.");
           return false;
         }
-        if (item.type === "criticalinjury" && !["character", "nemesis", "rival", "ace", "mobilesuit"].includes(actor.type)) {
-          ui.notifications.warn("Critical Injuries can only be added to character-type or mobile suit actors.");
+        if (item.type === "criticalinjury" && !["character", "nemesis", "rival", "ace"].includes(actor.type)) {
+          ui.notifications.warn("Critical Injuries can only be added to 'character' actor types.");
           return false;
         }
 
@@ -569,8 +514,7 @@ export class ActorSheetFFG extends ActorSheet {
         default: false,
       });
     }
-
-    if (this.actor.type === "character" || this.actor.type === "ace") {
+    if (this.actor.type === "character", "ace") {
       this.sheetoptions = new ActorOptions(this, html);
       this.sheetoptions.register("enableAutoSoakCalculation", {
         name: game.i18n.localize("SWFFG.EnableSoakCalc"),
@@ -649,56 +593,6 @@ export class ActorSheetFFG extends ActorSheet {
         type: "Array",
         default: 0,
         options: [game.i18n.localize("SWFFG.UseGlobalSetting"), game.i18n.localize("SWFFG.OptionValueYes"), game.i18n.localize("SWFFG.OptionValueNo")],
-      });
-    }
-
-    if (this.actor.type === "mobilesuit") {
-      this.sheetoptions = new ActorOptions(this, html);
-      this.sheetoptions.register("enableAutoSoakCalculation", {
-        name: game.i18n.localize("SWFFG.EnableSoakCalc"),
-        hint: game.i18n.localize("SWFFG.EnableSoakCalcHint"),
-        type: "Boolean",
-        default: true,
-      });
-      this.sheetoptions.register("enableForcePool", {
-        name: game.i18n.localize("SWFFG.EnableForcePool"),
-        hint: game.i18n.localize("SWFFG.EnableForcePoolHint"),
-        type: "Boolean",
-        default: false,
-      });
-      this.sheetoptions.register("enableCriticalInjuries", {
-        name: game.i18n.localize("SWFFG.EnableCriticalInjuries"),
-        hint: game.i18n.localize("SWFFG.EnableCriticalInjuriesHint"),
-        type: "Boolean",
-        default: true,
-      });
-      this.sheetoptions.register("talentSorting", {
-        name: game.i18n.localize("SWFFG.EnableSortTalentsByActivation"),
-        hint: game.i18n.localize("SWFFG.EnableSortTalentsByActivationHint"),
-        type: "Array",
-        default: 0,
-        options: [game.i18n.localize("SWFFG.UseGlobalSetting"), game.i18n.localize("SWFFG.OptionValueYes"), game.i18n.localize("SWFFG.OptionValueNo")],
-      });
-
-      // Mobile Suit pilot controls
-      html.find(".ms-pilot-remove").click(async (ev) => {
-        ev.preventDefault();
-        await this.actor.update({ "system.pilotId": "" });
-        ui.notifications.info("Pilot removed.");
-      });
-
-      html.find(".ms-pilot-open").click(async (ev) => {
-        ev.preventDefault();
-        const actorId = ev.currentTarget.dataset.actorId;
-        const pilot = game.actors.get(actorId);
-        if (pilot) pilot.sheet.render(true);
-      });
-
-      html.find(".ms-pilot-name").click(async (ev) => {
-        ev.preventDefault();
-        const actorId = ev.currentTarget.dataset.actorId;
-        const pilot = game.actors.get(actorId);
-        if (pilot) pilot.sheet.render(true);
       });
     }
 

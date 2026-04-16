@@ -1,6 +1,6 @@
 {
   "Actor": {
-    "types": ["character", "minion", "vehicle", "homestead"],
+    "types": ["character", "minion", "vehicle", "homestead", "rival", "nemesis", "ace", "mobilesuit"],
     "templates": {
       "biography": {
         "biography": ""
@@ -62,6 +62,9 @@
             "type": "Number",
             "label": "Credits",
             "adjusted": 0
+          },
+          "medical": {
+            "uses": 0
           }
         }
       },
@@ -141,14 +144,6 @@
             "type": "Combat",
             "max": 6
           },
-          "Astrogation": {
-            "rank": 0,
-            "characteristic": "Intellect",
-            "groupskill": false,
-            "careerskill": false,
-            "type": "General",
-            "max": 6
-          },
           "Athletics": {
             "rank": 0,
             "characteristic": "Brawn",
@@ -162,7 +157,7 @@
             "characteristic": "Presence",
             "groupskill": false,
             "careerskill": false,
-            "type": "Social",
+            "type": "General",
             "max": 6
           },
           "Coercion": {
@@ -170,7 +165,7 @@
             "characteristic": "Willpower",
             "groupskill": false,
             "careerskill": false,
-            "type": "Social",
+            "type": "General",
             "max": 6
           },
           "Computers": {
@@ -202,7 +197,7 @@
             "characteristic": "Cunning",
             "groupskill": false,
             "careerskill": false,
-            "type": "Social",
+            "type": "General",
             "max": 6
           },
           "Discipline": {
@@ -218,7 +213,7 @@
             "characteristic": "Presence",
             "groupskill": false,
             "careerskill": false,
-            "type": "Social",
+            "type": "General",
             "max": 6
           },
           "Mechanics": {
@@ -242,7 +237,23 @@
             "characteristic": "Presence",
             "groupskill": false,
             "careerskill": false,
-            "type": "Social",
+            "type": "General",
+            "max": 6
+          },
+          "Pathfinding: Earth": {
+            "rank": 0,
+            "characteristic": "Cunning",
+            "groupskill": false,
+            "careerskill": false,
+            "type": "General",
+            "max": 6
+          },
+          "Pathfinding: Space": {
+            "rank": 0,
+            "characteristic": "Intellect",
+            "groupskill": false,
+            "careerskill": false,
+            "type": "General",
             "max": 6
           },
           "Perception": {
@@ -253,7 +264,7 @@
             "type": "General",
             "max": 6
           },
-          "Piloting: Planetary": {
+          "Piloting: Earth": {
             "rank": 0,
             "characteristic": "Agility",
             "groupskill": false,
@@ -293,14 +304,6 @@
             "type": "General",
             "max": 6
           },
-          "Streetwise": {
-            "rank": 0,
-            "characteristic": "Cunning",
-            "groupskill": false,
-            "careerskill": false,
-            "type": "General",
-            "max": 6
-          },
           "Survival": {
             "rank": 0,
             "characteristic": "Cunning",
@@ -317,7 +320,7 @@
             "type": "General",
             "max": 6
           },
-          "Knowledge: Core Worlds": {
+          "Knowledge: Earth": {
             "rank": 0,
             "characteristic": "Intellect",
             "groupskill": false,
@@ -341,7 +344,7 @@
             "type": "Knowledge",
             "max": 6
           },
-          "Knowledge: Outer Rim": {
+          "Knowledge: Colonies": {
             "rank": 0,
             "characteristic": "Intellect",
             "groupskill": false,
@@ -349,7 +352,7 @@
             "type": "Knowledge",
             "max": 6
           },
-          "Knowledge: Underworld": {
+          "Knowledge: Extraspatial": {
             "rank": 0,
             "characteristic": "Intellect",
             "groupskill": false,
@@ -364,23 +367,20 @@
             "careerskill": false,
             "type": "Knowledge",
             "max": 6
-          },
-          "Knowledge: Xenology": {
-            "rank": 0,
-            "characteristic": "Intellect",
-            "groupskill": false,
-            "careerskill": false,
-            "type": "Knowledge",
-            "max": 6
           }
         }
       },
       "attributes": {
         "attributes": {}
+      },
+      "general": {
+        "general": {
+          "features": "<p></p>"
+        }
       }
     },
     "character": {
-      "templates": ["biography", "species", "career", "specialisation", "stats", "characteristics", "skills", "attributes"],
+      "templates": ["biography", "species", "career", "specialisation", "stats", "characteristics", "skills", "attributes", "general"],
       "encumbrance": {
         "value": 0,
         "type": "Number",
@@ -388,29 +388,43 @@
         "abrev": "Encum",
         "adjusted": 0
       },
-      "obligation": {
-        "value": 0,
-        "type": "Number",
-        "label": "Obligation"
-      },
-      "duty": {
-        "value": 0,
-        "type": "Number",
-        "label": "Duty"
-      },
-      "morality": {
-        "value": 0,
-        "type": "Number",
-        "label": "Morality"
-      },
-      "conflict": {
-        "value": 0,
-        "type": "Number",
-        "label": "Conflict"
-      },
       "experience": {
         "total": 0,
         "available": 0
+      },
+      "faction": "",
+      "rank": "",
+      "monthlyIncome": 0,
+      "incomeModifier": 0,
+      "newtypeAwakened": false,
+      "msBonus": {
+        "Brawn": false,
+        "Agility": false,
+        "Intellect": false,
+        "Cunning": false,
+        "Willpower": false,
+        "Presence": false
+      },
+      "kills": {
+        "smallVehicles": 0,
+        "mediumVessels": 0,
+        "largeVessels": 0,
+        "transportVessels": 0,
+        "mobileSuits": 0,
+        "ace": 0
+      },
+      "downtime": {
+        "days": 0,
+        "weeks": 0,
+        "totalMonths": 0
+      },
+      "hangar": [],
+      "rnd": [],
+      "production": [],
+      "customization": [],
+      "aceTalent": {
+        "name": "",
+        "ranks": 0
       }
     },
     "minion": {
@@ -507,14 +521,14 @@
           "label": "Hard Points",
           "adjusted": 0
         },
-        "hyperdrive" : {
-          "value" : 1,
+        "hyperdrive": {
+          "value": 1,
           "type": "Number",
           "label": "SWFFG.Hyperdrive"
         },
-        "consumables" : {
-          "value" : 1,
-          "duration" : "months",
+        "consumables": {
+          "value": 1,
+          "duration": "months",
           "type": "Number",
           "label": "SWFFG.Consumables"
         },
@@ -523,7 +537,9 @@
           "type": "Boolean",
           "label": "SWFFG.VehicleNavicomputer"
         }
-      }
+      },
+      "spaceShip": false,
+      "silhouetteImage": "systems/ucttg/images/shipdefence.png"
     },
     "homestead": {
       "templates": ["biography", "attributes"],
@@ -533,21 +549,151 @@
         "label": "Cost",
         "adjusted": 0
       },
-      "consumables" : {
-        "value" : 1,
-        "duration" : "months",
+      "consumables": {
+        "value": 1,
+        "duration": "months",
         "type": "Number",
         "label": "SWFFG.Consumables"
+      }
+    },
+    "rival": {
+      "templates": ["biography", "species", "characteristics", "skills", "attributes", "general"],
+      "stats": {
+        "wounds": {
+          "value": 0,
+          "min": 0,
+          "max": 0,
+          "adjusted": 0
+        },
+        "soak": {
+          "value": 0,
+          "adjusted": 0
+        },
+        "defence": {
+          "ranged": 0,
+          "melee": 0,
+          "adjusted": 0
+        },
+        "encumbrance": {
+          "value": 0,
+          "max": 0,
+          "adjusted": 0
+        },
+        "forcePool": {
+          "value": 0,
+          "max": 0,
+          "adjusted": 0
+        },
+        "credits": {
+          "value": 0,
+          "type": "Number",
+          "label": "Credits",
+          "adjusted": 0
+        }
+      }
+    },
+    "nemesis": {
+      "templates": ["biography", "species", "stats", "characteristics", "skills", "attributes", "general"]
+    },
+    "ace": {
+      "templates": ["biography", "species", "stats", "characteristics", "skills", "attributes", "general"]
+    },
+    "mobilesuit": {
+      "templates": ["biography", "characteristics", "skills", "attributes"],
+      "pilotId": "",
+      "stats": {
+        "wounds": {
+          "value": 0,
+          "min": 0,
+          "max": 0,
+          "adjusted": 0
+        },
+        "strain": {
+          "value": 0,
+          "min": 0,
+          "max": 0,
+          "adjusted": 0
+        },
+        "soak": {
+          "value": 0,
+          "adjusted": 0
+        },
+        "defence": {
+          "ranged": 0,
+          "melee": 0,
+          "adjusted": 0
+        },
+        "encumbrance": {
+          "value": 0,
+          "max": 0,
+          "adjusted": 0
+        },
+        "forcePool": {
+          "value": 0,
+          "max": 0,
+          "adjusted": 0
+        },
+        "credits": {
+          "value": 0,
+          "type": "Number",
+          "label": "Credits",
+          "adjusted": 0
+        },
+        "silhouette": {
+          "value": 2,
+          "type": "Number",
+          "label": "Silhouette"
+        },
+        "speed": {
+          "value": 0,
+          "max": 0,
+          "type": "Number",
+          "label": "Speed"
+        },
+        "handling": {
+          "value": 0,
+          "type": "Number",
+          "label": "Handling"
+        },
+        "armour": {
+          "value": 0,
+          "type": "Number",
+          "label": "Armour",
+          "adjusted": 0
+        },
+        "customizationHardPoints": {
+          "value": 0,
+          "type": "Number",
+          "label": "Hard Points",
+          "adjusted": 0
+        },
+        "sensorRange": {
+          "value": "Short",
+          "type": "String"
+        }
+      },
+      "msModel": "",
+      "msManufacturer": "",
+      "operatingEnviro": {
+        "ground": false,
+        "air": false,
+        "space": false,
+        "water": false
       }
     }
   },
   "Item": {
     "types": [
-      "ability", "armour", "career", "criticaldamage", "criticalinjury", "forcepower", "gear", "itemattachment", "itemmodifier", "talent", "shipattachment", "shipweapon", "homesteadupgrade", "signatureability", "specialization", "species", "weapon"],
+      "ability", "armour", "career", "criticaldamage", "criticalinjury", "forcepower", "gear", "itemattachment", "itemmodifier", "talent", "shipattachment", "shipweapon", "homesteadupgrade", "signatureability", "specialization", "species", "weapon"
+    ],
     "templates": {
       "core": {
         "description": "",
-        "attributes": {}
+        "attributes": {},
+        "metadata": {
+          "tags": [],
+          "sources": []
+        }
       },
       "basic": {
         "quantity": {
@@ -593,9 +739,9 @@
         }
       },
       "itemattachments": {
-        "itemattachment":[]
+        "itemattachment": []
       },
-      "qualities" : {
+      "qualities": {
         "itemmodifier": [],
         "adjusteditemmodifer": []
       }
@@ -667,7 +813,9 @@
       "isForceTalent": false,
       "isConflictTalent": false,
       "tier": 1,
-      "trees": []
+      "trees": [],
+      "longDesc": "",
+      "talentCategory": "infantry"
     },
     "shipweapon": {
       "templates": ["core", "basic", "hardpoints", "equippable", "itemattachments", "qualities"],
@@ -711,7 +859,11 @@
       "label": "Ship Attachment"
     },
     "species": {
-      "templates": ["core"]
+      "templates": ["core"],
+      "talents": {},
+      "abilities": {},
+      "species": {},
+      "startingXP": 0
     },
     "criticalinjury": {
       "templates": ["core"],
@@ -776,8 +928,10 @@
         "talent19": {}
       }
     },
-    "career" : {
-      "templates": ["core"]
+    "career": {
+      "templates": ["core"],
+      "specializations": {},
+      "signatureabilities": {}
     },
     "signatureability": {
       "templates": ["core"],
@@ -790,6 +944,13 @@
         "upgrade5": {},
         "upgrade6": {},
         "upgrade7": {}
+      },
+      "base_cost": 0,
+      "uplink_nodes": {
+        "uplink0": false,
+        "uplink1": false,
+        "uplink2": false,
+        "uplink3": false
       }
     },
     "itemattachment": {

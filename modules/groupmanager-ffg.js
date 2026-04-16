@@ -1,3 +1,5 @@
+import {xpLogEarn} from "./helpers/actor-helpers.js";
+
 export class GroupManagerLayer extends CanvasLayer {
   constructor() {
     super();
@@ -35,8 +37,8 @@ export class GroupManager extends FormApplication {
   }
 
   static get defaultOptions() {
-    return mergeObject(super.defaultOptions, {
-      classes: ["starwarsffg", "form", "group-manager"],
+    return foundry.utils.mergeObject(super.defaultOptions, {
+      classes: ["ucttg", "form", "group-manager"],
       closeOnSubmit: false,
       submitOnChange: true,
       submitOnClose: true,
@@ -45,7 +47,7 @@ export class GroupManager extends FormApplication {
       resizable: true,
       width: 330,
       height: 900,
-      template: "systems/starwarsffg/templates/group-manager.html",
+      template: "systems/ucttg/templates/group-manager.html",
       id: "group-manager",
       title: "Group Manager",
     });
@@ -58,12 +60,12 @@ export class GroupManager extends FormApplication {
    * @return {Object}   The data provided to the template when rendering the form
    */
   getData() {
-    const players = game.users.contents.filter((u) => !u.isGM && u.active);
+    const players = game.users.contents.filter((u) => (!u.isGM || game.settings.get("ucttg", "GMCharactersInGroupManager")) && u.active);
     if (players.length > 0) {
       players.connected = true;
     }
 
-    const pcListMode = game.settings.get("starwarsffg", "pcListMode");
+    const pcListMode = game.settings.get("ucttg", "pcListMode");
     const characters = [];
     let obligationRangeStart = 0;
     let dutyRangeStart = 0;
@@ -105,7 +107,7 @@ export class GroupManager extends FormApplication {
       });
     }
 
-    const dPool = { light: game.settings.get("starwarsffg", "dPoolLight"), dark: game.settings.get("starwarsffg", "dPoolDark") };
+    const dPool = { light: game.settings.get("ucttg", "dPoolLight"), dark: game.settings.get("ucttg", "dPoolDark") };
     const initiative = CONFIG.Combat.initiative.formula;
     const isGM = game.user.isGM;
     const theme = CONFIG.FFG.theme;
@@ -116,8 +118,8 @@ export class GroupManager extends FormApplication {
     if (!isGM) this.position.height = 470;
 
     const labels = {
-      light: game.settings.get("starwarsffg", "destiny-pool-light"),
-      dark: game.settings.get("starwarsffg", "destiny-pool-dark"),
+      light: game.settings.get("ucttg", "destiny-pool-light"),
+      dark: game.settings.get("ucttg", "destiny-pool-dark"),
     };
 
     return { dPool, players, initiative, isGM, pcListMode, characters, obligations, duties, theme, labels };
@@ -159,7 +161,7 @@ export class GroupManager extends FormApplication {
     // Listen for initiative dropdown change and update initiative formula accordingly.
     html.find(".initiative-mode").change((ev) => {
       const init_value = ev.target.value.charAt(0).toLowerCase();
-      game.settings.set("starwarsffg", "initiativeRule", init_value);
+      game.settings.set("ucttg", "initiativeRule", init_value);
       ui.notifications.info(`Initiative mode changed to: ${ev.target.value}`);
     });
 
@@ -225,9 +227,9 @@ export class GroupManager extends FormApplication {
    * @private
    */
   _updateObject(event, formData) {
-    const formDPool = expandObject(formData).dPool || {};
-    game.settings.set("starwarsffg", "dPoolLight", formDPool.light);
-    game.settings.set("starwarsffg", "dPoolDark", formDPool.dark);
+    const formDPool = foundry.utils.expandObject(formData).dPool || {};
+    game.settings.set("ucttg", "dPoolLight", formDPool.light);
+    game.settings.set("ucttg", "dPoolDark", formDPool.dark);
     return formData;
   }
 
@@ -262,7 +264,7 @@ export class GroupManager extends FormApplication {
   async _rollTable(table, type) {
     let r = new Roll("1d100");
     await r.evaluate();
-    let rollOptions = game.settings.get("starwarsffg", "privateTriggers") ? { rollMode: "gmroll" } : {};
+    let rollOptions = game.settings.get("ucttg", "privateTriggers") ? { rollMode: "gmroll" } : {};
     r.toMessage(
       {
         flavor: `${game.i18n.localize("SWFFG.Rolling")} ${type}...`,
@@ -275,7 +277,7 @@ export class GroupManager extends FormApplication {
       user: game.user.id,
       content: tableResult,
     };
-    if (game.settings.get("starwarsffg", "privateTriggers")) {
+    if (game.settings.get("ucttg", "privateTriggers")) {
       messageOptions.whisper = ChatMessage.getWhisperRecipients("GM");
     }
     ChatMessage.create(messageOptions);
@@ -321,17 +323,14 @@ export class GroupManager extends FormApplication {
   async _setupCombat(cbt) {
     // If no combat encounter is active, create one.
     if (!cbt) {
-      let scene = game.scenes.viewed;
-      if (!scene) return;
-      let cbt = await game.combats.object.create({ scene: scene.id, active: true });
-      await cbt.activate();
+      cbt = await Combat.create({scene: canvas.scene.id, active: true});
     }
   }
 
   async _grantXP(character) {
-    const id = randomID();
+    const id = foundry.utils.randomID();
     const description = game.i18n.localize("SWFFG.GrantXPTo") + ` ${character.name}...`;
-    const content = await renderTemplate("systems/starwarsffg/templates/grant-xp.html", {
+    const content = await renderTemplate("systems/ucttg/templates/grant-xp.html", {
       id,
     });
 
@@ -342,11 +341,15 @@ export class GroupManager extends FormApplication {
         one: {
           icon: '<i class="fas fa-check"></i>',
           label: game.i18n.localize("SWFFG.GrantXP"),
-          callback: () => {
+          callback: async () => {
             const container = document.getElementById(id);
             const amount = container.querySelector('input[name="amount"]');
-            character.update({ ["data.experience.total"]: +character.system.experience.total + +amount.value });
-            character.update({ ["data.experience.available"]: +character.system.experience.available + +amount.value });
+            const note = container.querySelector('input[name="note"]').value;
+            const available = +character.system.experience.available + +amount.value;
+            const total = +character.system.experience.total + +amount.value;
+            character.update({ ["system.experience.total"]: +character.system.experience.total + +amount.value });
+            character.update({ ["system.experience.available"]: +character.system.experience.available + +amount.value });
+            await xpLogEarn(character, amount.value, available, total, note);
             ui.notifications.info(`Granted ${amount.value} XP to ${character.name}.`);
           },
         },
@@ -359,9 +362,9 @@ export class GroupManager extends FormApplication {
   }
 
   async _bulkXP(characters) {
-    const id = randomID();
+    const id = foundry.utils.randomID();
     const description = game.i18n.localize("SWFFG.GrantXPToAllCharacters");
-    const content = await renderTemplate("systems/starwarsffg/templates/grant-xp.html", {
+    const content = await renderTemplate("systems/ucttg/templates/grant-xp.html", {
       id,
     });
 
@@ -372,15 +375,19 @@ export class GroupManager extends FormApplication {
         one: {
           icon: '<i class="fas fa-check"></i>',
           label: game.i18n.localize("SWFFG.GrantXP"),
-          callback: () => {
+          callback: async () => {
             const container = document.getElementById(id);
             const amount = container.querySelector('input[name="amount"]');
-            characters.forEach((c) => {
+            const note = container.querySelector('input[name="note"]').value;
+            for (const c of characters) {
               const character = game.actors.get(c);
-              character.update({ ["data.experience.total"]: +character.system.experience.total + +amount.value });
-              character.update({ ["data.experience.available"]: +character.system.experience.available + +amount.value });
+              const available = +character.system.experience.available + +amount.value;
+              const total = +character.system.experience.total + +amount.value;
+              character.update({ ["system.experience.total"]: +character.system.experience.total + +amount.value });
+              character.update({ ["system.experience.available"]: +character.system.experience.available + +amount.value });
+              await xpLogEarn(character, amount.value, available, total, note);
               ui.notifications.info(`Granted ${amount.value} XP to ${character.name}.`);
-            });
+            }
           },
         },
         two: {

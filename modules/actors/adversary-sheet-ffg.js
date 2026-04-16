@@ -8,15 +8,15 @@ export class AdversarySheetFFG extends ActorSheetFFG {
 
   /** @override */
   get template() {
-    const path = "systems/starwarsffg/templates/actors";
+    const path = "systems/ucttg/templates/actors";
     return `${path}/ffg-adversary-sheet.html`;
   }
 
   /** @override */
   static get defaultOptions() {
     return mergeObject(super.defaultOptions, {
-      classes: ["starwarsffg", "sheet", "actor", "adversary"],
-      template: "systems/starwarsffg/templates/actors/ffg-adversary-sheet.html",
+      classes: ["ucttg", "sheet", "actor", "adversary"],
+      template: "systems/ucttg/templates/actors/ffg-adversary-sheet.html",
       width: 710,
       height: 650,
       tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "characteristics" }],
@@ -35,7 +35,7 @@ export class AdversarySheetFFG extends ActorSheetFFG {
         }
 
         // we need to update all specialization talents with the latest talent information
-        if (!this.actor.flags.starwarsffg?.loaded) {
+        if (!this.actor.flags.ucttg?.loaded) {
           super._updateSpecialization(data);
         }
 
@@ -66,7 +66,7 @@ export class AdversarySheetFFG extends ActorSheetFFG {
         name: game.i18n.localize("SWFFG.EnableForcePool"),
         hint: game.i18n.localize("SWFFG.EnableForcePoolHint"),
         type: "Boolean",
-        default: true,
+        default: false,
       });
       this.sheetoptions.register("enableStrainThreshold", {
         name: game.i18n.localize("SWFFG.EnableStrainThreshold"),

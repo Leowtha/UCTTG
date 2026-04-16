@@ -7,7 +7,12 @@
 // Import Modules
 import { FFG } from "./swffg-config.js";
 import { ActorFFG } from "./actors/actor-ffg.js";
-import {CombatFFG, CombatTrackerFFG, updateCombatTracker} from "./combat-ffg.js";
+import CombatantFFG, {
+  CombatFFG,
+  CombatTrackerFFG,
+  registerHandleCombatantRemoval,
+  updateCombatTracker
+} from "./combat-ffg.js";
 import { ItemFFG } from "./items/item-ffg.js";
 import { ItemSheetFFG } from "./items/item-sheet-ffg.js";
 import { ItemSheetFFGV2 } from "./items/item-sheet-ffg-v2.js";
@@ -32,7 +37,7 @@ import {register_crew} from "./helpers/crew.js";
 
 // Import Dice Types
 import { AbilityDie, BoostDie, ChallengeDie, DifficultyDie, ForceDie, ProficiencyDie, SetbackDie } from "./dice-pool-ffg.js";
-import { createFFGMacro } from "./helpers/macros.js";
+import { createFFGMacro, updateMacro } from "./helpers/macros.js";
 import EmbeddedItemHelpers from "./helpers/embeddeditem-helpers.js";
 import DataImporter from "./importer/data-importer.js";
 import PauseFFG from "./apps/pause-ffg.js";
@@ -41,6 +46,8 @@ import RollBuilderFFG from "./dice/roll-builder.js";
 import CrewSettings from "./settings/crew-settings.js";
 import {register_dice_enricher, register_oggdude_tag_enricher, register_roll_tag_enricher} from "./helpers/journal.js";
 import {drawAdversaryCount, drawMinionCount, registerTokenControls} from "./helpers/token.js";
+import {handleUpdate} from "./swffg-migration.js";
+import SWAImporter from "./importer/swa-importer.js";
 
 /* -------------------------------------------- */
 /*  Foundry VTT Initialization                  */
@@ -48,10 +55,10 @@ import {drawAdversaryCount, drawMinionCount, registerTokenControls} from "./help
 
 async function parseSkillList() {
   try {
-    return JSON.parse(await game.settings.get("starwarsffg", "arraySkillList"));
+    return JSON.parse(await game.settings.get("ucttg", "arraySkillList"));
   } catch (e) {
     CONFIG.logger.log("Could not parse custom skill list, returning raw setting");
-    return await game.settings.get("starwarsffg", "arraySkillList");
+    return await game.settings.get("ucttg", "arraySkillList");
   }
 }
 
@@ -63,12 +70,13 @@ Hooks.on("setup", function (){
 });
 
 Hooks.once("init", async function () {
-  console.log(`Initializing SWFFG System`);
+  console.log(`Initializing UCTTG System`);
   // Place our classes in their own namespace for later reference.
   game.ffg = {
     ActorFFG,
     ItemFFG,
     CombatFFG,
+    CombatantFFG,
     CombatTrackerFFG,
     RollFFG,
     DiceHelpers,
@@ -88,6 +96,7 @@ Hooks.once("init", async function () {
   CONFIG.Actor.documentClass = ActorFFG;
   CONFIG.Item.documentClass = ItemFFG;
   CONFIG.Combat.documentClass = CombatFFG;
+  CONFIG.Combatant.documentClass = CombatantFFG;
 
   // Define custom Roll class
   CONFIG.Dice.rolls.push(CONFIG.Dice.rolls[0]);
@@ -114,73 +123,202 @@ Hooks.once("init", async function () {
   Token.prototype._drawBar = function (number, bar, data) {
     let val = Number(data.value);
     // FFG style behaviour for wounds and strain.
+    let aboveThreshold = 0;
     if (data.attribute === "stats.wounds" || data.attribute === "stats.strain" || data.attribute === "stats.hullTrauma" || data.attribute === "stats.systemStrain") {
       val = Number(data.max - data.value);
+      aboveThreshold = Math.max(data.value - data.max, 0);
     }
 
-    const pct = Math.clamped(val, 0, data.max) / data.max;
+    // draw the empty bar
     let h = Math.max(canvas.dimensions.size / 12, 8);
-    if (this.height >= 2) h *= 1.6; // Enlarge the bar for large tokens
-    // Draw the bar
-    let color = number === 0 ? [1 - pct / 2, pct, 0] : [0.5 * pct, 0.7 * pct, 0.5 + pct / 2];
-    bar
-      .clear()
+    bar.clear()
       .beginFill(0x000000, 0.5)
       .lineStyle(2, 0x000000, 0.9)
-      .drawRoundedRect(0, 0, this.w, h, 3)
+      .drawRoundedRect(0, 0, this.w, h, 3);
+    let startX = 1;
+    let startY = 1;
+
+    if (aboveThreshold > 0) {
+      // render the above-threshold portion of the bar
+      let abovePct = Math.min(aboveThreshold / data.max, 1);
+      bar
+      .beginFill(game.settings.get("ucttg", "ui-token-overwounded"), 0.8)
+      .lineStyle(1, 0x000000, 0.8)
+      .drawRoundedRect(startX, startY, abovePct * (this.w - 2), h - 2, 2);
+      // render the rest as wounds
+      startX = abovePct * (this.w - 2) + 1;
+      let remainingLength = this.w  - abovePct * (this.w - 2) - 2;
+      bar
+      .beginFill(game.settings.get("ucttg", "ui-token-wounded"), 0.8)
+      .lineStyle(1, 0x000000, 0.8)
+      .drawRoundedRect(startX, startY, remainingLength, h - 2, 2);
+    } else if (["stats.wounds", "stats.hullTrauma"].includes(data.attribute)) {
+      // render healthy and then unhealthy portions of the bar
+      let woundedPct = Math.min((data.max - data.value) / data.max, 1);
+      bar
+      .beginFill(game.settings.get("ucttg", "ui-token-healthy"), 0.8)
+      .lineStyle(1, 0x000000, 0.8)
+      .drawRoundedRect(startX, startY, woundedPct * (this.w - 2), h - 2, 2);
+      // remaining health
+      startX = woundedPct * (this.w - 2) + 1;
+      let remainingLength = this.w - woundedPct * (this.w - 2) - 2;
+      bar
+      .beginFill(game.settings.get("ucttg", "ui-token-wounded"), 0.8)
+      .lineStyle(1, 0x000000, 0.8)
+      .drawRoundedRect(startX, startY, remainingLength, h - 2, 2);
+    } else {
+      // render normally
+      const pct = Math.clamp(val, 0, data.max) / data.max;
+      let color = number === 0 ? [1 - pct / 2, pct, 0] : [0.5 * pct, 0.7 * pct, 0.5 + pct / 2];
+      bar
       .beginFill(PIXI.utils.rgb2hex(color), 0.8)
       .lineStyle(1, 0x000000, 0.8)
       .drawRoundedRect(1, 1, pct * (this.w - 2), h - 2, 2);
+    }
+
     // Set position
     let posY = number === 0 ? this.h - h : 0;
     bar.position.set(0, posY);
   };
 
   // Load character templates so that dynamic skills lists work correctly
-  loadTemplates(["systems/starwarsffg/templates/actors/ffg-character-sheet.html", "systems/starwarsffg/templates/actors/ffg-minion-sheet.html"]);
+  loadTemplates(["systems/ucttg/templates/actors/ffg-character-sheet.html", "systems/ucttg/templates/actors/ffg-minion-sheet.html"]);
 
   SettingsHelpers.initLevelSettings();
 
-  const uitheme = game.settings.get("starwarsffg", "ui-uitheme");
+  const uitheme = game.settings.get("ucttg", "ui-uitheme");
 
   switch (uitheme) {
     case "mandar": {
-      $('link[href*="styles/starwarsffg.css"]').prop("disabled", true);
-      $("head").append('<link href="systems/starwarsffg/styles/mandar.css" rel="stylesheet" type="text/css" media="all">');
+      $('link[href*="styles/ucttg.css"]').prop("disabled", true);
+      $("head").append('<link href="systems/ucttg/styles/mandar.css" rel="stylesheet" type="text/css" media="all">');
       break;
     }
     default: {
-      $('link[href*="styles/starwarsffg.css"]').prop("disabled", false);
+      $('link[href*="styles/ucttg.css"]').prop("disabled", false);
     }
   }
 
   /**
+   * Register default XP spend notification
+   */
+  game.settings.register("ucttg", "notifyOnXpSpend", {
+    name: game.i18n.localize("SWFFG.Settings.Purchase.Notify.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.Purchase.Notify.Hint"),
+    scope: "world",
+    config: false,
+    default: true,
+    type: Boolean,
+  });
+
+  /**
    * Register the option to use generic slots for combat
    */
-  game.settings.register("starwarsffg", "useGenericSlots", {
+  game.settings.register("ucttg", "useGenericSlots", {
     name: game.i18n.localize("SWFFG.Settings.UseGenericSlots.Name"),
     hint: game.i18n.localize("SWFFG.Settings.UseGenericSlots.Hint"),
     scope: "world",
-    config: true,
+    config: false,
     default: true,
     type: Boolean,
     onChange: (rule) => window.location.reload()
   });
 
-  if (game.settings.get("starwarsffg", "useGenericSlots")) {
+  if (game.settings.get("ucttg", "useGenericSlots")) {
     CONFIG.ui.combat = CombatTrackerFFG;
   }
+
+  /**
+   * Register action to take when a user removes a combatant from combat
+   */
+  game.settings.register("ucttg", "removeCombatantAction", {
+    name: game.i18n.localize("SWFFG.Settings.RemoveCombatantAction.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.RemoveCombatantAction.Hint"),
+    scope: "world",
+    config: false,
+    default: "combatant_only",
+    type: String,
+    choices: {
+      combatant_only: "Combatant Only",
+      last_slot: "Last Slot",
+      prompt: "Prompt",
+    },
+  });
+
+  /**
+   * Register the max value for characteristics and skills
+   */
+  game.settings.register("ucttg", "maxAttribute", {
+    name: game.i18n.localize("SWFFG.Settings.maxAttribute.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.maxAttribute.Hint"),
+    scope: "world",
+    config: false,
+    default: 7,
+    type: Number,
+  });
+  game.settings.register("ucttg", "maxSkill", {
+    name: game.i18n.localize("SWFFG.Settings.maxSkill.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.maxSkill.Hint"),
+    scope: "world",
+    config: false,
+    default: 6,
+    type: Number,
+  });
+
+  /**
+   * Register compendiums for sources for purchasing
+   */
+  game.settings.register("ucttg", "specializationCompendiums", {
+    name: game.i18n.localize("SWFFG.Settings.Purchase.Specialization.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.Purchase.Specialization.Hint"),
+    scope: "world",
+    config: false,
+    default: "world.oggdudespecializations",
+    type: String,
+  });
+  game.settings.register("ucttg", "signatureAbilityCompendiums", {
+    name: game.i18n.localize("SWFFG.Settings.Purchase.SignatureAbility.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.Purchase.SignatureAbility.Hint"),
+    scope: "world",
+    config: false,
+    default: "world.oggdudesignatureabilities",
+    type: String,
+  });
+  game.settings.register("ucttg", "forcePowerCompendiums", {
+    name: game.i18n.localize("SWFFG.Settings.Purchase.ForcePower.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.Purchase.ForcePower.Hint"),
+    scope: "world",
+    config: false,
+    default: "world.oggdudeforcepowers",
+    type: String,
+  });
+  game.settings.register("ucttg", "talentCompendiums", {
+    name: game.i18n.localize("SWFFG.Settings.Purchase.Talent.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.Purchase.Talent.Hint"),
+    scope: "world",
+    config: false,
+    default: "",
+    type: String,
+  });
+  game.settings.register("ucttg", "useDefense", {
+    name: game.i18n.localize("SWFFG.Settings.UseDefense.Name"),
+    hint: game.i18n.localize("SWFFG.Settings.UseDefense.Hint"),
+    scope: "client",
+    config: false,
+    default: true,
+    type: Boolean,
+  });
 
   /**
    * Set an initiative formula for the system
    * @type {String}
    */
   // Register initiative rule
-  game.settings.register("starwarsffg", "initiativeRule", {
+  game.settings.register("ucttg", "initiativeRule", {
     name: game.i18n.localize("SWFFG.InitiativeMode"),
     hint: game.i18n.localize("SWFFG.InitiativeModeHint"),
     scope: "world",
-    config: true,
+    config: false,
     default: "v",
     type: String,
     choices: {
@@ -189,7 +327,7 @@ Hooks.once("init", async function () {
     },
     onChange: (rule) => _setffgInitiative(rule),
   });
-  _setffgInitiative(game.settings.get("starwarsffg", "initiativeRule"));
+  _setffgInitiative(game.settings.get("ucttg", "initiativeRule"));
 
   function _setffgInitiative(initMethod) {
     let formula;
@@ -215,7 +353,7 @@ Hooks.once("init", async function () {
   }
 
   async function gameSkillsList() {
-    game.settings.registerMenu("starwarsffg", "addskilltheme", {
+    game.settings.registerMenu("ucttg", "addskilltheme", {
       name: game.i18n.localize("SWFFG.SettingsSkillListImporter"),
       label: game.i18n.localize("SWFFG.SettingsSkillListImporterLabel"),
       hint: game.i18n.localize("SWFFG.SettingsSkillListImporterHint"),
@@ -224,7 +362,7 @@ Hooks.once("init", async function () {
       restricted: true,
     });
 
-    game.settings.register("starwarsffg", "addskilltheme", {
+    game.settings.register("ucttg", "addskilltheme", {
       name: "Item Importer",
       scope: "world",
       default: {},
@@ -232,7 +370,7 @@ Hooks.once("init", async function () {
       type: Object,
     });
 
-    game.settings.register("starwarsffg", "arraySkillList", {
+    game.settings.register("ucttg", "arraySkillList", {
       name: "Skill List",
       scope: "world",
       default: defaultSkillList,
@@ -251,19 +389,19 @@ Hooks.once("init", async function () {
         skillChoices[list.id] = list.id;
       });
 
-      game.settings.register("starwarsffg", "skilltheme", {
+      game.settings.register("ucttg", "skilltheme", {
         name: game.i18n.localize("SWFFG.SettingsSkillTheme"),
         hint: game.i18n.localize("SWFFG.SettingsSkillThemeHint"),
         scope: "world",
-        config: true,
+        config: false,
         default: "starwars",
         type: String,
         onChange: SettingsHelpers.debouncedReload,
         choices: skillChoices,
       });
 
-      if (game.settings.get("starwarsffg", "skilltheme") !== "starwars") {
-        const altSkills = JSON.parse(JSON.stringify(CONFIG.FFG.alternateskilllists.find((list) => list.id === game.settings.get("starwarsffg", "skilltheme")).skills));
+      if (game.settings.get("ucttg", "skilltheme") !== "starwars") {
+        const altSkills = JSON.parse(JSON.stringify(CONFIG.FFG.alternateskilllists.find((list) => list.id === game.settings.get("ucttg", "skilltheme")).skills));
 
         let skills = {};
         Object.keys(altSkills).forEach((skillKey) => {
@@ -295,12 +433,12 @@ Hooks.once("init", async function () {
     Hooks.on("createActor", (actor) => {
       if (actor.type !== "vehicle" && actor.type !== "homestead") {
         if (CONFIG.FFG?.alternateskilllists?.length) {
-          let skilllist = game.settings.get("starwarsffg", "skilltheme");
+          let skilllist = game.settings.get("ucttg", "skilltheme");
           try {
             let skills = JSON.parse(JSON.stringify(CONFIG.FFG.alternateskilllists.find((list) => list.id === skilllist)));
             CONFIG.logger.log(`Applying skill theme ${skilllist} to actor`);
 
-            if (!actor?.flags?.starwarsffg?.hasOwnProperty('ffgimportid') && JSON.stringify(Object.keys(skills.skills).sort()) !== JSON.stringify(Object.keys(actor.system.skills).sort())) {
+            if (!actor?.flags?.ucttg?.hasOwnProperty('ffgimportid') && JSON.stringify(Object.keys(skills.skills).sort()) !== JSON.stringify(Object.keys(actor.system.skills).sort())) {
               // only apply the skills if it wasn't an imported actor and the skills loaded are not the same
               actor.update({
                 system: {
@@ -324,9 +462,7 @@ Hooks.once("init", async function () {
     Hooks.on("preCreateCombatant", async (combatant, context, options, combatantId) => {
       await game.combat.handleCombatantAddition(combatant, context, options, combatantId);
     });
-    Hooks.on("preDeleteCombatant", async (combatant, options, unknownId) => {
-      await game.combat.handleCombatantRemoval(combatant, options, unknownId);
-    });
+    CONFIG.FFG.preCombatDelete = Hooks.on("preDeleteCombatant", registerHandleCombatantRemoval);
   }
 
   await gameSkillsList();
@@ -336,16 +472,30 @@ Hooks.once("init", async function () {
 
   // Register sheet application classes
   Actors.unregisterSheet("core", ActorSheet);
-  Actors.registerSheet("ffg", ActorSheetFFG, { makeDefault: true, label: "Actor Sheet v1" });
-  Actors.registerSheet("ffg", ActorSheetFFGV2, { label: "Actor Sheet v2" });
+  Actors.registerSheet("ffg", ActorSheetFFG, { label: "Actor Sheet v1" });
+  Actors.registerSheet("ffg", ActorSheetFFGV2, { makeDefault: true, label: "Actor Sheet v2" });
   Actors.registerSheet("ffg", AdversarySheetFFG, { types: ["character"], label: "Adversary Sheet v1" });
   Actors.registerSheet("ffg", AdversarySheetFFGV2, { types: ["character"], label: "Adversary Sheet v2" });
+  Actors.registerSheet("ffg", ActorSheetFFG, { types: ["ace"], label: "Ace Sheet v1" });
+  Actors.registerSheet("ffg", ActorSheetFFGV2, { types: ["ace"], makeDefault: true, label: "Ace Sheet v2" });
+  Actors.registerSheet("ffg", ActorSheetFFG, { types: ["mobilesuit"], label: "Mobile Suit Sheet v1" });
+  Actors.registerSheet("ffg", ActorSheetFFGV2, { types: ["mobilesuit"], makeDefault: true, label: "Mobile Suit Sheet v2" });
   Items.unregisterSheet("core", ItemSheet);
-  Items.registerSheet("ffg", ItemSheetFFG, { makeDefault: true, label: "Item Sheet v1" });
-  Items.registerSheet("ffg", ItemSheetFFGV2, { label: "Item Sheet v2" });
+  Items.registerSheet("ffg", ItemSheetFFG, { label: "Item Sheet v1" });
+  Items.registerSheet("ffg", ItemSheetFFGV2, { makeDefault: true, label: "Item Sheet v2" });
 
   // Add utilities to the global scope, this can be useful for macro makers
   window.DicePoolFFG = DicePoolFFG;
+
+  // add back in the select helper (under a new name, so we don't get warnings)
+  Handlebars.registerHelper({
+    selectFfg: function (selected, options) {
+      const escapedValue = RegExp.escape(Handlebars.escapeExpression(selected));
+      const rgx = new RegExp(' value=[\"\']' + escapedValue + '[\"\']');
+      const html = options.fn(this);
+      return html.replace(rgx, "$& selected");
+    }
+  });
 
   // Register Handlebars utilities
   Handlebars.registerHelper("json", JSON.stringify);
@@ -442,7 +592,9 @@ Hooks.once("init", async function () {
   });
 
   Handlebars.registerHelper("ffgDiceSymbols", function (text) {
-    return PopoutEditor.renderDiceImages(text);
+    //return PopoutEditor.renderDiceImages(text);
+    CONFIG.logger.warn("This function is no longer needed and should not be called. Please notify the devs if you see this message.");
+    return text;
   });
 
   Handlebars.registerHelper("object", function ({ hash }) {
@@ -463,10 +615,10 @@ Hooks.once("init", async function () {
             result += options.fn({item: list[i]});
 
     return result.length > 0 ? result : options.inverse();
-});
+  });
 
 
-  TemplateHelpers.preload();
+  await TemplateHelpers.preload();
 });
 
 Hooks.on("renderSidebarTab", (app, html, data) => {
@@ -504,70 +656,59 @@ Hooks.on("renderActorDirectory", (app, html, data) => {
 Hooks.on("renderCompendiumDirectory", (app, html, data) => {
   if (game.user.isGM) {
     const div = $(`<div class="og-character-import"></div>`);
-    const divider = $("<hr><h4>OggDude Import</h4>");
-    const datasetImportButton = $('<button class="og-character">Dataset Importer</button>');
-    div.append(divider, datasetImportButton);
+    const divider = $("<hr><h4>Importers</h4>");
+    const datasetImportButton = $('<button class="og-character">OggDude Dataset Importer</button>');
+    const datasetImportButton2 = $('<button class="swa-character">Adversaries Dataset Importer</button>');
 
+    div.append(divider, datasetImportButton, datasetImportButton2);
     html.find(".directory-footer").append(div);
 
     html.find(".og-character").click(async (event) => {
       event.preventDefault();
       new DataImporter().render(true);
     });
+
+    html.find(".swa-character").click(async (event) => {
+      event.preventDefault();
+      new SWAImporter().render(true);
+    });
   }
 });
 
 // Update chat messages with dice images
-Hooks.on("renderChatMessage", (app, html, messageData) => {
+Hooks.on("renderChatMessage", async (app, html, messageData) => {
   const content = html.find(".message-content");
-  content[0].innerHTML = PopoutEditor.renderDiceImages(content[0].innerHTML);
+  content[0].innerHTML = await PopoutEditor.renderDiceImages(content[0].innerHTML);
 
   html.on("click", ".ffg-pool-to-player", () => {
-    const poolData = messageData.message.flags.starwarsffg;
+    const poolData = messageData.message.flags.ucttg;
 
     const dicePool = new DicePoolFFG(poolData.dicePool);
 
     DiceHelpers.displayRollDialog(poolData.roll.data, dicePool, poolData.description, poolData.roll.skillName, poolData.roll.item, poolData.roll.flavor, poolData.roll.sound);
   });
 
-  html.find(".item-display .item-pill, .item-properties .item-pill").on("click", async (event) => {
+  // collapse / expand item details
+  html.find(".ucttg.item-card .summary").on("click", async (event) => {
     event.preventDefault();
-    event.stopPropagation();
     const li = $(event.currentTarget);
-    const itemType = li.attr("data-item-embed-type");
-    let itemData = {};
-    const newEmbed = li.attr("data-item-embed");
-
-    if (newEmbed === "true" && itemType === "itemmodifier") {
-      itemData = {
-        img: li.attr('data-item-embed-img'),
-        name: li.attr('data-item-embed-name'),
-        type: li.attr('data-item-embed-type'),
-        system: {
-          description: li.attr('data-item-embed-description'),
-          attributes: JSON.parse(li.attr('data-item-embed-modifiers')),
-          rank: li.attr('data-item-embed-rank'),
-          rank_current: li.attr('data-item-embed-rank'),
-        },
-      };
-      const tempItem = await Item.create(itemData, {temporary: true});
-      tempItem.sheet.render(true);
+    const details = li.parent().children(".collapsible-content");
+    const collapseButton = li.children(".collapse-toggle");
+    // Toggle summary
+    if (li.hasClass("expanded")) {
+      details.slideUp(200, () => details.hide());
     } else {
-      CONFIG.logger.debug(`Unknown item type: ${itemType}, or lacking new embed system`);
-      const li2 = event.currentTarget;
-      let uuid = li2.dataset.itemId;
-      let modifierId = li2.dataset.modifierId;
-      let modifierType = li2.dataset.modifierType;
-      if (li2.dataset.uuid) {
-        uuid = li2.dataset.uuid;
-      }
-
-      const parts = uuid.split(".");
-
-      const [entityName, entityId, embeddedName, embeddedId] = parts;
-
-      await EmbeddedItemHelpers.displayOwnedItemItemModifiersAsJournal(embeddedId, modifierType, modifierId, entityId);
+      details.show();
+      details.slideDown(200);
     }
+    li.toggleClass("expanded");
+    collapseButton.toggleClass("fa-chevron-down");
+    collapseButton.toggleClass("fa-chevron-left");
+  });
+
+  // item card tooltips
+  html.find(".ucttg.item-card .item-pill, .ucttg .specials .hover-tooltip").on("mouseover", (event) => {
+    itemPillHover(event);
   });
 });
 
@@ -584,7 +725,27 @@ function isCurrentVersionNullOrBlank(currentVersion) {
 Hooks.once("ready", async () => {
   SettingsHelpers.readyLevelSetting();
 
-  const currentVersion = game.settings.get("starwarsffg", "systemMigrationVersion");
+  if (!game.settings.get("ucttg", "token_configured")) {
+    const tokenData = {
+      bar1: {
+        attribute: "stats.wounds",
+      },
+      bar2: {
+        attribute: "stats.strain",
+      },
+      displayBars: 20, // hovered by owner
+    };
+    const existingSettings = game.settings.get("core", "defaultToken");
+    const updateData = foundry.utils.mergeObject(existingSettings, tokenData);
+    game.settings.set("core", "defaultToken", updateData);
+    game.settings.set("ucttg", "token_configured", true);
+  }
+
+  // NOTE: the "currentVersion" will be updated in handleUpdate, preventing the code below from running in the future
+  // this is intended to encourage migrating code to this file to clean up the main file
+  await handleUpdate();
+
+  const currentVersion = game.settings.get("ucttg", "systemMigrationVersion");
 
   const version = game.system.version;
   const isAlpha = game.system.version.includes("alpha");
@@ -626,7 +787,7 @@ Hooks.once("ready", async () => {
         }
 
         // migrate all character to using current skill list if not default.
-        let skilllist = game.settings.get("starwarsffg", "skilltheme");
+        let skilllist = game.settings.get("ucttg", "skilltheme");
 
         if (CONFIG.FFG?.alternateskilllists?.length) {
           try {
@@ -665,9 +826,9 @@ Hooks.once("ready", async () => {
         if (data.files.includes(`worlds/${game.world.id}/skills.json`)) {
           // if the skills.json file is found AND the skillsList in setting is the default skill list then read the data from the file.
           // This will make sure that the data from the JSON file overwrites the data in the setting.
-          if ((await game.settings.get("starwarsffg", "arraySkillList")) === defaultSkillList) {
+          if ((await game.settings.get("ucttg", "arraySkillList")) === defaultSkillList) {
             const fileData = await fetch(`/worlds/${game.world.id}/skills.json`).then((response) => response.json());
-            await game.settings.set("starwarsffg", "arraySkillList", JSON.stringify(fileData));
+            await game.settings.set("ucttg", "arraySkillList", JSON.stringify(fileData));
             skillList = fileData;
           }
         } else {
@@ -675,8 +836,8 @@ Hooks.once("ready", async () => {
         }
 
         CONFIG.FFG.alternateskilllists = skillList;
-        if (game.settings.get("starwarsffg", "skilltheme") !== "starwars") {
-          const altSkills = JSON.parse(JSON.stringify(CONFIG.FFG.alternateskilllists.find((list) => list.id === game.settings.get("starwarsffg", "skilltheme")).skills));
+        if (game.settings.get("ucttg", "skilltheme") !== "starwars") {
+          const altSkills = JSON.parse(JSON.stringify(CONFIG.FFG.alternateskilllists.find((list) => list.id === game.settings.get("ucttg", "skilltheme")).skills));
 
           let skills = {};
           Object.keys(altSkills).forEach((skillKey) => {
@@ -794,7 +955,7 @@ Hooks.once("ready", async () => {
       // update skill sets
       ui.notifications.info('Updating skill groupings, please be patient...');
       try {
-        const skillTheme = game.settings.get("starwarsffg", "skilltheme");
+        const skillTheme = game.settings.get("ucttg", "skilltheme");
         if (skillTheme === 'starwars') {
           const skills = CONFIG.FFG.alternateskilllists.find((list) => list.id === skillTheme).skills;
           const actors = game.actors.filter(i => i.type === 'character' || i.type === 'minion');
@@ -813,13 +974,13 @@ Hooks.once("ready", async () => {
       }
       ui.notifications.info('Done updating skill groupings!');
     }
-    game.settings.set("starwarsffg", "systemMigrationVersion", version);
+    game.settings.set("ucttg", "systemMigrationVersion", version);
   }
 
   // enable functional testing
   if (game.user.isGM && window.location.href.includes("localhost") && game?.data?.system?.data?.test) {
     const command = `
-      const testing = import('/systems/starwarsffg/tests/ffg-tests.js').then((mod) => {
+      const testing = import('/systems/ucttg/tests/ffg-tests.js').then((mod) => {
       const tester = new mod.default();
       tester.render(true);
     });
@@ -838,14 +999,80 @@ Hooks.once("ready", async () => {
   }
 
   // Wait to register hotbar drop hook on ready so that modules could register earlier if they want to
-  Hooks.on("hotbarDrop", (bar, data, slot) => createFFGMacro(data, slot));
+  Hooks.on("hotbarDrop", async (bar, data, slot) => await createFFGMacro(bar, data, slot));
+  Hooks.on("createMacro", async function (...args) {
+    args[0] = await updateMacro(args[0]);
+    return args;
+  });
 
   Hooks.on("closeItemSheetFFG", (item) => {
     Hooks.call(`closeAssociatedTalent_${item.object._id}`, item);
   });
 
+  Hooks.on("createItem", async (item, options, userId) => {
+    // add talents from species to character
+    if (item.isEmbedded && item.parent.documentName === "Actor") {
+      const actor = item.actor
+      if (item.type === "species" && actor.type === "character") {
+        const toAdd = [];
+        // talents
+        for(const talentId of Object.keys(item.system.talents)) {
+          const talentUuid = item.system.talents[talentId].source;
+          const talent = await fromUuid(talentUuid);
+          if (talent) {
+            toAdd.push(talent);
+          }
+        }
+        // abilities
+        for(const abilityId of Object.keys(item.system.abilities)) {
+          const abilityData = item.system.abilities[abilityId];
+          const abilityItem = await new Item(
+            {
+              name: abilityData.name,
+              type: "ability",
+              system: {
+                description: abilityData.system.description,
+              }
+            },
+            {
+              temporary: true,
+            },
+          );
+          toAdd.push(abilityItem);
+        }
+        if (toAdd.length > 0) {
+          const created = await actor.createEmbeddedDocuments("Item", toAdd);
+          created.forEach(created_item => {
+            // mark the items as coming from a species
+            created_item.update({flags: {ucttg: {fromSpecies: true}}});
+          });
+        }
+      }
+    }
+  });
+  // data for _onDropItemCreate has system.encumbrance.adjusted = 0, despite it being proper in the item itself
+  Hooks.on("deleteItem", (item, options, userId) => {
+    // remove talents added by species
+    if (item.isEmbedded && item.parent.documentName === "Actor") {
+      const actor = item.actor
+      if (item.type === "species" && actor.type === "character") {
+        const toDelete = [];
+        for(const talentId of Object.keys(item.system.talents)) {
+          const speciesTalent = item.system.talents[talentId];
+          const actorTalent = actor.items.find(i => i.name === speciesTalent.name && i.type === "talent");
+          if (actorTalent) {
+            toDelete.push(actorTalent.id);
+          }
+        }
+        if (toDelete.length > 0) {
+          actor.deleteEmbeddedDocuments("Item", toDelete);
+        }
+      }
+    }
+  });
+
   // Display Destiny Pool
-  let destinyPool = { light: game.settings.get("starwarsffg", "dPoolLight"), dark: game.settings.get("starwarsffg", "dPoolDark") };
+  let destinyPool = { light: game.settings.get("ucttg", "dPoolLight"), dark: game.settings.get("ucttg", "dPoolDark") };
 
   // future functionality to allow multiple menu items to be passed to destiny pool
   const defaultDestinyMenu = [
@@ -884,21 +1111,28 @@ Hooks.once("ready", async () => {
   await registerCrewRoles();
   registerTokenControls();
 
-  if (game.settings.get("starwarsffg", "useGenericSlots")) {
-    if (game.user.isGM) {
-      game.socket.on("system.starwarsffg", async (...args) => {
-        if (game.user.id === game.users.find(i => i.isGM)?.id) {
-          const event_type = args[0].event;
-          if (event_type === "combat") {
-            CONFIG.logger.debug("Processing combat event from player");
-            const data = args[0]?.data;
-            CONFIG.logger.debug(`Received data: ${data.combatId}, ${data.round}, ${data.slot}, ${data.combatantId}`);
-            const combat = game.combats.get(data.combatId);
-            await combat.claimSlot(data.round, data.slot, data.combatantId);
-          }
+  if (game.settings.get("ucttg", "useGenericSlots")) {
+
+    game.socket.on("system.ucttg", async (...args) => {
+      const event_type = args[0].event;
+      if (game.user.id === game.users.activeGM?.id) {
+        if (event_type === "combat") {
+          CONFIG.logger.debug("Processing combat event from player");
+          const data = args[0]?.data;
+          CONFIG.logger.debug(`Received data: ${data.combatId}, ${data.round}, ${data.slot}, ${data.combatantId}`);
+          const combat = game.combats.get(data.combatId);
+          await combat.claimSlot(data.round, data.slot, data.combatantId);
         }
-      });
-    }
+      } else if (event_type === "trackerRender") {
+        CONFIG.logger.debug("Received combat tracker rerender request");
+        const incomingCombatID = args[0].combatId;
+        const incomingCombat = game.combats.get(incomingCombatID);
+        incomingCombat.debounceRender();
+        incomingCombat.setupTurns();
+      }
+    });
+
+
   }
 
   Hooks.on("refreshToken", (token) => {
@@ -908,7 +1142,7 @@ Hooks.once("ready", async () => {
     if (token?.actor?.type === "minion") {
       drawMinionCount(token);
     }
-    if (["character"].includes(token?.actor?.type)) {
+    if (["character", "nemesis", "rival", "ace", "mobilesuit"].includes(token?.actor?.type)) {
       drawAdversaryCount(token);
     }
     return token;
@@ -916,7 +1150,7 @@ Hooks.once("ready", async () => {
 });
 
 Hooks.once("diceSoNiceReady", (dice3d) => {
-  let dicetheme = game.settings.get("starwarsffg", "dicetheme");
+  let dicetheme = game.settings.get("ucttg", "dicetheme");
   if (!dicetheme || dicetheme == "starwars") {
     dice3d.addSystem({ id: "swffg", name: "Star Wars FFG" }, true);
 
@@ -1139,7 +1373,7 @@ Hooks.once("diceSoNiceReady", (dice3d) => {
 
 Hooks.on("pauseGame", () => {
   if (game.data.paused) {
-    const pausedImage = game.settings.get("starwarsffg", "ui-pausedImage");
+    const pausedImage = game.settings.get("ucttg", "ui-pausedImage");
     if (pausedImage) {
       $("#pause img").css("content", `url(${pausedImage})`);
     }
@@ -1149,25 +1383,13 @@ Hooks.on("pauseGame", () => {
 async function registerCrewRoles() {
   const defaultArrayCrewRoles = [
     {
-      "role_name":  game.i18n.localize("SWFFG.Crew.Roles.None"),
-      "role_skill": undefined,
-      "use_weapons": false,
-      "use_handling": false
-    },
-    {
-      "role_name":  game.i18n.localize("SWFFG.Crew.Roles.Pilot_Space"),
-      "role_skill":  game.i18n.localize("SWFFG.SkillsNamePilotingSpace").replace(' ', ' '),
-      "use_weapons": false,
-      "use_handling": true
-    },
-    {
       "role_name":  game.i18n.localize("SWFFG.Crew.Roles.Gunner.Name"),
       "role_skill":  game.i18n.localize("SWFFG.SkillsNameGunnery"),
       "use_weapons": true,
       "use_handling": false
     }
   ];
-  game.settings.registerMenu("starwarsffg", "arrayCrewRoles", {
+  game.settings.registerMenu("ucttg", "arrayCrewRoles", {
     name: game.i18n.localize("SWFFG.Crew.Settings.Name"),
     label: game.i18n.localize("SWFFG.Crew.Settings.Label"),
     hint: game.i18n.localize("SWFFG.Crew.Settings.Hint"),
@@ -1176,8 +1398,8 @@ async function registerCrewRoles() {
     restricted: true,
   });
 
-  game.settings.register("starwarsffg", "arrayCrewRoles", {
-    module: "starwarsffg",
+  game.settings.register("ucttg", "arrayCrewRoles", {
+    module: "ucttg",
     name: "arrayCrewRoles",
     scope: "world",
     default: defaultArrayCrewRoles,
@@ -1190,12 +1412,103 @@ async function registerCrewRoles() {
       "use_weapons": false,
       "use_handling": false
     };
-  game.settings.register("starwarsffg", "initiativeCrewRole", {
-    module: "starwarsffg",
+  game.settings.register("ucttg", "initiativeCrewRole", {
+    module: "ucttg",
     name: "initiativeCrewRole",
     scope: "world",
     default: initiativeCrewRole,
     config: false,
     type: Object,
   });
+}
+
+/**
+ * Check if all built-in compendiums are empty or not
+ * @returns {Promise<boolean>}
+ */
+async function compendiumsEmpty() {
+  const compendiums = game.packs.contents.filter(i => i.collection.includes("starwars"));
+  for (const compendium of compendiums) {
+    if ((await compendium.getDocuments()).length !== 0) {
+      return false;
+    }
+  }
+
+  return compendiums.length > 0;
+}
+
+/**
+ * Give a custom, Star Wars FFG tooltip when qualities, attachments, upgrades, etc are hovered (after sending to chat)
+ * @param event
+ */
+export function itemPillHover(event) {
+  event.preventDefault();
+  const li = $(event.currentTarget);
+  const itemName = li.data("item-embed-name");
+  const itemImage = li.data("item-embed-img");
+  const itemType = li.data("item-type");
+  const itemRanks = li.data("item-ranks");
+  let desc = li.data("desc");
+  let descRanks = "";
+  if (itemType === "itemattachment") {
+    const rarity = li.data("rarity");
+    const price = li.data("price");
+    if (price) {
+      desc = `<span class="statt" title="Price"><i class="fa-solid fa-dollar-sign"></i>${price}</span>${desc}`
+    }
+    if (rarity) {
+      desc = `<span class="stat stat-right" title="Rarity"><i class="fa-solid fa-magnifying-glass"></i>${rarity}</span>${desc}`
+    }
+
+    // if the item has embedded mods, pull the data and add it to the description
+    let modNames = li.data("mod-names");
+    let modDescs = li.data("mod-descs");
+    let modActives = li.data("mod-actives");
+    if (modNames) {
+      modNames = modNames.split("~");
+      modDescs = modDescs.split("~");
+      modActives = modActives.split("~");
+      CONFIG.logger.debug(modNames);
+      CONFIG.logger.debug(modDescs);
+      CONFIG.logger.debug(modActives);
+      let newDesc = `<hr><b>Mods</b>:<br>`;
+      for (let i = 0; i < modNames.length - 1; i++) {
+        if (modActives[i] === "true") {
+          modNames[i] = `<i class="fa-solid fa-user-check" title="Installed"></i>&nbsp;${modNames[i]}`;
+        } else {
+          modNames[i] = `<i class="fa-duotone fa-solid fa-user-xmark" title="Not Installed"></i>&nbsp;${modNames[i]}`;
+        }
+        newDesc += `<u>${modNames[i]}</u>:&nbsp;${modDescs[i]}<br>`;
+      }
+      desc += newDesc;
+    }
+  }
+  if (itemRanks > 0) {
+    descRanks = `${itemRanks} ranks`;
+  } else {
+    if (!["specialization", "signatureAbility", "itemattachment"].includes(itemType)) {
+      descRanks = "Not ranked";
+    }
+  }
+  let embeddedContent = `
+    <section class="chat-msg-tooltip content">
+      <section class="header">
+        <div class="top">
+          <img class="tooltip-img" src="${itemImage}"/>
+          <div class="name name-stacked">
+            <span class="title">${itemName}</span>
+          </div>
+        </div>
+      </section>
+      <section class="description">
+        ${desc}
+      </section>
+      <section class="ranks">
+        ${descRanks}
+      </section>
+    </section>
+  `;
+  if (itemType !== undefined) {
+    li.attr("data-tooltip", embeddedContent);
+  }
 }

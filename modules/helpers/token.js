@@ -1,27 +1,27 @@
 export function registerTokenControls() {
-  game.settings.register("starwarsffg", "showMinionCount", {
+  game.settings.register("ucttg", "showMinionCount", {
     name: game.i18n.localize("SWFFG.Settings.showMinionCount.Name"),
     hint: game.i18n.localize("SWFFG.Settings.showMinionCount.Hint"),
     scope: "world",
-    config: true,
+    config: false,
     default: true,
     type: Boolean,
     onChange: (rule) => window.location.reload()
   });
-  game.settings.register("starwarsffg", "showAdversaryCount", {
+  game.settings.register("ucttg", "showAdversaryCount", {
     name: game.i18n.localize("SWFFG.Settings.showAdversaryCount.Name"),
     hint: game.i18n.localize("SWFFG.Settings.showAdversaryCount.Hint"),
     scope: "world",
-    config: true,
+    config: false,
     default: true,
     type: Boolean,
     onChange: (rule) => window.location.reload()
   });
-    game.settings.register("starwarsffg", "adversaryItemName", {
+    game.settings.register("ucttg", "adversaryItemName", {
     name: game.i18n.localize("SWFFG.Settings.AdversaryItemName.Name"),
     hint: game.i18n.localize("SWFFG.Settings.AdversaryItemName.Hint"),
     scope: "world",
-    config: true,
+    config: false,
     default: "Adversary",
     type: String,
     onChange: (rule) => window.location.reload()
@@ -29,7 +29,7 @@ export function registerTokenControls() {
 }
 
 export function drawMinionCount(token) {
-  if (!game.settings.get("starwarsffg", "showMinionCount")) {
+  if (!game.settings.get("ucttg", "showMinionCount")) {
     return;
   }
   const borderWidth = 0.35;
@@ -57,8 +57,6 @@ export function drawMinionCount(token) {
   const insideGap = 5;
   const availableSpace = tokenWidth - ((markerWidth * maxCount) + (insideGap * (maxCount - 1)));
   const outsideGap = availableSpace / 2;
-  CONFIG.logger.debug(`drawing minion count. calculated tokenWidth: ${tokenWidth}, insideGap: ${insideGap}, availableSpace: ${availableSpace}, outsideGap: ${outsideGap}`);
-  CONFIG.logger.debug(`curCount: ${curCount}, maxCount: ${maxCount}`);
 
   if (maxCount > maxRender) {
     const text = new PIXI.Text(
@@ -112,11 +110,11 @@ export function drawMinionCount(token) {
 }
 
 export function drawAdversaryCount(token) {
-  if (!game.settings.get("starwarsffg", "showAdversaryCount")) {
+  if (!game.settings.get("ucttg", "showAdversaryCount")) {
     return;
   }
   const overflowColor = "0xDAA520";
-  const itemName = game.settings.get("starwarsffg", "adversaryItemName");
+  const itemName = game.settings.get("ucttg", "adversaryItemName");
   const adversaryItems = token?.actor?.items?.filter(i => i.name === itemName) || [];
   let adversaryLevel = 0;
   adversaryItems.forEach(function (item) {
@@ -132,12 +130,13 @@ export function drawAdversaryCount(token) {
     } else {
       token.adversaryLevel.removeChildren().forEach(i => i.destroy());
     }
-    const sprite = PIXI.Sprite.from(`systems/starwarsffg/images/adversary/adversary-${adversaryLevel}.png`);
+    const sprite = PIXI.Sprite.from(`systems/ucttg/images/adversary/adversary-${adversaryLevel}.png`);
     sprite.scale.set(0.15, 0.15);
     sprite.x = (token.w / 2) - 20;
     sprite.y = token.h / 2 + 15;
     if (adversaryLevel > 5) {
       sprite.tint = overflowColor;
+      adversaryLevel = 6;
     }
     token.adversaryLevel.addChild(sprite);
   }

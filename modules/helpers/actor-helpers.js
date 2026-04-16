@@ -1,8 +1,9 @@
 import ModifierHelpers from "./modifiers.js";
+import {migrateDataToSystem} from "./migration.js";
 
 export default class ActorHelpers {
-  static updateActor(event, formData) {
-    formData = expandObject(formData);
+  static async updateActor(event, formData) {
+    formData = foundry.utils.expandObject(formData);
     const ownedItems = this.actor.items;
 
     // as of Foundry v10, saving an editor only submits the single entry for that editor
@@ -29,8 +30,16 @@ export default class ActorHelpers {
             }
           });
           // Handle stat updates
-          Object.keys(CONFIG.FFG.character_stats).forEach((k) => {
-            const key = CONFIG.FFG.character_stats[k].value;
+          let stats;
+          if (this.actor.type === "rival") {
+            stats = CONFIG.FFG.rival_stats;
+          } else {
+            stats = CONFIG.FFG.character_stats;
+          }
+          const autoSoakCalculation = (typeof this.actor.flags?.ucttg?.config?.enableAutoSoakCalculation === "undefined" && game.settings.get("ucttg", "enableSoakCalc")) || this.actor.flags.ucttg?.config.enableAutoSoakCalculation;
+
+          Object.keys(stats).forEach((k) => {
+            const key = stats[k].value;
 
             let total = ModifierHelpers.getCalculateValueForAttribute(key, this.actor.system.attributes, ownedItems, "Stat");
 
@@ -71,8 +80,6 @@ export default class ActorHelpers {
 
             let y = parseInt(formData.data.attributes[key].value, 10) + x;
             if (key === "Soak") {
-              const autoSoakCalculation = (typeof this.actor.flags?.starwarsffg?.config?.enableAutoSoakCalculation === "undefined" && game.settings.get("starwarsffg", "enableSoakCalc")) || this.actor.flags.starwarsffg?.config.enableAutoSoakCalculation;
-
               if (autoSoakCalculation) {
                 y = 0;
               }
@@ -118,7 +125,7 @@ export default class ActorHelpers {
             } else if (formData.data?.stats[k]?.max) {
               statValue = parseInt(formData.data.stats[k].max, 10);
             } else {
-              if (formData.data.stats[k]?.value) {
+              if (Number.isInteger(formData.data.stats[k]?.value)) {
                 statValue = parseInt(formData.data.stats[k].value, 10);
               } else {
                 statValue = 0;
@@ -161,7 +168,7 @@ export default class ActorHelpers {
       }
     }
     // Handle the free-form attributes list
-    const formAttrs = expandObject(formData)?.data?.attributes || {};
+    const formAttrs = foundry.utils.expandObject(formData)?.data?.attributes || {};
     const attributes = Object.values(formAttrs).reduce((obj, v) => {
       let k = v["key"].trim();
       delete v["key"];
@@ -180,7 +187,79 @@ export default class ActorHelpers {
     formData.data.attributes = attributes;
 
     // Update the Actor
-    setProperty(formData, `flags.starwarsffg.loaded`, false);
-    return this.object.update(formData);
+    foundry.utils.setProperty(formData, `flags.ucttg.loaded`, false);
+
+    // as of v12, "data" is no longer shimmed into "system" for you, so we must do it ourselves
+    formData = migrateDataToSystem(formData);
+
+    const curXP = this.object?.system?.experience?.available ? this.object.system.experience.available : 0;
+    const newXP = formData?.system?.experience?.available ? formData.system.experience.available : 0;
+    if (curXP > newXP) {
+      // XP has been manually edited to a lower value (spent)
+      await xpLogSpend(this.object, "manual spend", curXP - newXP, newXP, formData?.system?.experience?.total);
+    } else if (curXP < newXP) {
+      // XP has been manually edited to a higher value (granted)
+      await xpLogEarn(this.object, newXP - curXP, newXP, formData?.system?.experience?.total, "manual grant", "Self");
+    }
+
+    return await this.object.update(formData);
   }
+}
+
+/**
+ * Adds a SPEND log entry to the actor's XP log (accessed via the notebook under specializations)
+ * @param actor - ffgActor object
+ * @param action - action taken (e.g. "skill rank Astrogation 1 --> 2")
+ * @param cost - XP spent
+ * @param available - XP available
+ * @param total - XP total
+ * @returns {Promise<void>}
+ */
+export async function xpLogSpend(actor, action, cost, available, total) {
+    const xpLog = actor.getFlag("ucttg", "xpLog") || [];
+    const date = new Date().toISOString().slice(0, 10);
+    let newEntry = `<font color="red"><b>${date}</b>: spent <b>${cost}</b> XP for <b>${action}</b> (${available} available, ${total} total)</font>`;
+    await actor.setFlag("ucttg", "xpLog", [newEntry, ...xpLog]);
+    await notifyXpSpend(actor, action);
+}
+
+/**
+ * Whisper the GM notifying them of spending XP
+ * @param actor
+ * @param action
+ * @returns {Promise<void>}
+ */
+async function notifyXpSpend(actor, action) {
+  if (game.settings.get("ucttg", "notifyOnXpSpend")) {
+    const chatData = {
+      speaker: {
+        actor: actor,
+      },
+      content: `bought ${action}`,
+      whisper: ChatMessage.getWhisperRecipients("GM"),
+    };
+    await ChatMessage.create(chatData);
+  }
+}
+
+/**
+ * Adds a GRANT log entry to the actor's XP log (accessed via the notebook under specializations)
+ * @param actor - ffgActor object
+ * @param grant - XP granted
+ * @param available - XP available
+ * @param total - XP total
+ * @param note - note about the grant
+ * @param granter - string for who did the granting
+ * @returns {Promise<void>}
+ */
+export async function xpLogEarn(actor, grant, available, total, note, granter="GM") {
+  const xpLog = actor.getFlag("ucttg", "xpLog") || [];
+  const date = new Date().toISOString().slice(0, 10);
+  let newEntry;
+  if (note) {
+    newEntry = `<font color="green"><b>${date}</b>: ${granter} granted <b>${grant}</b> XP, reason: ${note} (${available} available, ${total} total)</font>`;
+  } else {
+    newEntry = `<font color="green"><b>${date}</b>: ${granter} granted <b>${grant}</b> XP (${available} available, ${total} total)</font>`;
+  }
+  await actor.setFlag("ucttg", "xpLog", [newEntry, ...xpLog]);
 }

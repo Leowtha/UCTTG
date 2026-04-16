@@ -4,7 +4,7 @@ export default class Helpers {
       console.log(`${CONFIG.module} | `, ...args);
     },
     debug: (...args) => {
-      if (game.settings.get("starwarsffg", "enableDebug")) {
+      if (game.settings.get("ucttg", "enableDebug")) {
         console.debug(`${CONFIG.module} | `, ...args);
       }
     },

@@ -61,3 +61,61 @@ export const character_stats = {
     label: "SWFFG.ForcePool",
   },
 };
+
+export const rival_stats = {
+  "wounds": {
+    value: "Wounds",
+    label: "SWFFG.Wounds",
+  },
+  "soak": {
+    value: "Soak",
+    label: "SWFFG.Soak",
+  },
+  "defencemelee": {
+    value: "Defence-Melee",
+    label: "SWFFG.DefenseMeleeLabel",
+  },
+  "defenceranged": {
+    value: "Defence-Ranged",
+    label: "SWFFG.DefenseRangedLabel",
+  },
+  "encumbrance": {
+    value: "Encumbrance",
+    label: "SWFFG.Encumbrance",
+  },
+  "forcePool": {
+    value: "ForcePool",
+    label: "SWFFG.ForcePool",
+  },
+};
+
+export const ace_stats = {
+  "wounds": {
+    value: "Wounds",
+    label: "SWFFG.Wounds",
+  },
+  "strain": {
+    value: "Strain",
+    label: "SWFFG.Strain",
+  },
+  "soak": {
+    value: "Soak",
+    label: "SWFFG.Soak",
+  },
+  "defencemelee": {
+    value: "Defence-Melee",
+    label: "SWFFG.DefenseMeleeLabel",
+  },
+  "defenceranged": {
+    value: "Defence-Ranged",
+    label: "SWFFG.DefenseRangedLabel",
+  },
+  "encumbrance": {
+    value: "Encumbrance",
+    label: "SWFFG.Encumbrance",
+  },
+  "forcePool": {
+    value: "ForcePool",
+    label: "SWFFG.ForcePool",
+  },
+};

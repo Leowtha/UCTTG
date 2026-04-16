@@ -13,6 +13,7 @@
         </div>
         <div class="container">
           <div class="header-name header-description-block">
+            <div class="title-card rival" style="background: rgba(73, 12, 11, 0.85); color:#ffffff">ACE</div>
             <div>
               <h2><input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'SWFFG.Name'}}" data-dtype="String" /></h2>
             </div>
@@ -29,34 +30,10 @@
                     <div class="drag-note">{{localize "SWFFG.DragNotes"}}</div>
                   {{/each_when}}
                 </td>
-                <td style="{{#if limited}}display:none;{{/if}}">
-                  <i class="fa-regular fa-circle-up ffg-purchase" data-buy-action="signatureability" title="{{localize "SWFFG.Actors.Sheets.Purchase.Tooltip.SignatureAbility"}}"></i>
-                  {{localize "SWFFG.SignatureAbilities"}}:
-                </td>
-                <td style="{{#if limited}}display:none;{{/if}}">
-                  {{#each_when actor.items "type" "signatureability"}}
-                  <div class="signatureability-pill item" data-item-id="{{item._id}}">
-                    {{item.name}} <i class="fas fa-times item-delete"></i>
-                  </div>
-                  {{else}}
-                  <div class="drag-note">{{localize "SWFFG.DragNotes"}}</div>
-                  {{/each_when}}
-                </td>
               </tr>
               <tr style="{{#if limited}}display:none;{{/if}}">
                 <td>
-                  {{localize "SWFFG.Career"}}:
-                </td>
-                <td>
-                  {{#each_when actor.items "type" "career"}}
-                  <div class="career-pill item" data-item-id="{{item._id}}">{{item.name}} <i class="fas fa-times item-delete"></i></div>
-                  {{else}}
-                  <div class="drag-note">{{localize "SWFFG.DragNotes"}}</div>
-                  {{/each_when}}
-                </td>
-                <td>
                   {{#if (eq actor.flags.ucttg.config.enableForcePool true)}}
-                  <i class="fa-regular fa-circle-up ffg-purchase" data-buy-action="forcepower" title="{{localize "SWFFG.Actors.Sheets.Purchase.Tooltip.ForcePower"}}"></i>
                   {{localize "SWFFG.ForcePowers"}}:
                   {{/if}}
                 </td>
@@ -72,36 +49,6 @@
                   {{/if}}
                 </td>
               </tr>
-              <tr style="{{#if limited}}display:none;{{/if}}">
-                <td>
-                  <i class="fa-regular fa-circle-up ffg-purchase" data-buy-action="specialization" title="{{localize "SWFFG.Actors.Sheets.Purchase.Tooltip.Specialization" }}"></i>
-                  {{localize "SWFFG.Specializations"}}:
-                </td>
-                <td>
-                  {{#each_when actor.items "type" "specialization"}}
-                  <div class="specialization-pill item" data-item-id="{{item._id}}">
-                    {{item.name}} <i class="fas fa-times item-delete"></i>
-                  </div>
-                  {{else}}
-                  <div class="drag-note">{{localize "SWFFG.DragNotes"}}</div>
-                  {{/each_when}}
-                </td>
-                <td></td>
-                <td></td>
-              </tr>
-              {{#if (contains classType "V2")}}{{else}}
-              <tr style="{{#if limited}}display:none;{{/if}}">
-                <td>
-                  <div>
-                    <a class="alt-tab" data-tab="general"><i class="far fa-id-card"></i></a>
-                    <a class="alt-tab" data-tab="xp"><i class="far fa-note"></i></a>
-                  </div>
-                </td>
-                <td></td>
-                <td></td>
-                <td></td>
-              </tr>
-              {{/if}}
               </tbody>
             </table>
           </div>
@@ -122,7 +69,11 @@
     </div>
   </header>
 
-  {{!-- Sheet Tab Navigation --}} {{> "systems/ucttg/templates/parts/shared/ffg-tabs.html" displayLimited=true limited=limited items=(array (object tab="characteristics" label="SWFFG.TabCharacteristics" icon="fas fa-user-circle" cls=classType) (object tab="items" label="SWFFG.TabGear" icon="fas fa-toolbox" cls=classType) (object tab="talents" label="SWFFG.TabTalents" icon="fab fa-superpowers" cls=classType) (object tab="crits" label="SWFFG.TabCrits" icon="fa-solid fa-notes-medical" cls=classType) (object tab="general" label="SWFFG.TabGeneral" icon="fas fa-address-card" cls=classType isHidden=true) (object tab="description" label="SWFFG.TabBiography" icon="fas fa-sticky-note" cls=classType) (object tab="obligation" label="SWFFG.TabObligationDutyMorality" icon="fas fa-balance-scale" cls=classType isHidden=true isHiddenV2=hideObligationDutyMoralityConflictTab) (object tab="xp" label="SWFFG.TabXpLog" icon="far fa-note" cls=classType isHidden=true) )}} {{!-- Sheet Body --}}
+  {{!-- Sheet Tab Navigation --}}
+  {{#if limited}}{{ else }}
+  {{> "systems/ucttg/templates/parts/shared/ffg-tabs.html" displayLimited=true limited=limited items=(array (object tab="characteristics" label="SWFFG.TabCharacteristics" icon="fas fa-user-circle" cls=classType) (object tab="items" label="SWFFG.TabGear" icon="fas fa-toolbox" cls=classType) (object tab="talents" label="SWFFG.TabTalents" icon="fab fa-superpowers" cls=classType) (object tab="crits" label="SWFFG.TabCrits" icon="fa-solid fa-notes-medical" cls=classType) (object tab="general" label="SWFFG.TabGeneral" icon="fas fa-address-card" cls=classType isHidden=true) (object tab="description" label="SWFFG.TabBiography" icon="fas fa-sticky-note" cls=classType) )}}
+  {{/if }}
+  {{!-- Sheet Body --}}
   <section class="sheet-body" style="{{#if limited}}display:none;{{/if}}">
     {{!-- Characteristics Tab --}}
     <div class="tab characteristics active" data-group="primary" data-tab="characteristics">
@@ -133,10 +84,10 @@
         <div class="characteristic-item flex-group-center" data-ability="{{id}}">
           <div class="characteristic">
             <div class="characteristic-value">
-              <input type="text" name="data.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" pattern="[0-{{ ../maxAttribute }}]" />
+              <input type="text" name="data.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" pattern="[0-9]" />
             </div>
           </div>
-          <div class="characteristic-label ffg-purchase" data-buy-action="characteristic" data-buy-characteristic="{{ id }}">
+          <div class="characteristic-label">
             {{characteristic.label}}
           </div>
         </div>
@@ -173,18 +124,13 @@
     {{!-- Biography Tab --}}
     <div class="tab biography active" data-group="primary" data-tab="description">
       <div class="biography-editor">
-        {{editor data.enrichedBio target="system.biography" button=true editable=editable }}
+        {{editor data.enrichedBio target="system.biography" button=true owner=owner editable=editable}} {{!-- Footer info --}}
       </div>
 
       <div class="container flex-group-center biography-values">
         {{#if (contains classType "V2")}}{{else}}
           {{> "systems/ucttg/templates/parts/actor/ffg-criticalinjury.html" type="criticalinjury"}}
         {{/if}}
-        {{!-- Experience Box --}}
-
-        <div class="grid bio-grid">
-
-        </div>
       </div>
     </div>
 
@@ -207,7 +153,7 @@
           </div>
         </div>
         <div class="block-editor">
-          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="double" title="SWFFG.NotableFeature" type="PopoutEditor" name="data.general.features" value=data.general.enrichedFeatures)}} {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="double" title="SWFFG.Notes" type="PopoutEditor" name="data.general.notes" value=data.general.enrichedNotes)}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="double" title="SWFFG.NotableFeature" type="PopoutEditor" name="data.general.features" value=data.general.features)}} {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="double" title="SWFFG.Notes" type="PopoutEditor" name="data.general.notes" value=data.general.notes)}}
         </div>
       </div>
       <div>
@@ -253,109 +199,14 @@
     </div>
 
     <div class="tab xp" data-group="primary" data-tab="xp">
-      {{!-- Experience Box --}}
-        {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="split" title="SWFFG.DescriptionXP" fields=(array (object name="data.experience.available" value=data.experience.available type="Number" label="SWFFG.DescriptionXPAvailable") (object name="data.experience.total" value=data.experience.total type="Number" label="SWFFG.DescriptionXPTotal") ))}}
-      <div class="xp-adjustment" title="{{ localize "SWFFG.XP.Adjust.Title" }}"><a class="fa-solid fa-eraser"></a></div>
-      {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="SWFFG.Actors.Sheets.Purchase.LogTitle" type="PopoutEditor" value=xpLog readonly=true)}}
-    </div>
-
-    <div class="tab obligation" data-group="primary" data-tab="obligation">
-      {{!-- Obligation Tab --}}
-      {{!-- Obligation Box --}}
-        {{#if (eq actor.flags.ucttg.config.enableObligation true)}}
-          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="SWFFG.DescriptionObligation" headerlink=true headerclass="alt-tab" headerattributes="data-tab='obligation'" type="Number" name="data.obligation.value" value=data.obligation.value )}}
-        {{/if}}
-      {{!-- Duty Box --}}
-        {{#if (eq actor.flags.ucttg.config.enableDuty true)}}
-          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="SWFFG.DescriptionDuty" type="Number" name="data.duty.value" value=data.duty.value headerlink=true headerclass="alt-tab" headerattributes="data-tab='obligation'")}}
-        {{/if}}
-      {{!-- Morality Box --}}
-        {{#if (eq actor.flags.ucttg.config.enableMorality true)}}
-          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="SWFFG.DescriptionMorality" type="Number" name="data.morality.value" value=data.morality.value headerlink=true headerclass="alt-tab" headerattributes="data-tab='obligation'" )}}
-        {{/if}}
-      {{!-- Conflict Box --}}
-        {{#if (eq actor.flags.ucttg.config.enableConflict true)}}
-          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="SWFFG.DescriptionConflict" type="Number" name="data.conflict.value" value=data.conflict.value headerlink=true headerclass="alt-tab" headerattributes="data-tab='obligation'" )}}
-        {{/if}}
-      {{#if (eq actor.flags.ucttg.config.enableObligation true)}}
-      <div class="resource full">
-        <div class="attribute flex-group-center">
-          <div class="block-background">
-            <div class="block-title">
-              {{localize "SWFFG.DescriptionObligation"}}
-            </div>
-            <div class="block-attribute">
-              <table>
-                <thead>
-                <tr>
-                  <th>{{localize "SWFFG.Type"}}</th>
-                  <th>{{localize "SWFFG.Magnitude"}}</th>
-                  <th>{{localize "SWFFG.MotivationDescription"}}</th>
-                  <th>
-                    <a class="add-obligation"><i class="far fa-plus-square"></i></a>
-                  </th>
-                  <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {{#each data.obligationlist as |obligation id|}}
-                  <tr>
-                    <td><input type="text" name="data.obligationlist.{{id}}.type" value="{{obligation.type}}" data-dtype="String" /></td>
-                    <td><input type="text" name="data.obligationlist.{{id}}.magnitude" value="{{obligation.magnitude}}" data-dtype="String" /></td>
-                    <td><textarea name="data.obligationlist.{{id}}.description">{{obligation.description}}</textarea></td>
-                    <td><a class="remove-obligation" data-id="{{id}}"><i class="fas fa-trash"></i></a></td>
-                  </tr>
-                {{/each}}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      {{/if}}
-      {{#if (eq actor.flags.ucttg.config.enableDuty true)}}
-      <div class="resource full">
-        <div class="attribute flex-group-center">
-          <div class="block-background">
-            <div class="block-title">
-              {{localize "SWFFG.DescriptionDuty"}}
-            </div>
-            <div class="block-attribute">
-              <table>
-                <thead>
-                <tr>
-                  <th>{{localize "SWFFG.Type"}}</th>
-                  <th>{{localize "SWFFG.Magnitude"}}</th>
-                  <th>{{localize "SWFFG.MotivationDescription"}}</th>
-                  <th>
-                    <a class="add-duty"><i class="far fa-plus-square"></i></a>
-                  </th>
-                  <th></th>
-                </tr>
-                </thead>
-                <tbody>
-                {{#each data.dutylist as |duty id|}}
-                  <tr>
-                    <td><input type="text" name="data.dutylist.{{id}}.type" value="{{duty.type}}" data-dtype="String" /></td>
-                    <td><input type="text" name="data.dutylist.{{id}}.magnitude" value="{{duty.magnitude}}" data-dtype="String" /></td>
-                    <td><textarea name="data.dutylist.{{id}}.description">{{duty.description}}</textarea></td>
-                    <td><a class="remove-duty" data-id="{{id}}"><i class="fas fa-trash"></i></a></td>
-                  </tr>
-                {{/each}}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      {{/if}} {{#if (eq actor.flags.ucttg.config.enableMorality true)}}
-      <div class="block-editor">
-        {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="full" title="SWFFG.EmotionalStrength" type="PopoutEditor" name="data.morality.strength" value=data.morality.strength)}}
-      </div>
-      <div class="block-editor">
-        {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="full" title="SWFFG.EmotionalWeakness" type="PopoutEditor" name="data.morality.weakness" value=data.morality.weakness)}}
-      </div>
-      {{/if}}
+      {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="SWFFG.Actors.Sheets.Purchase.LogTitle" type="PopoutEditor" value=xpLog)}}
     </div>
   </section>
+  {{#if limited }}
+    <section class="sheet-body">
+      <div class="biography-editor">
+        {{editor data.enrichedBio target="system.biography" button=true owner=owner editable=editable}} {{!-- Footer info --}}
+      </div>
+    </section>
+    {{/if }}
 </form>

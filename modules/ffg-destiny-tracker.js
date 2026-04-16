@@ -21,27 +21,27 @@ export default class DestinyTracker extends FormApplication {
 
   /** @override */
   static get defaultOptions() {
-    return mergeObject(super.defaultOptions, {
+    return foundry.utils.mergeObject(super.defaultOptions, {
       id: "destiny-tracker",
-      classes: ["starwarsffg"],
+      classes: ["ucttg"],
       title: "Destiny Tracker",
-      template: "systems/starwarsffg/templates/ffg-destiny-tracker.html",
+      template: "systems/ucttg/templates/ffg-destiny-tracker.html",
     });
   }
 
   /** @override */
   getData() {
     // Get current value
-    let destinyPool = { light: game.settings.get("starwarsffg", "dPoolLight"), dark: game.settings.get("starwarsffg", "dPoolDark") };
-    let destinyPoolLabel = { light: game.settings.get("starwarsffg", "destiny-pool-light"), dark: game.settings.get("starwarsffg", "destiny-pool-dark") };
+    let destinyPool = { light: game.settings.get("ucttg", "dPoolLight"), dark: game.settings.get("ucttg", "dPoolDark") };
+    let destinyPoolLabel = { light: game.settings.get("ucttg", "destiny-pool-light"), dark: game.settings.get("ucttg", "destiny-pool-dark") };
 
     const x = $(window).width();
     const y = $(window).height();
 
     this.position.left = x - 505;
     this.position.top = y;
-    this.position.width = 150;
-    this.position.height = 105;
+    //this.position.width = 150;
+    //this.position.height = 105;
 
     // filter menu based on role.
 
@@ -53,6 +53,7 @@ export default class DestinyTracker extends FormApplication {
       destinyPoolLabel,
       isGM: game.user.isGM,
       menu,
+      theme: game.settings.get("ucttg", "dicetheme"),
     };
   }
 
@@ -62,13 +63,7 @@ export default class DestinyTracker extends FormApplication {
   _updateObject(event, formData) {};
 
   /** @override */
-  async close(options = {}) {
-    let menu = $("#menu");
-    if (menu.length === 0) {
-      menu = new MainMenu();
-    }
-      menu.toggle();
-  };
+  async close(options = {}) {};
 
   /** @override */
   activateListeners(html) {
@@ -112,38 +107,38 @@ export default class DestinyTracker extends FormApplication {
       var actionType = null;
       if (pointType == "dPoolLight") {
         flipType = "dPoolDark";
-        typeName = game.i18n.localize(game.settings.get("starwarsffg", "destiny-pool-light"));
+        typeName = game.i18n.localize(game.settings.get("ucttg", "destiny-pool-light"));
       } else {
         flipType = "dPoolLight";
-        typeName = game.i18n.localize(game.settings.get("starwarsffg", "destiny-pool-dark"));
+        typeName = game.i18n.localize(game.settings.get("ucttg", "destiny-pool-dark"));
       }
       var messageText;
 
       if (!add && !remove) {
-        if (game.settings.get("starwarsffg", pointType) == 0) {
+        if (game.settings.get("ucttg", pointType) == 0) {
           ui.notifications.warn(`Cannot flip a ${typeName} point; 0 remaining.`);
           return;
         } else {
           let pool = { light: 0, dark: 0 };
           if (flipType == "dPoolLight") {
-            pool.light = game.settings.get("starwarsffg", flipType) + 1;
-            pool.dark = game.settings.get("starwarsffg", pointType) - 1;
+            pool.light = game.settings.get("ucttg", flipType) + 1;
+            pool.dark = game.settings.get("ucttg", pointType) - 1;
           } else if (flipType == "dPoolDark") {
-            pool.dark = game.settings.get("starwarsffg", flipType) + 1;
-            pool.light = game.settings.get("starwarsffg", pointType) - 1;
+            pool.dark = game.settings.get("ucttg", flipType) + 1;
+            pool.light = game.settings.get("ucttg", pointType) - 1;
           }
 
           if (game.user.isGM) {
-            game.settings.set("starwarsffg", "dPoolLight", pool.light);
-            game.settings.set("starwarsffg", "dPoolDark", pool.dark);
+            game.settings.set("ucttg", "dPoolLight", pool.light);
+            game.settings.set("ucttg", "dPoolDark", pool.dark);
           } else {
-            await game.socket.emit("system.starwarsffg", { pool });
+            await game.socket.emit("system.ucttg", { pool });
           }
 
           messageText = `<div class="destiny-flip ${flipType}">
-          <div class="destiny-title">${game.i18n.localize("SWFFG.DestinyFlipMessage")}: <span>${typeName}</span></div>
-          <div class="destiny-left">${game.i18n.localize(game.settings.get("starwarsffg", "destiny-pool-dark"))} ${game.i18n.localize("SWFFG.DestinyFlipRemaining")}: ${pool.dark}</div>
-          <div class="destiny-left">${game.i18n.localize(game.settings.get("starwarsffg", "destiny-pool-light"))} ${game.i18n.localize("SWFFG.DestinyFlipRemaining")}: ${pool.light}</div>
+          <div class="destiny-title">${game.i18n.localize("SWFFG.DestinyFlipMessage")}: <span class="${typeName}">${typeName}</span></div>
+          <div class="destiny-left ${flipType !== "dPoolDark"} dark">${game.i18n.localize(game.settings.get("ucttg", "destiny-pool-dark"))} ${game.i18n.localize("SWFFG.DestinyFlipRemaining")}: ${pool.dark}</div>
+          <div class="destiny-left ${flipType !== "dPoolLight"} light">${game.i18n.localize(game.settings.get("ucttg", "destiny-pool-light"))} ${game.i18n.localize("SWFFG.DestinyFlipRemaining")}: ${pool.light}</div>
           </div>`;
         }
       } else if (add) {
@@ -151,16 +146,16 @@ export default class DestinyTracker extends FormApplication {
           ui.notifications.warn("Only GMs can add or remove points from the Destiny Pool.");
           return;
         }
-        const setting = game.settings.settings.get(`starwarsffg.${pointType}`);
-        game.settings.set("starwarsffg", pointType, game.settings.get("starwarsffg", pointType) + 1);
+        const setting = game.settings.settings.get(`ucttg.${pointType}`);
+        game.settings.set("ucttg", pointType, game.settings.get("ucttg", pointType) + 1);
         messageText = "Added a " + typeName + " point.";
       } else if (remove) {
         if (!game.user.isGM) {
           ui.notifications.warn("Only GMs can add or remove points from the Destiny Pool.");
           return;
         }
-        const setting = game.settings.settings.get(`starwarsffg.${pointType}`);
-        game.settings.set("starwarsffg", pointType, game.settings.get("starwarsffg", pointType) - 1);
+        const setting = game.settings.settings.get(`ucttg.${pointType}`);
+        game.settings.set("ucttg", pointType, game.settings.get("ucttg", pointType) - 1);
         messageText = "Removed a " + typeName + " point.";
       }
 
@@ -179,11 +174,11 @@ export default class DestinyTracker extends FormApplication {
     });
 
     // setup socket handler for checking destiny roll
-    game.socket.on("system.starwarsffg", async (...args) => {
+    game.socket.on("system.ucttg", async (...args) => {
       if (args[0]?.canIRollDestinyResponse === game.user.id && !game.user.isGM) {
         if (!args[0]?.rolled) {
-          const roll = this._rollDestiny();
-          await game.socket.emit("system.starwarsffg", { destiny: game.user.id, light: roll.ffg.light, dark: roll.ffg.dark });
+          const roll = await this._rollDestiny();
+          await game.socket.emit("system.ucttg", { destiny: game.user.id, light: roll.ffg.light, dark: roll.ffg.dark });
         } else {
           ui.notifications.error(`${game.i18n.localize("SWFFG.DestinyAlreadyRolled")}`);
         }
@@ -192,7 +187,7 @@ export default class DestinyTracker extends FormApplication {
 
     if (game.user.isGM) {
       // socket handler for GM
-      game.socket.on("system.starwarsffg", async (...args) => {
+      game.socket.on("system.ucttg", async (...args) => {
         // check if this is the GM intended to answer the question or not
         if (game.user.id !== game.users.activeGM?.id) {
           // limit rolling to a single GM
@@ -203,9 +198,9 @@ export default class DestinyTracker extends FormApplication {
           let rolled = false;
 
           try {
-            rolled = await game.settings.get("starwarsffg", `destinyrollers${args[0]?.canIRollDestiny}`);
+            rolled = await game.settings.get("ucttg", `destinyrollers${args[0]?.canIRollDestiny}`);
           } catch (err) {
-            game.settings.register("starwarsffg", `destinyrollers${args[0].canIRollDestiny}`, {
+            game.settings.register("ucttg", `destinyrollers${args[0].canIRollDestiny}`, {
               name: "DestinyRoll",
               scope: "client",
               default: false,
@@ -214,13 +209,13 @@ export default class DestinyTracker extends FormApplication {
             });
           }
 
-          await game.socket.emit("system.starwarsffg", { canIRollDestinyResponse: args[0]?.canIRollDestiny, rolled });
+          await game.socket.emit("system.ucttg", { canIRollDestinyResponse: args[0]?.canIRollDestiny, rolled });
         }
 
         // Handle user initiated destiny pool flips
         if (args[0]?.pool) {
-          const light = await game.settings.get("starwarsffg", "dPoolLight");
-          const dark = await game.settings.get("starwarsffg", "dPoolDark");
+          const light = await game.settings.get("ucttg", "dPoolLight");
+          const dark = await game.settings.get("ucttg", "dPoolDark");
 
           const request = {
             id: "player",
@@ -262,17 +257,17 @@ export default class DestinyTracker extends FormApplication {
     event.preventDefault();
     event.stopPropagation();
     if (!game.user.isGM) {
-      await game.socket.emit("system.starwarsffg", { canIRollDestiny: game.user.id });
+      await game.socket.emit("system.ucttg", { canIRollDestiny: game.user.id });
     }
 
     if (game.user.isGM) {
-      const roll = this._rollDestiny();
+      const roll = await this._rollDestiny();
 
-      const light = await game.settings.get("starwarsffg", "dPoolLight");
-      const dark = await game.settings.get("starwarsffg", "dPoolDark");
+      const light = await game.settings.get("ucttg", "dPoolLight");
+      const dark = await game.settings.get("ucttg", "dPoolDark");
 
-      await game.settings.set("starwarsffg", "dPoolLight", light + roll.ffg.light);
-      await game.settings.set("starwarsffg", "dPoolDark", dark + roll.ffg.dark);
+      await game.settings.set("ucttg", "dPoolLight", light + roll.ffg.light);
+      await game.settings.set("ucttg", "dPoolDark", dark + roll.ffg.dark);
     }
   }
 
@@ -283,19 +278,19 @@ export default class DestinyTracker extends FormApplication {
       const request = this.destinyQueue.shift();
       CONFIG.logger.debug(`Processing Destiny Request (${request.type}) from User ${request.id}`, request);
 
-      const light = await game.settings.get("starwarsffg", "dPoolLight");
-      const dark = await game.settings.get("starwarsffg", "dPoolDark");
+      const light = await game.settings.get("ucttg", "dPoolLight");
+      const dark = await game.settings.get("ucttg", "dPoolDark");
 
       switch (request.type) {
         case "destiny-roll": {
-          game.settings.set("starwarsffg", `destinyrollers${request.id}`, true);
-          await game.settings.set("starwarsffg", "dPoolLight", light + request.light);
-          await game.settings.set("starwarsffg", "dPoolDark", dark + request.dark);
+          game.settings.set("ucttg", `destinyrollers${request.id}`, true);
+          await game.settings.set("ucttg", "dPoolLight", light + request.light);
+          await game.settings.set("ucttg", "dPoolDark", dark + request.dark);
           break;
         }
         case "destiny-flip": {
-          await game.settings.set("starwarsffg", "dPoolLight", light - request.light);
-          game.settings.set("starwarsffg", "dPoolDark", dark - request.dark);
+          await game.settings.set("ucttg", "dPoolLight", light - request.light);
+          game.settings.set("ucttg", "dPoolDark", dark - request.dark);
           break;
         }
       }
@@ -305,13 +300,13 @@ export default class DestinyTracker extends FormApplication {
     this.isRunningQueue = false;
   }
 
-  _rollDestiny() {
+  async _rollDestiny() {
     const pool = new DicePoolFFG({
       force: 1,
     });
 
     const roll = new game.ffg.RollFFG(pool.renderDiceExpression());
-    roll.toMessage({
+    await roll.toMessage({
       user: game.user.id,
       flavor: `${game.i18n.localize("SWFFG.Rolling")} ${game.i18n.localize("SWFFG.DestinyPool")}...`,
     });
