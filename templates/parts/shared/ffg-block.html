@@ -4,13 +4,13 @@
       <div class="block-title">
         {{#if headerlink}}
         <a class="{{headerclass}}" {{{headerattributes}}}>{{localize title}}</a>
-        {{else}} {{localize title}} {{/if}}
+        {{else}} {{localize title}}{{/if}}
       </div>
       <div class="block-attribute">
         {{#if (eq blocktype "pills")}}
         <ul class="item-pill-list">
           {{#each fields as |item id|}}
-            <li class="item-pill {{#if adjusted}}adjusted{{/if}}" data-item-name="{{../name}}" data-item-index="{{#if adjusted}}{{item.flags.starwarsffg.ffgTempItemIndex}}{{else}}{{id}}{{/if}}">
+            <li class="item-pill {{#if adjusted}}adjusted{{/if}}" data-item-name="{{../name}}" data-item-index="{{#if adjusted}}{{item.flags.ucttg.ffgTempItemIndex}}{{else}}{{id}}{{/if}}">
             {{item.name}}
             {{#if item.system.rank_current}}
               <i class="rank">{{item.system.rank_current}}</i>
@@ -28,9 +28,9 @@
         {{/if}} {{#if (eq type "Dropdown")}}
         <select style="text-align: center;" name="{{name}}">
           {{#if (eq name "data.characteristic.value")}}<option value="">None</option>{{/if}}
-          {{#select value}} {{#each options as |t|}}
+          {{#selectFfg value}} {{#each options as |t|}}
           <option value="{{#if (eq t.value undefined) }}{{t._id}}{{else}}{{t.value}}{{/if}}">{{localize t.label}}{{t.name}}</option>
-          {{/each}} {{/select}}
+          {{/each}} {{/selectFfg}}
         </select>
         {{/if}} {{#if (eq type "Multicheckbox")}}
         <div class="grid grid-2col firing-arcs">
@@ -41,17 +41,25 @@
           </div>
           {{/each}}
         </div>
-        {{/if}} {{#if (eq type "PopoutEditor")}}
+        {{/if}}  {{#if (eq type "PopoutEditor")}}
         <div class="block-value block-single">
-          <div class="popout-editor" data-target="{{name}}" data-label="{{localize title}}">
-            <div class="popout-editor-button"><i class="fas fa-edit"></i></div>
-            {{{ffgDiceSymbols value}}}
+          <div class="popout-editor" data-target="{{name}}" data-value="{{value}}" data-label="{{localize title}}">
+            <div class="popout-editor-button">{{#if readonly}}{{ else }}<i class="fas fa-edit"></i>{{/if}}</div>
+            {{{value}}}
           </div>
         </div>
         {{/if}} {{#if (and (ne type "Boolean") (ne type "Dropdown") (ne type "Multicheckbox") (ne type "PopoutEditor"))}}
         <div class="block-value block-single">{{#if prefix}}{{{prefix}}}{{/if}}<input type="text" name="{{name}}" value="{{value}}" data-dtype="{{type}}" {{#if disabled}}disabled{{/if}} /></div>
         {{/if}} {{/if}} {{#if (eq blocktype "split")}} {{#each fields as |t|}}
-        <div class="block-value"><input type="text" name="{{name}}" value="{{value}}" data-dtype="{{type}}" {{#if disabled}}disabled{{/if}} /></div>
+        <div class="block-value">
+        {{#if (eq type "Button") }}
+          <div class="btn {{ t.name }}">
+            {{{ t.icon }}}
+          </div>
+        {{ else }}
+          <input type="text" name="{{name}}" value="{{value}}" data-dtype="{{type}}" {{#if disabled}}disabled{{/if}} />
+        {{/if}}
+        </div>
         {{/each}} {{/if}} {{#with (lookup options [value])~}} {{#if (ne label ../adjusted)}}
         <div class="adjustedvalue">{{localize ../adjusted}}</div>
         {{/if}} {{/with}}

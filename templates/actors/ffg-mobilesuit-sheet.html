@@ -1,0 +1,262 @@
+<form class="{{cssClass}} character mobilesuit" autocomplete="off">
+  {{!-- Sheet Header --}}
+  <header class="sheet-header">
+    <div id="actor-id" data-actor="{{actor._id}}" style="display: none;"></div>
+
+    <div class="header-fields">
+      {{!-- MS Details Container --}}
+      <div class="container" style="flex-wrap: nowrap;">
+        <div class="profile-block">
+          <div>
+            <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" height="170" width="170" />
+          </div>
+        </div>
+        <div class="container">
+          <div class="header-name header-description-block">
+            <div class="title-card mobilesuit">{{ localize "ucttg.MobileSuit" }}</div>
+            <div>
+              <h2><input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'SWFFG.Name'}}" data-dtype="String" /></h2>
+            </div>
+            <table class="character-details-table">
+              <tbody>
+                <tr>
+                  <td>{{localize "ucttg.MSType"}}:</td>
+                  <td>
+                    <input type="text" name="data.msType" value="{{data.msType}}" data-dtype="String" placeholder="Mobile Suit" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{localize "ucttg.MSManufacturer"}}:</td>
+                  <td>
+                    <input type="text" name="data.manufacturer" value="{{data.manufacturer}}" data-dtype="String" placeholder="" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {{!-- Pilot Assignment Block --}}
+        <div class="container ms-pilot-block">
+          <div class="ms-pilot-header">
+            <span class="ms-pilot-label">{{localize "ucttg.MSPilot"}}</span>
+          </div>
+          {{#if pilot}}
+            <div class="ms-pilot-assigned">
+              <div class="ms-pilot-portrait">
+                <img src="{{pilot.img}}" title="{{pilot.name}}" height="120" width="120" />
+              </div>
+              <div class="ms-pilot-info">
+                <a class="ms-pilot-name" data-actor-id="{{pilot.id}}">{{pilot.name}}</a>
+                <div class="ms-pilot-mode">{{localize "ucttg.MSPilotLinked"}}</div>
+              </div>
+              <div class="ms-pilot-controls">
+                <a class="ms-pilot-open" data-actor-id="{{pilot.id}}" title="Open Pilot Sheet"><i class="fas fa-external-link-alt"></i></a>
+                <a class="ms-pilot-remove" title="{{localize 'ucttg.MSRemovePilot'}}"><i class="fas fa-times"></i></a>
+              </div>
+            </div>
+          {{else}}
+            <div class="ms-pilot-empty" data-drop-target="pilot">
+              <div class="ms-pilot-dropzone">
+                <i class="fas fa-user-plus"></i>
+                <span>{{localize "ucttg.MSAssignPilot"}}</span>
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Primary Stats Container --}}
+      <div class="container" style="flex-wrap: nowrap;{{#if limited}}display:none;{{/if}}">
+        <div class="container flex-group-center">
+          {{!-- Wounds Box (Hull Integrity) --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="split" title="SWFFG.Wounds"
+              fields=(array
+                (object name="data.stats.wounds.max" value=data.stats.wounds.max type="Number" label="SWFFG.Threshold")
+                (object name="data.stats.wounds.value" value=data.stats.wounds.value type="Number" label="SWFFG.Current")
+              )
+            )
+          }}
+          {{!-- Soak Box --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="single" title="SWFFG.Armor" type="Number" name="data.stats.soak.value" value=data.stats.soak.value disabled=this.settings.enableSoakCalculation)
+          }}
+          {{!-- Defence Box --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="split" title="SWFFG.Defense"
+              fields=(array
+                (object name="data.stats.defence.melee" value=data.stats.defence.melee type="Number" label="SWFFG.DefenseMelee")
+                (object name="data.stats.defence.ranged" value=data.stats.defence.ranged type="Number" label="SWFFG.DefenseRanged")
+              )
+            )
+          }}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {{!-- Sheet Tab Navigation --}}
+  {{> "systems/ucttg/templates/parts/shared/ffg-tabs.html"
+    displayLimited=true limited=limited
+    items=(array
+      (object tab="characteristics" label="SWFFG.TabCharacteristics" icon="fas fa-user-circle" cls=classType)
+      (object tab="items" label="SWFFG.TabGear" icon="fas fa-toolbox" cls=classType)
+      (object tab="talents" label="SWFFG.TabTalents" icon="fab fa-superpowers" cls=classType)
+      (object tab="crits" label="SWFFG.TabCrits" icon="fa-solid fa-notes-medical" cls=classType)
+      (object tab="description" label="SWFFG.TabBiography" icon="fas fa-sticky-note" cls=classType)
+    )
+  }}
+
+  {{!-- Sheet Body --}}
+  <section class="sheet-body" style="{{#if limited}}display:none;{{/if}}">
+
+    {{!-- ===================== CHARACTERISTICS TAB ===================== --}}
+    <div class="tab characteristics active" data-group="primary" data-tab="characteristics">
+
+      {{!-- Characteristics Scores --}}
+      {{!-- When pilot is linked, these are read-only. When no pilot, they are editable. --}}
+      <div class="grid grid-6col">
+        {{#each data.characteristics as |characteristic id|}}
+        <div class="characteristic-item flex-group-center" data-ability="{{id}}">
+          <div class="characteristic">
+            <div class="characteristic-value">
+              {{#if ../pilot}}
+                {{!-- Pilot linked: show pilot's characteristics, read-only --}}
+                <input type="text" name="data.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" disabled class="pilot-linked-readonly" title="{{localize 'ucttg.MSPilotStats'}}" />
+              {{else}}
+                {{!-- No pilot: editable --}}
+                <input type="text" name="data.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" type="text" pattern="[0-{{ ../../maxAttribute }}]" />
+              {{/if}}
+            </div>
+          </div>
+          <div class="characteristic-label">
+            {{characteristic.label}}
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      {{!-- Pilot indicator banner --}}
+      {{#if pilot}}
+        <div class="ms-pilot-stats-banner">
+          <i class="fas fa-link"></i> {{localize "ucttg.MSPilotStats"}} — {{pilot.name}}
+        </div>
+      {{/if}}
+
+      {{!-- Skills --}}
+      {{> "systems/ucttg/templates/parts/actor/ffg-skills.html"}}
+    </div>
+
+    {{!-- ===================== GEAR TAB ===================== --}}
+    <div class="tab items" data-group="primary" data-tab="items">
+      <div class="container flex-group-center item-values">
+        {{!-- Encumbrance Box --}}
+        {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+          (object blocktype="split" title="SWFFG.Encumbrance"
+            fields=(array
+              (object name="data.stats.encumbrance.max" value=data.stats.encumbrance.max type="Number" label="SWFFG.Threshold")
+              (object name="data.stats.encumbrance.value" value=data.stats.encumbrance.value type="Number" label="SWFFG.Current")
+            )
+          )
+        }}
+        {{!-- Credits / Cost Box --}}
+        {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+          (object blocktype="double" title="SWFFG.DescriptionCredits" type="String" name="data.stats.credits.value" value=data.stats.credits.value)
+        }}
+      </div>
+
+      {{> "systems/ucttg/templates/parts/actor/ffg-weapon-armor-gear.html"}}
+    </div>
+
+    {{!-- ===================== TALENTS TAB ===================== --}}
+    <div class="tab talents items" data-group="primary" data-tab="talents">
+
+      {{!-- MS Talents --}}
+      {{> "systems/ucttg/templates/parts/actor/ffg-talents.html"}}
+
+      {{!-- MS Abilities (Speed, Type tags, etc. live here as ability items) --}}
+      {{> "systems/ucttg/templates/parts/actor/ffg-abilities.html"}}
+
+      {{!-- Pilot Talents (read-only reference, if pilot linked) --}}
+      {{#if pilot}}
+        {{#if pilot.talentList.length}}
+          <div class="ms-pilot-talents-section">
+            <div class="items-header flexrow">
+              <h3 class="item-name"><i class="fas fa-link"></i> Pilot Talents ({{pilot.name}}) — Reference Only</h3>
+            </div>
+            <ol class="item-list">
+              {{#each pilot.talentList as |talent|}}
+                <li class="item flexrow ms-pilot-talent-row">
+                  <div class="item-name">
+                    <span>{{talent.name}}</span>
+                  </div>
+                  <div class="item-detail">
+                    {{#if talent.system.ranks.current}}
+                      <span class="talent-rank">Rank {{talent.system.ranks.current}}</span>
+                    {{/if}}
+                  </div>
+                </li>
+              {{/each}}
+            </ol>
+          </div>
+        {{/if}}
+      {{/if}}
+
+      {{!-- Force Powers (hidden unless explicitly enabled, unlikely for MS) --}}
+      {{#if (eq actor.flags.ucttg.config.enableForcePool true)}}
+        <div class="container flex-group-center item-values">
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="split" title="SWFFG.ForcePool"
+              fields=(array
+                (object name="data.stats.forcePool.value" value=data.stats.forcePool.value type="Number" label="SWFFG.ForcePoolCommitted")
+                (object name="data.stats.forcePool.max" value=data.stats.forcePool.max type="Number" label="SWFFG.ForcePoolAvailable")
+              )
+            )
+          }}
+        </div>
+        {{> "systems/ucttg/templates/parts/actor/ffg-forcepowers.html"}}
+      {{/if}}
+
+      {{> "systems/ucttg/templates/parts/actor/ffg-signatureability.html"}}
+    </div>
+
+    {{!-- ===================== CRITS TAB ===================== --}}
+    <div class="tab crits items" data-group="primary" data-tab="crits">
+      {{> "systems/ucttg/templates/parts/actor/ffg-criticalinjury.html" type="criticalinjury"}}
+    </div>
+
+    {{!-- ===================== BIOGRAPHY TAB ===================== --}}
+    <div class="tab biography active" data-group="primary" data-tab="description">
+
+      {{!-- MS Info Fields --}}
+      <div class="ms-biography-fields">
+        <div class="grid grid-2col">
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="single" title="ucttg.MSRolloutDate" type="String" name="data.rolloutDate" value=data.rolloutDate)
+          }}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="single" title="ucttg.MSCostToManufacture" type="String" name="data.costToManufacture" value=data.costToManufacture)
+          }}
+        </div>
+      </div>
+
+      {{!-- Biography Editor (hit locations, notes, etc.) --}}
+      <div class="biography-editor">
+        {{editor data.biography target="system.biography" button=true owner=owner editable=editable}}
+      </div>
+
+      <div class="container flex-group-center biography-values">
+        {{#if (contains classType "V2")}}{{else}}
+          {{> "systems/ucttg/templates/parts/actor/ffg-criticalinjury.html" type="criticalinjury"}}
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Modifiers Tab (hidden, for system compatibility) --}}
+    <div class="tab attributes" data-group="primary" data-tab="attributes">
+      {{> "systems/ucttg/templates/parts/shared/ffg-modifiers.html"}}
+    </div>
+
+  </section>
+</form>

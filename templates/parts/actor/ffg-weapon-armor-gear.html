@@ -1,4 +1,5 @@
-{{#if (ne actor.type "vehicle")}} {{!-- Weapons List --}}
+{{#if (ne actor.type "vehicle")}}
+{{!-- Weapons List --}}
 <ul class="items">
   <li class="items-header flexrow">
     <div class="header-name">{{localize "SWFFG.ItemsWeapons"}}</div>
@@ -17,7 +18,7 @@
       <div class="item-name">
         <div class="roll-button">
           <!-- Create define a button with mouseover events to update the icon and generate rolls when clicked and moused over -->
-          <div class="skill-label rollable roll-button starwarsffg item-rollable" style="background-image: url('{{ item.img }}')"></div>
+          <div class="skill-label rollable roll-button ucttg item-rollable" style="background-image: url('{{ item.img }}')"></div>
         </div>
         <div class="hover {{#if item.system.rarity.isrestricted}}restricted{{/if}}">
           {{item.name}} {{#if item.system.rarity.isrestricted}}
@@ -27,9 +28,9 @@
       </div>
       <div>
         {{#if item.system.equippable.equipped}}
-        <a class="toggle-equipped active" data-item-id="{{item._id}}" title="Equipped"><i class="fas fa-fist-raised"></i></a>
+        <a class="toggle-equipped active" data-item-id="{{item._id}}" title="{{ localize "SWFFG.Equipped" }}"><i class="fas fa-fist-raised"></i></a>
         {{else}}
-        <a class="toggle-equipped" data-item-id="{{item._id}}" title="Equipped"><i class="fas fa-fist-raised"></i></a>
+        <a class="toggle-equipped" data-item-id="{{item._id}}" title="{{ localize "SWFFG.Unequipped" }}"><i class="fas fa-fist-raised"></i></a>
         {{/if}}
       </div>
       <div>{{item.system.damage.value}} {{#if (and (ne item.system.damage.value item.system.damage.adjusted) (or (gt item.system.damage.adjusted.length 0) (gt item.system.damage.adjusted 0)))}}({{item.system.damage.adjusted}}){{/if}}</div>
@@ -195,7 +196,7 @@
       <div class="item-name">
         <div class="roll-button-crew">
           <!-- Create define a button with mouseover events to update the icon and generate rolls when clicked and moused over -->
-          <div class="skill-label rollable roll-button-crew starwarsffg item-rollable" style="background-image: url('{{ item.img }}')"></div>
+          <div class="skill-label rollable roll-button-crew ucttg item-rollable" style="background-image: url('{{ item.img }}')"></div>
         </div>
         {{#if item.link}}
           {{{ item.link }}}
