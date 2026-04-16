@@ -1,38 +1,37 @@
-# ucttg
+# Universal Century Tabletop Game
 
-# ucttg
+# UCTTG
 
-This is an unoffical implementation of the [Fantasy Flight Games Star Wars](https://www.fantasyflightgames.com/en/starwarsrpg/) series of Star Wars RPGs systems for Foundry VTT.
+This is an unoffical Gundam TTRPG developed based off of Genesys and FFG's Star Wars systems for Foundry VTT.
 
 Full support for other Genesys-based systems is also included.
 
 This system is made by fans, for fans, and is not associated with Fantasy Flight Games or their partners in any way.
 
-The system for Foundry VTT contains no rules or proprietary content from the various official RPG sourcebooks by Fantasy Flight Games. It is intended to make the process of enjoying the Star Wars and Genesys RPG systems via an online tabletop experience as easy as possible but you will still need to purchase any and all official sourcebooks you desire in order to enjoy this system as intended.
+The system for Foundry VTT contains no rules or proprietary content from the various official RPG sourcebooks by Fantasy Flight Games. Classes, Talents, etc within the system are inspired by Genesys and Official FFG content but are not compatible with them without complex reverse engineering or extensive homebrew.
 
 For more info and documentation including various "How-To" guides, please check out the Wiki section of our GitHub repo.
 
-- For support on this game system : Discord [The Foundry](https://discord.gg/foundryvtt) #starwars-ffg
-- Read this document in another language : [Français](https://github.com/StarWarsFoundryVTT/swffg/blob/main/README-fr.md)
+- For support on this game system : Discord [Universal Century Tabletop Game](https://discord.gg/8Egchv8uSf) #UCTTG
 
-# Installing Star Wars FFG game system
+# Installing UCTTG game system
 
 1. Open Foundry VTT
 2. Go to the "Game Systems" Tab
 3. Click the "Install System" button
 4. Copy the Following link into the "Manifest URL" section:
-   https://raw.githubusercontent.com/StarWarsFoundryVTT/swffg/master/system.json
+   https://TBD
 5. Click Install, after a few seconds the system should be installed.
 
-# Getting Started
-Check out our getting started guides over on the wiki...
+# Getting Started with Auxiliary Systems
+Check out StarWarsFoundryVTT's getting started guides over on their wiki...
 * Star Wars: https://github.com/StarWarsFoundryVTT/swffg/wiki/Getting-started
 * Genesys: https://github.com/StarWarsFoundryVTT/swffg/wiki/Getting-Started-with-Genesys
 
 # Contributing
 
-Please see [CONTRIBUTING.md](https://github.com/StarWarsFoundryVTT/swffg/blob/main/CONTRIBUTING.md).
+Best you can do is politely interact in the Discord server, but chances are most ideas will be shot down. This has been a solo dev project since '17 and has since advanced into a very small team.
 
 # Changelog
 
-Release `CHANGELOG` can be found [here](https://github.com/StarWarsFoundryVTT/swffg/releases).
+There just won't be one man, I don't have the time.
