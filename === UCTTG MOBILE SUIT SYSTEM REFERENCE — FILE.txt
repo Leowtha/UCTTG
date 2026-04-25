@@ -1,0 +1,66 @@
+=== UCTTG MOBILE SUIT SYSTEM — FILE REFERENCE ===
+
+PROJECT: Custom Foundry VTT system (forked from Star Wars FFG)
+SYSTEM ID: ucttg
+
+--- ACTOR TYPES ---
+character, nemesis, rival, ace, minion, mobilesuit, vehicle, homestead
+
+--- KEY FILES ---
+
+1. SHEET CLASS (all actor types share one file):
+   File: actor-sheet-ffg.js (exports ActorSheetFFG extends ActorSheet)
+   - getData() prepares data for Handlebars template
+   - Mobile Suit pilot-linking logic lives in getData() under:
+     `if (this.actor.type === "mobilesuit" && this.actor.system.pilotId)`
+   - This block: looks up pilot actor, copies characteristics + skills,
+     manually scans MS-owned items for modifiers, applies them on top
+     of pilot values, builds pilot talent list for display
+   - _onDropActor() handles drag-and-drop pilot assignment
+   - _updateObject() calls ActorHelpers.updateActor() for form submission
+   - activateListeners() has mobilesuit-specific controls (pilot remove/open)
+
+2. ACTOR HELPERS:
+   File: helpers/actor-helpers.js (exports ActorHelpers + xpLogSpend/xpLogEarn)
+   - updateActor() handles form submission for ALL actor types
+   - Processes characteristic, stat, and skill rank changes via
+     ModifierHelpers.getCalculateValueForAttribute()
+   - mobilesuit shares the character/nemesis/rival/ace code path
+     (not the vehicle path)
+
+3. TEMPLATE (HTML):
+   File: templates/actors/ffg-mobilesuit-sheet.html
+   - Handlebars template for the MS sheet
+   - Has: pilot assignment dropzone, characteristics (read-only when
+     pilot linked), skills, gear, talents (MS + pilot reference),
+     crits, biography tabs
+   - Uses shared partials: ffg-block.html, ffg-skills.html,
+     ffg-talents.html, ffg-weapon-armor-gear.html, etc.
+
+4. MODIFIER HELPERS:
+   File: helpers/modifiers.js (exports ModifierHelpers)
+   - getCalculateValueForAttribute() computes total modifier bonuses
+     from owned items for a given attribute key and type
+   - Used by updateActor() during form saves
+   - The system's native modifier pipeline runs BEFORE getData()
+     so by the time our MS code runs, data.data already includes
+     MS-owned-item bonuses applied to the MS's own base stats
+
+--- MS PILOT LINKING DESIGN ---
+- Option 2: MS has no meaningful base stats (0s or minimal)
+- Pilot actor ID stored at: system.pilotId
+- In getData(), pilot's characteristics and skill ranks OVERWRITE
+  the MS's values, then MS-owned-item modifiers are MANUALLY scanned
+  and added on top (this is necessary because getData() is the final
+  output to the template — no re-processing occurs after)
+- Pilot talents shown as read-only reference on Talents tab
+- Valid pilot types: character, nemesis, rival, ace
+- "AI pilot" can be created as a regular actor to drop in if needed
+
+--- MODIFIER TYPES SCANNED ON MS ITEMS ---
+- "Characteristic" → adds to pilot's base characteristic
+- "Skill Boost" → boost dice for specific skills
+- "Skill Add Upgrade" → upgrade dice for specific skills (or "*" for all)
+- "Skill Add Advantage" → auto-advantage for specific skills
+- "Stat" with mod "Defence-Ranged"/"Defence-Melee" → defence bonuses
+- "Armor Stat" with mod "soak" → soak bonus

@@ -1,0 +1,51 @@
+{
+  "id": "ucttg",
+  "title": "UC Tabletop Game",
+  "description": "A tabletop game system set in the Universal Century, built on the Genesys/FFG narrative dice engine.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": 12,
+    "verified": 12
+  },
+  "authors": [
+    {"name": "Leowtha Schuzac"}
+  ],
+  "esmodules": ["modules/dice-pool-ffg.js", "modules/swffg-main.js"],
+  "styles": ["styles/ucttg.css", "lib/select2/select2.min.css", "lib/pure/grids-min.css"],
+  "scripts": ["lib/select2/select2.min.js", "lib/jszip/jszip.min.js", "lib/jxon/jxon.min.js"],
+  "socket": true,
+  "packs": [],
+  "packFolders": [],
+  "languages": [
+  {
+    "lang": "en",
+    "name": "English",
+    "path": "lang/en.json"
+  },
+  {
+    "lang": "de",
+    "name": "Deutsch",
+    "path": "lang/de.json"
+  },
+  {
+    "lang": "es",
+    "name": "Español",
+    "path": "lang/es.json"
+  },
+  {
+    "lang": "it",
+    "name": "Italiano",
+    "path": "lang/it.json"
+  }
+  ],
+  "grid": {
+    "distance": 5,
+    "units": "ft"
+  },
+  "primaryTokenAttribute": "wounds",
+  "secondaryTokenAttribute": "strain",
+  "url": "",
+  "manifest": "",
+  "download": "",
+  "license": "LICENSE.txt"
+}
