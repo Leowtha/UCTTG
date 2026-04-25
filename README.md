@@ -2,7 +2,7 @@
 
 # UCTTG
 
-This is an unoffical Gundam TTRPG developed based off of Genesys and FFG's Star Wars systems for Foundry VTT.
+This is an unoffical Gundam TTRPG developed based off of Genesys and FFG's Star Wars systems for Foundry VTT (Version 12).
 
 Full support for other Genesys-based systems is also included.
 
@@ -16,7 +16,7 @@ For more info and documentation including various "How-To" guides, please check 
 
 # Installing UCTTG game system
 
-1. Open Foundry VTT
+1. Open Foundry VTT (v12)
 2. Go to the "Game Systems" Tab
 3. Click the "Install System" button
 4. Copy the Following link into the "Manifest URL" section:
