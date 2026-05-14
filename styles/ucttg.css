@@ -1,0 +1,2963 @@
+@charset "UTF-8";
+@font-face {
+  font-family: "Roboto";
+  src: url("../fonts/Roboto-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "StarJedi";
+  src: url("../fonts/StarJedi-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Signika";
+  src: url("../fonts/Signika-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "EotESymbol";
+  src: url("../fonts/EotESymbol-Regular-PLUS.otf") format("opentype");
+}
+@font-face {
+  font-family: "SWRPG-Symbol-Regular";
+  src: url("../fonts/swrpg_symbol-regular_v1-webfont.woff2") format("woff2"), url("../fonts/swrpg_symbol-regular_v1-webfont.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Genesys";
+  src: url("../fonts/genesysglyphsanddice.woff2") format("woff2"), url("../fonts/genesysglyphsanddice.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "GenesysSymbol";
+  src: url("../fonts/Genesys.ttf") format("truetype");
+}
+/* Global styles */
+div,
+section {
+  scrollbar-width: thin;
+}
+
+.window-app {
+  font-family: "Roboto", sans-serif;
+}
+.window-app .window-content {
+  background: #cccccc;
+  font-size: 9pt;
+}
+
+.hidden-content {
+  display: none;
+}
+
+.rollable:hover, .rollable:focus {
+  color: #000;
+  text-shadow: 0 0 10px red;
+  cursor: pointer;
+}
+
+#chat-log .message {
+  background: #eeeeee;
+}
+
+#chat-form textarea {
+  background: whitesmoke;
+}
+
+span.dietype.starwars {
+  font-family: "EotESymbol", sans-serif;
+}
+
+span.dietype.genesys {
+  font-family: "GenesysSymbol", sans-serif;
+}
+
+span.dietype.ability {
+  color: green;
+}
+span.dietype.advantage {
+  color: black;
+}
+span.dietype.boost {
+  color: lightskyblue;
+}
+span.dietype.challenge {
+  color: red;
+}
+span.dietype.dark {
+  color: black;
+}
+span.dietype.despair {
+  color: black;
+}
+span.dietype.difficulty {
+  color: purple;
+}
+span.dietype.forcepoint {
+  color: black;
+}
+span.dietype.failure {
+  color: black;
+}
+span.dietype.force {
+  color: black;
+}
+span.dietype.light {
+  color: black;
+}
+span.dietype.proficiency {
+  color: yellow;
+}
+span.dietype.setback {
+  color: black;
+}
+span.dietype.success {
+  color: black;
+}
+span.dietype.threat {
+  color: black;
+}
+span.dietype.triumph {
+  color: black;
+}
+
+.clearfix:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+
+.grid,
+.grid-2col {
+  display: grid;
+  grid-column: span 2/span 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+  padding: 0;
+}
+
+.grid-3col {
+  grid-column: span 3/span 3;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-4col {
+  grid-column: span 4/span 4;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-5col {
+  grid-column: span 5/span 5;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.grid-6col {
+  grid-column: span 6/span 6;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.grid-7col {
+  grid-column: span 7/span 7;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.grid-8col {
+  grid-column: span 8/span 8;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.grid-9col {
+  grid-column: span 9/span 9;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+}
+
+.grid-10col {
+  grid-column: span 10/span 10;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+}
+
+.grid-11col {
+  grid-column: span 11/span 11;
+  grid-template-columns: repeat(11, minmax(0, 1fr));
+}
+
+.grid-12col {
+  grid-column: span 12/span 12;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.flex-group-center,
+.flex-group-left,
+.flex-group-right {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 5px;
+  border: 1px solid #999;
+}
+
+.flex-group-left {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.flex-group-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.flex-center {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.flex-between {
+  justify-content: space-between;
+}
+
+img {
+  border: 0;
+}
+
+.ucttg .item-form {
+  font-family: "Roboto", sans-serif;
+}
+.ucttg.sheet.actor .tabs {
+  height: 15px;
+  margin-bottom: 10px;
+  border: 0;
+  padding: 0;
+}
+.ucttg.sheet.actor .tabs .item {
+  line-height: 15px;
+  padding: 0;
+}
+.ucttg.sheet.actor .characteristic-item .characteristic-label {
+  background-color: #490c0b;
+}
+.ucttg.sheet.actor .characteristic-item .characteristic {
+  border-radius: 50%;
+  border: 5px double black;
+}
+.ucttg.sheet.actor .characteristic-item .characteristic .characteristic-value {
+  border-radius: 50%;
+}
+.ucttg.sheet.actor .characteristic-item .characteristic .characteristic-value input:focus {
+  border-radius: 50%;
+}
+.ucttg.sheet.actor.v2 .tabs .item {
+  line-height: normal;
+}
+.ucttg.sheet.actor.v2 .tabs .item.active {
+  color: #490c0b;
+}
+.ucttg .block-background {
+  background-color: #ddd;
+  padding: 5px;
+  margin: 0 0;
+  --notchSize: 9px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .block-background-shadow {
+  position: absolute;
+  width: 100%;
+  top: 30px;
+  height: 30px;
+  background-color: #7da9c2;
+  padding: 5px;
+  z-index: -1;
+  --notchSize: 9px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg.sheet.actor.adversary .character .sheet-body .skillsTablesGrid {
+  height: calc(100% - 32.1875rem);
+}
+.ucttg.sheet.actor .character .header-fields {
+  flex: 1;
+  height: auto;
+}
+.ucttg.sheet.actor .character .header-fields .drag-note {
+  border: 2px dotted;
+  border-radius: 10px;
+  padding: 0 5px;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+}
+.ucttg.sheet.actor .character .header-fields .specialization-pill, .ucttg.sheet.actor .character .header-fields .species-pill, .ucttg.sheet.actor .character .header-fields .career-pill, .ucttg.sheet.actor .character .header-fields .signatureability-pill, .ucttg.sheet.actor .character .header-fields .forcepower-pill {
+  padding: 3px 9px;
+  background-color: #aaa;
+  border: 1px solid black;
+  border-radius: 20px;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+}
+.ucttg.sheet.actor .character .header-fields .specialization-pill .item-delete, .ucttg.sheet.actor .character .header-fields .species-pill .item-delete, .ucttg.sheet.actor .character .header-fields .career-pill .item-delete, .ucttg.sheet.actor .character .header-fields .signatureability-pill .item-delete, .ucttg.sheet.actor .character .header-fields .forcepower-pill .item-delete {
+  cursor: pointer;
+}
+.ucttg.sheet.actor .character .header-fields .block-background-shadow {
+  top: 36px;
+}
+.ucttg.sheet.actor .character .header-fields h1 {
+  margin: 0;
+  width: 100%;
+}
+.ucttg.sheet.actor .character .header-fields .header-name {
+  margin: 0;
+  position: relative;
+  width: 100%;
+}
+.ucttg.sheet.actor .character .header-fields .header-name input {
+  margin: 0;
+  width: 100%;
+  border: 0;
+  background-color: rgba(0, 0, 0, 0);
+}
+.ucttg.sheet.actor .character .header-fields .header-name input:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+}
+.ucttg.sheet.actor .character .header-fields .header-description-block {
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+.ucttg.sheet.actor .character .header-fields .header-description {
+  background-color: #c4dbe9;
+  --notchSize: 10px;
+  padding: 3px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg.sheet.actor .character .header-fields .table {
+  display: table;
+  width: 100%;
+}
+.ucttg.sheet.actor .character .header-fields .row {
+  display: table-row;
+  width: 100%;
+}
+.ucttg.sheet.actor .character .header-fields .row div {
+  display: table-cell;
+}
+.ucttg.sheet.actor .character .header-fields .row .row-input {
+  width: 100%;
+  padding: 1px 5px;
+}
+.ucttg.sheet.actor .character .header-fields .row input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid black;
+  border-radius: 0;
+}
+.ucttg.sheet.actor .character .header-fields .row input:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+}
+.ucttg.sheet.actor .character .header-fields .profile-block {
+  margin-right: 5px;
+  margin-left: 5px;
+  height: 130px;
+  max-width: 130px;
+}
+.ucttg.sheet.actor .character .header-fields .profile-img {
+  flex: 0 0 100px;
+  height: 124px;
+  width: auto;
+  max-width: 124px;
+  border: 0;
+  margin: auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+}
+.ucttg.sheet.actor .character .sheet-body {
+  height: calc(100% - 13.75rem);
+  overflow: hidden;
+}
+.ucttg.sheet.actor .character .sheet-body .general .grid, .ucttg.sheet.actor .character .sheet-body .obligation .grid {
+  margin: 0;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource, .ucttg.sheet.actor .character .sheet-body .obligation .resource {
+  width: 100%;
+  line-height: normal;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource p, .ucttg.sheet.actor .character .sheet-body .obligation .resource p {
+  padding: 0 0.3125rem;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource.full, .ucttg.sheet.actor .character .sheet-body .obligation .resource.full {
+  width: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource.full table, .ucttg.sheet.actor .character .sheet-body .obligation .resource.full table {
+  margin: 0;
+  border-bottom: none;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource.full table thead, .ucttg.sheet.actor .character .sheet-body .obligation .resource.full table thead {
+  background: #919191;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource.full table th, .ucttg.sheet.actor .character .sheet-body .obligation .resource.full table th {
+  line-height: 0.875rem;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource.full table td, .ucttg.sheet.actor .character .sheet-body .obligation .resource.full table td {
+  vertical-align: top;
+  padding: 0.25em 0.3125rem;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource.full table .motivation.description, .ucttg.sheet.actor .character .sheet-body .obligation .resource.full table .motivation.description {
+  width: 66%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .resource.full table input, .ucttg.sheet.actor .character .sheet-body .obligation .resource.full table input {
+  width: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .genesys.grid, .ucttg.sheet.actor .character .sheet-body .obligation .genesys.grid {
+  gap: 0px;
+}
+.ucttg.sheet.actor .character .sheet-body .general .genesys .resource, .ucttg.sheet.actor .character .sheet-body .obligation .genesys .resource {
+  min-height: 6rem;
+}
+.ucttg.sheet.actor .character .sheet-body .general .genesys .resource .attribute, .ucttg.sheet.actor .character .sheet-body .obligation .genesys .resource .attribute {
+  height: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .genesys .resource .attribute .block-background, .ucttg.sheet.actor .character .sheet-body .obligation .genesys .resource .attribute .block-background {
+  height: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .genesys .resource .attribute .block-background .block-attribute, .ucttg.sheet.actor .character .sheet-body .obligation .genesys .resource .attribute .block-background .block-attribute {
+  height: calc(100% - 0.9375rem);
+  overflow: hidden;
+}
+.ucttg.sheet.actor .character .sheet-body .general .genesys .resource .attribute .block-background .block-attribute .block-value, .ucttg.sheet.actor .character .sheet-body .obligation .genesys .resource .attribute .block-background .block-attribute .block-value {
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .block-editor .resource, .ucttg.sheet.actor .character .sheet-body .obligation .block-editor .resource {
+  min-height: 4.6875rem;
+}
+.ucttg.sheet.actor .character .sheet-body .general .block-editor .resource .attribute, .ucttg.sheet.actor .character .sheet-body .obligation .block-editor .resource .attribute {
+  height: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .block-editor .resource .attribute .block-background, .ucttg.sheet.actor .character .sheet-body .obligation .block-editor .resource .attribute .block-background {
+  height: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .general .block-editor .resource .attribute .block-background .block-attribute, .ucttg.sheet.actor .character .sheet-body .obligation .block-editor .resource .attribute .block-background .block-attribute {
+  height: calc(100% - 0.9375rem);
+  overflow: hidden;
+}
+.ucttg.sheet.actor .character .sheet-body .general .block-editor .resource .attribute .block-background .block-attribute .block-value, .ucttg.sheet.actor .character .sheet-body .obligation .block-editor .resource .attribute .block-background .block-attribute .block-value {
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+}
+.ucttg.sheet.actor .character .sheet-body .obligation .resource.full table {
+  width: 97.4%;
+  margin: 0 0 0 0.5rem;
+}
+.ucttg.sheet.actor .character .sheet-body .obligation .block-editor .resource {
+  min-height: 4.6875rem;
+}
+.ucttg.sheet.actor .character .sheet-body .obligation .block-editor .popout-editor {
+  min-height: 4.6875rem;
+}
+.ucttg.sheet.actor .character .sheet-body .tab.items, .ucttg.sheet.actor .character .sheet-body .tab.general, .ucttg.sheet.actor .character .sheet-body .tab.obligation {
+  height: calc(100% - 2.5rem);
+}
+.ucttg.sheet.actor .character .sheet-body .biography {
+  height: calc(100% - 4.6875rem);
+  overflow: auto;
+}
+.ucttg.sheet.actor .character .sheet-body .characteristics {
+  overflow: hidden;
+  height: calc(100% + 26.25rem);
+}
+.ucttg.sheet.actor .character .sheet-body .skillsTablesGrid {
+  height: calc(100% - 32.1875rem);
+  overflow: auto;
+}
+.ucttg.sheet.actor .character .sheet-body table.force-powers {
+  border: 0;
+}
+.ucttg.sheet.actor .character .sheet-body table.force-powers th {
+  text-align: left;
+  padding: 3px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  background-color: #490c0b;
+  color: white;
+  font-size: 12px;
+  font-weight: normal;
+}
+.ucttg.sheet.actor .character .sheet-body table.force-powers td {
+  height: 30px;
+  line-height: 24px;
+  padding: 3px;
+  position: relative;
+}
+.ucttg.sheet.actor .character .sheet-body table.force-powers td .item-controls {
+  text-align: right;
+  width: auto;
+  z-index: auto;
+}
+.ucttg.sheet.actor .character-details-table {
+  border-top: none;
+  border-bottom: none;
+  background: none;
+}
+.ucttg.sheet.actor.v2 .character .sheet-body .skillsTablesGrid {
+  height: calc(100% - 31.1875rem);
+}
+.ucttg.sheet.actor.v2 .character .sheet-body .tab.items, .ucttg.sheet.actor.v2 .character .sheet-body .tab.general, .ucttg.sheet.actor.v2 .character .sheet-body .tab.obligation {
+  height: calc(100% - 1rem);
+}
+.ucttg.sheet.actor.v2.adversary .character .sheet-body .skillsTablesGrid {
+  height: calc(100% - 31.1875rem);
+}
+.ucttg.sheet.actor.v2.adversary .character .sheet-body .tab.items, .ucttg.sheet.actor.v2.adversary .character .sheet-body .tab.general, .ucttg.sheet.actor.v2.adversary .character .sheet-body .tab.obligation {
+  height: calc(100% - 0rem);
+}
+.ucttg .container {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 11pt;
+}
+.ucttg .container .attributes {
+  margin-top: 5px;
+}
+.ucttg .container.flex-group-center {
+  border: 0;
+  margin-bottom: 5px;
+  padding: 0 5px 5px 5px;
+  align-items: flex-start;
+}
+.ucttg.sheet.item .popout-editor {
+  height: 50px;
+  width: 215px;
+}
+.ucttg.sheet.item .tab[data-tab].active {
+  height: 100%;
+}
+.ucttg.sheet.item .tabs {
+  height: 20px;
+  border: 0;
+  padding: 0;
+}
+.ucttg.sheet.item .tabs .item {
+  line-height: 15px;
+  padding: 0;
+}
+.ucttg.sheet.item .characteristic .characteristic-value.restricted::after {
+  content: "R";
+  position: absolute;
+  font-size: 15px;
+  left: 1px;
+  top: -1px;
+  color: #8b0000;
+}
+.ucttg.sheet .window-content {
+  overflow-y: hidden;
+}
+.ucttg.sheet .sheet-body {
+  margin: 10px 5px;
+  overflow: auto;
+}
+.ucttg.sheet .item-pill-list {
+  padding: 0;
+}
+.ucttg.sheet .item-pill-list:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.ucttg.sheet .item-pill {
+  list-style-type: none;
+  padding: 0 5px;
+  background-color: #aaa;
+  border: 1px solid black;
+  border-radius: 12px;
+  float: left;
+  margin: 1px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.ucttg.sheet .item-pill.adjusted {
+  color: #8b0000;
+}
+.ucttg.sheet .item-pill .rank {
+  padding-right: 15px;
+}
+.ucttg.sheet .item-pill .rank:hover {
+  color: green;
+}
+.ucttg.sheet .item-pill .item-delete {
+  cursor: pointer;
+}
+.ucttg.sheet .item-pill .item-delete:hover {
+  color: red;
+}
+.ucttg.sheet .add-new-item {
+  cursor: pointer;
+}
+.ucttg.sheet.item.v2 .sheet-body {
+  margin: 0px 5px;
+}
+.ucttg.sheet.item.v2 .tabs .item {
+  line-height: normal;
+}
+.ucttg.sheet.item.v2 .tabs .item.active {
+  color: #490c0b;
+}
+.ucttg .charname {
+  width: 100%;
+}
+.ucttg .charname input {
+  color: black;
+  border: 0;
+}
+.ucttg .charname input:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+}
+.ucttg .characteristic-item {
+  border: 0;
+  position: relative;
+  padding: 0;
+  margin: 0 5px;
+}
+.ucttg .characteristic-item .characteristic-label {
+  margin-top: 5px;
+  width: 100%;
+  text-align: center;
+  background-color: black;
+  color: white;
+  text-transform: uppercase;
+  font-size: 10px;
+  --notchSize: 7px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .characteristic-item .characteristic {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  border: 5px double black;
+  margin: auto;
+  position: relative;
+}
+.ucttg .characteristic-item .characteristic .characteristic-value input {
+  height: 40px;
+  border: 0;
+  font-size: 30px;
+  text-align: center;
+}
+.ucttg .characteristic-item .characteristic .characteristic-value input:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+  border-radius: 5px;
+}
+.ucttg .item-name {
+  margin: 0;
+  padding-bottom: 0;
+}
+.ucttg .item-name .restricted {
+  color: #8b0000;
+}
+.ucttg .item-quantity {
+  position: relative;
+}
+.ucttg .grid {
+  margin-top: 0;
+}
+.ucttg .attribute {
+  position: relative;
+  padding: 0;
+  z-index: 1;
+  border: 0;
+}
+.ucttg .attribute .block-background-shadow {
+  top: 36px;
+}
+.ucttg .attribute .block-background {
+  padding: 5px 5px;
+}
+.ucttg .attribute .block-title {
+  line-height: initial;
+  background-color: #553113;
+  color: white;
+  font-size: 13px;
+  padding: 0 10px;
+  text-transform: uppercase;
+  margin: auto;
+  --notchSize: 8px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .attribute .block-header {
+  line-height: initial;
+  background-color: #490c0b;
+  color: white;
+  font-size: 13px;
+  text-transform: uppercase;
+  margin: auto;
+  --notchSize: 8px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .attribute .block-attribute select:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+}
+.ucttg .attribute .block-attribute .block-value {
+  display: inline-block;
+}
+.ucttg .attribute .block-value textarea {
+  resize: none;
+  font-family: "Roboto";
+  border: 0;
+}
+.ucttg .attribute .block-value textarea:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+  outline: none;
+}
+.ucttg .attribute .block-value.block-single input {
+  width: 100%;
+}
+.ucttg .attribute .block-value input {
+  border: 0;
+  font-size: 14px;
+}
+.ucttg .attribute .block-value input:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+}
+.ucttg .attribute .shadow-text {
+  position: absolute;
+  top: 5px;
+  font-size: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ucttg .attribute .shadow-left {
+  background-color: #490c0b;
+  width: 50%;
+  height: 100%;
+  float: left;
+  position: relative;
+  padding-top: 25px;
+}
+.ucttg .attribute .shadow-left .shadow-text {
+  color: white;
+  text-transform: uppercase;
+}
+.ucttg .attribute .shadow-right {
+  background-color: #7da9c2;
+  width: 50%;
+  height: 100%;
+  float: right;
+  position: relative;
+  padding-top: 25px;
+}
+.ucttg .attribute .shadow-right .shadow-text {
+  color: black;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.ucttg .resource {
+  line-height: 30px;
+  width: 110px;
+  height: 40px;
+  padding-bottom: 4px;
+  padding-left: 2px;
+  margin: 0;
+  display: inline-table;
+}
+.ucttg .resource.split {
+  width: 130px;
+}
+.ucttg .resource.single {
+  width: 100px;
+}
+.ucttg .resource.double {
+  width: 235px;
+}
+.ucttg .resource input {
+  width: 45px;
+}
+.ucttg .tabs {
+  flex: 0 0 40px;
+  border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+  margin-top: 3px;
+}
+.ucttg .tabs .item {
+  line-height: 40px;
+  font-weight: bold;
+}
+.ucttg .tabs .item.active {
+  text-decoration: underline;
+  text-shadow: none;
+}
+.ucttg .tab {
+  height: 100%;
+  overflow: auto;
+}
+.ucttg form {
+  overflow: hidden;
+}
+.ucttg .quantity {
+  position: absolute;
+  top: 0;
+}
+.ucttg .quantity.increase {
+  right: 25%;
+  cursor: pointer;
+}
+.ucttg .quantity.decrease {
+  left: 25%;
+  cursor: pointer;
+}
+.ucttg .talent-body {
+  height: 100px;
+  overflow: auto;
+}
+.ucttg .talent-hidden {
+  display: none;
+}
+.ucttg .talent-grid {
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+}
+.ucttg .talent-upgrade {
+  position: relative;
+  margin: 10px 10px 5px 10px;
+}
+.ucttg .talent-upgrade .talent-actions {
+  display: none;
+}
+.ucttg .talent-upgrade .talent-actions .split,
+.ucttg .talent-upgrade .talent-actions .combine {
+  display: none;
+}
+.ucttg .talent-upgrade .talent-actions.talent-canSplit {
+  display: block;
+}
+.ucttg .talent-upgrade .talent-actions.talent-canSplit .split {
+  display: initial;
+  position: absolute;
+  right: 30px;
+  top: 15px;
+  font-size: 15px;
+  color: white;
+  z-index: 20;
+}
+.ucttg .talent-upgrade .talent-actions.talent-canSplit .split i {
+  transform: rotate(45deg);
+}
+.ucttg .talent-upgrade .talent-actions.talent-canCombine {
+  display: block;
+}
+.ucttg .talent-upgrade .talent-actions.talent-canCombine .combine {
+  display: initial;
+  position: absolute;
+  right: -16px;
+  font-size: 15px;
+  top: 15px;
+}
+.ucttg .talent-upgrade .talent-actions.talent-canCombine .combine i {
+  transform: rotate(45deg);
+}
+.ucttg .talent-upgrade.talent-single {
+  flex: 1 0 21%;
+}
+.ucttg .talent-upgrade.talent-double {
+  flex: 1 0 46%;
+}
+.ucttg .talent-upgrade.talent-triple {
+  flex: 1 0 71%;
+}
+.ucttg .talent-upgrade.talent-full {
+  flex: 1 0 97%;
+}
+.ucttg .talent-background {
+  position: relative;
+  z-index: 10;
+  background-color: #ddd;
+  padding: 5px;
+  --notchSize: 9px;
+  -webkit-clip-path: polygon(0% 0, var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% 0, var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .talent-background .talent-header {
+  position: relative;
+  background-color: #000544;
+  padding: 5px;
+  --notchSize: 9px;
+  -webkit-clip-path: polygon(0 0, var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, 0 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0 0, var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, 0 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .talent-background .talent-header div {
+  display: inline-block;
+  vertical-align: middle;
+  color: white;
+}
+.ucttg .talent-background .talent-header div.talent-name {
+  width: 75%;
+}
+.ucttg .talent-background .talent-header div.talent-name.talent-modifiers {
+  cursor: pointer;
+}
+.ucttg .talent-background .talent-header div.talent-name span {
+  font-size: 9px;
+  float: right;
+}
+.ucttg .talent-background .talent-header div input[type=text] {
+  border: 0px;
+  background-color: #001e82;
+  color: white;
+}
+.ucttg .talent-background.talent-active .talent-header {
+  background-color: #490c0b;
+}
+.ucttg .talent-background.talent-passive .talent-header {
+  background-color: #464855;
+}
+.ucttg .talent-row {
+  margin: 10px 0;
+}
+.ucttg .talent-row .talent-upgrade {
+  margin: 0 3px;
+}
+.ucttg .talent-connections {
+  font-size: 15px;
+}
+.ucttg .talent-single textarea {
+  max-width: 145px;
+}
+.ucttg .talent-double textarea {
+  max-width: 315px;
+}
+.ucttg .talent-triple textarea {
+  max-width: 495px;
+}
+.ucttg .talent-full textarea {
+  max-width: 670px;
+}
+.ucttg .talent-connection-point-top {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  display: flex;
+}
+.ucttg .talent-connection-point-top.talent-single {
+  position: relative;
+  text-align: center;
+  transform: initial;
+  left: initial;
+  display: inline-block;
+}
+.ucttg .talent-connection-point-top.talent-double {
+  position: relative;
+  display: inline-block;
+  width: 50%;
+  left: initial;
+  transform: none;
+  text-align: center;
+}
+.ucttg .talent-connection-point-top.talent-triple {
+  position: relative;
+  display: inline-block;
+  width: 33%;
+  left: initial;
+  transform: none;
+  text-align: center;
+}
+.ucttg .talent-connection-point-top.talent-full {
+  position: relative;
+  display: inline-block;
+  width: 25%;
+  left: initial;
+  transform: none;
+  text-align: center;
+}
+.ucttg .talent-connection-point-top .talent-connector-up {
+  display: none;
+}
+.ucttg .talent-connection-point-right {
+  position: absolute;
+  right: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ucttg .talent-connection-point-right .talent-connector-side {
+  display: none;
+}
+.ucttg .talent-connector i {
+  display: none;
+}
+.ucttg .talent-connector .talent-connector-up,
+.ucttg .talent-connector .talent-connector-side {
+  display: inline-block;
+  width: 34px;
+  height: 12px;
+  background-color: black;
+  position: absolute;
+  top: -3px;
+}
+.ucttg .talent-connector .talent-connector-up i,
+.ucttg .talent-connector .talent-connector-side i {
+  display: initial;
+  color: white;
+}
+.ucttg .talent-connector .talent-connector-up {
+  height: 100px;
+  top: -50px;
+  z-index: 5;
+}
+.ucttg .talent-connector .talent-connector-up i {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 34px;
+}
+.ucttg .talent-connector .talent-connector-side {
+  width: 35px;
+  height: 35px;
+  left: -15px;
+  padding-top: 8px;
+}
+.ucttg .talent-disable-edit .talent-actions {
+  display: none !important;
+}
+.ucttg .talent-disable-edit .talent-connections i {
+  display: none !important;
+}
+.ucttg .talent-action {
+  cursor: pointer;
+}
+.ucttg .header-fields {
+  position: relative;
+}
+.ucttg .header-fields .talent-actions {
+  position: absolute;
+  right: 10px;
+  top: 14px;
+  color: white;
+}
+.ucttg .dice-pool-dialog .dice-pool {
+  margin-top: 10px;
+  min-height: 54px;
+  text-align: center;
+}
+.ucttg .dice-pool-dialog .pool-value {
+  border: 1px solid black;
+  background-color: #ddd;
+}
+.ucttg .dice-pool-dialog .pool-value input {
+  border: 0;
+  font-size: 25px;
+  text-align: center;
+  background: none;
+  width: 100%;
+}
+.ucttg .dice-pool-dialog .pool-text {
+  text-align: left;
+}
+.ucttg .dice-pool-dialog .pool-text label {
+  margin-left: 1.2em;
+}
+.ucttg .dice-pool-dialog .upgrade-buttons {
+  display: flex;
+}
+.ucttg .dice-pool-dialog .upgrade-buttons button {
+  line-height: 20px;
+  font-size: 12px;
+  text-align: left;
+}
+.ucttg .dice-pool-dialog .pool-dice-pool {
+  padding: 5px 1px;
+  width: calc(100% - 2px);
+}
+.ucttg .dice-pool-dialog .pool-additional-container {
+  padding: 0 1px;
+  width: calc(100% - 2px);
+  min-width: 300px;
+}
+.ucttg .dice-pool-dialog .pool-additional-container .pool-additional {
+  text-align: left;
+}
+.ucttg .dice-pool-dialog .pool-additional-container .pool-additional input[type=button] {
+  margin: 0 3px;
+}
+.ucttg .dice-pool-dialog .pool-roll-options {
+  margin-top: 10px;
+}
+.ucttg .dice-pool-dialog .pool-roll-options select, .ucttg .dice-pool-dialog .pool-roll-options input {
+  margin-top: 1px;
+  margin-right: 1px;
+}
+.ucttg .dice-pool-dialog .roll-button {
+  margin-top: 15px;
+}
+.ucttg .dice-pool-dialog table {
+  width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.ucttg .dice-pool-dialog .hide {
+  display: none;
+}
+.ucttg .dice-pool-dialog .minimize {
+  max-width: 20%;
+}
+.ucttg .dice-pool-dialog .maximize {
+  width: 100%;
+}
+.ucttg .ffgDiceArray {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.ucttg .ffgDiceArray .dice-rolls {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.ucttg .ffgDiceArray .dice-rolls .roll {
+  width: 40px;
+  float: left;
+}
+.ucttg.dice-roll .dice-result .dice-tooltip.expanded .dice-rolls .roll.isFFG {
+  width: 24px;
+  float: left;
+}
+.ucttg .dice-result .roll-success {
+  color: darkgreen;
+}
+.ucttg .dice-result .roll-failure {
+  color: darkred;
+}
+.ucttg .dice-additional-flavor {
+  font-style: oblique;
+  font-size: 12px;
+}
+.ucttg .item-display {
+  margin: 0.5rem 0 0.8rem 0;
+  padding: 0.5rem;
+  border: 1px solid #782e22;
+  background: rgba(255, 255, 255, 0.75);
+}
+.ucttg .item-display img {
+  height: 50px;
+  width: auto;
+}
+.ucttg .item-display h4 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+}
+.ucttg .item-display h4 input {
+  width: 70%;
+}
+.ucttg .item-display .item-miss {
+  text-align: center;
+  font-style: italic;
+  color: darkred;
+}
+.ucttg .item-display .item-pill {
+  list-style-type: none;
+  padding: 0 5px;
+  background-color: #aaa;
+  border: 1px solid black;
+  border-radius: 12px;
+  display: inline-block;
+  margin: 1px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.ucttg .item-display .item-pill.adjusted {
+  color: #8b0000;
+}
+.ucttg .item-display .item-pill .rank {
+  padding-right: 15px;
+}
+.ucttg .item-display .item-pill .rank:hover {
+  color: green;
+}
+.ucttg .item-display .item-pill .item-delete {
+  cursor: pointer;
+}
+.ucttg .item-display .item-pill .item-delete:hover {
+  color: red;
+}
+.ucttg span.dietype {
+  position: relative;
+}
+.ucttg span.dietype.ability {
+  color: green;
+}
+.ucttg span.dietype.advantage {
+  color: black;
+}
+.ucttg span.dietype.boost {
+  color: lightskyblue;
+}
+.ucttg span.dietype.challenge {
+  color: red;
+}
+.ucttg span.dietype.dark {
+  color: black;
+}
+.ucttg span.dietype.despair {
+  color: black;
+}
+.ucttg span.dietype.difficulty {
+  color: purple;
+}
+.ucttg span.dietype.forcepoint {
+  color: black;
+}
+.ucttg span.dietype.failure {
+  color: black;
+}
+.ucttg span.dietype.force {
+  color: black;
+}
+.ucttg span.dietype.light {
+  color: black;
+}
+.ucttg span.dietype.proficiency {
+  color: yellow;
+}
+.ucttg span.dietype.remsetback {
+  color: black;
+}
+.ucttg span.dietype.remsetback::after {
+  content: "-";
+  color: white;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ucttg span.dietype.restricted {
+  color: #8b0000;
+}
+.ucttg span.dietype.restricted::after {
+  content: "-";
+  color: white;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ucttg span.dietype.setback {
+  color: black;
+}
+.ucttg span.dietype.success {
+  color: black;
+}
+.ucttg span.dietype.threat {
+  color: black;
+}
+.ucttg span.dietype.triumph {
+  color: black;
+}
+.ucttg span.dietype.adddifficulty {
+  color: purple;
+}
+.ucttg span.dietype.adddifficulty::after {
+  content: "+";
+  color: white;
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  transform: translateX(-50%);
+}
+.ucttg span.dietype.updifficulty {
+  color: purple;
+}
+.ucttg span.dietype.updifficulty::after {
+  content: "↑";
+  color: white;
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  transform: translateX(-50%);
+}
+.ucttg span.dietype.cancelthreat {
+  color: black;
+}
+.ucttg span.dietype.cancelthreat::after {
+  content: "✖";
+  color: red;
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  transform: translateX(-50%);
+}
+.ucttg span.bold {
+  font-weight: bold;
+}
+.ucttg span.italic {
+  font-style: italic;
+}
+.ucttg .popout-editor {
+  text-align: left;
+  font-size: 12px;
+  overflow: auto;
+  height: 100%;
+  width: 100%;
+  min-height: 2rem;
+  position: relative;
+}
+.ucttg .popout-editor p {
+  line-height: 0.875rem;
+}
+.ucttg .popout-editor .popout-editor-button {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 0;
+  cursor: pointer;
+}
+.ucttg .popout-editor-window .sheet-body {
+  height: 100%;
+}
+.ucttg .popout-editor-window .editor {
+  width: 100%;
+  height: 100%;
+}
+.ucttg .editor {
+  width: 100%;
+  height: 100%;
+  min-height: 2rem;
+}
+.ucttg .tox.tox-tinymce {
+  height: 100% !important;
+}
+.ucttg .tabs {
+  height: 40px;
+  border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;
+}
+.ucttg .tabs .item {
+  line-height: 15px;
+  font-weight: bold;
+  background-color: #aaa;
+  padding: 1px;
+  margin: 0 5px;
+  --notchSize: 8px;
+  width: 100%;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .tabs .item:hover {
+  text-shadow: 0 0 8px white;
+}
+.ucttg .tabs .item.active {
+  text-decoration: underline;
+  text-shadow: none;
+  background-color: #490c0b;
+  color: white;
+  font-weight: normal;
+}
+.ucttg.v2 .tabs {
+  position: absolute;
+  width: 40px;
+  right: -20px;
+  top: 160px;
+  flex-direction: column;
+}
+.ucttg.v2 .tabs .item {
+  line-height: 35px;
+  font-size: 16pt;
+  margin: 5px 5px;
+  background-color: #cccccc;
+}
+.ucttg.v2 .tabs .item.active {
+  background: #cccccc;
+  background: linear-gradient(to right, #cccccc 0%, #7da9c2 100%);
+  margin-right: -10px;
+}
+.ucttg .skill-characteristic {
+  display: inline;
+}
+.ucttg .skill-characteristic-select-dialog {
+  display: inline-block;
+  margin: auto;
+}
+.ucttg .skill-characteristic-select-dialog li {
+  list-style: none;
+}
+.ucttg .skill-create-dialog {
+  display: inline-flex;
+  margin: auto;
+}
+.ucttg .tableWithHeader {
+  overflow-y: auto;
+  margin: 0;
+  height: calc(100% - 5rem);
+  display: flex;
+}
+.ucttg .tableWithHeader .tableWithHeader-container {
+  flex: 1;
+  margin: 2px;
+  position: relative;
+}
+.ucttg .skillsTablesGrid {
+  position: relative;
+  overflow: auto;
+  height: calc(100% - 5.5rem);
+  float: left;
+  width: 100%;
+}
+.ucttg .skillsGrid {
+  display: flex;
+  align-content: flex-start;
+  width: 100%;
+  padding: 0 5px;
+}
+.ucttg .skillsGrid .skillTypeGrid {
+  flex: 0 1 auto;
+  flex-direction: column;
+}
+.ucttg .skillsGrid .skillTypeGrid.skillColumnGrid {
+  border: 1px solid #7a7971;
+  background: rgba(0, 0, 0, 0.05);
+  flex: 50%;
+}
+.ucttg .skillsGrid .pure-g {
+  letter-spacing: initial;
+}
+.ucttg .skillsGrid .skillTable .skillsHeader {
+  line-height: 1.313rem;
+}
+.ucttg .skillsGrid .skillTable .skillsHeader div {
+  text-align: center;
+  padding: 3px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  background-color: #490c0b;
+  color: white;
+  font-size: 12px;
+  font-weight: normal;
+}
+.ucttg .skillsGrid .skillTable .skillsHeader div:first-of-type {
+  text-align: left;
+}
+.ucttg .skillsGrid .skillTable div.skill {
+  position: relative;
+}
+.ucttg .skillsGrid .skillTable div.skill > div {
+  text-align: center;
+}
+.ucttg .skillsGrid .skillTable div.skill > div:first-of-type {
+  text-align: left;
+  padding-left: 3px;
+  padding-top: 7px;
+}
+.ucttg .skillsGrid .skillTable div.skill input[type=checkbox] {
+  width: 20px;
+  height: 20px;
+  margin: 2px 5px;
+}
+.ucttg .skillsGrid .skillTable .careerskill-toggle {
+  margin: 0;
+  padding: 0;
+}
+.ucttg .skillsGrid .skillTable .careerskill-rank {
+  margin-top: 2px;
+  width: 30px;
+  text-align: center;
+}
+.ucttg .skillsGrid .dice-pool {
+  margin: 0.5em 0;
+}
+.ucttg .skillsGrid .dice-pool img {
+  width: 1em;
+  height: 1em;
+  border: 0;
+}
+.ucttg .skillsGrid:last-child {
+  padding-bottom: 2rem;
+}
+.ucttg .items {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ucttg .items .items-header {
+  text-align: center;
+  padding: 3px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  background-color: #490c0b;
+  color: white;
+  font-size: 12px;
+  font-weight: normal;
+}
+.ucttg .items .items-header .header-name {
+  flex: 1 0 120px;
+  text-align: left;
+}
+.ucttg .items li {
+  padding: 3px;
+}
+.ucttg .items .item-values {
+  margin-bottom: 10px;
+  border: 0;
+}
+.ucttg .items .items-list {
+  padding: 0;
+}
+.ucttg .items .items-list .item {
+  line-height: 24px;
+  padding: 3px 0;
+  border-bottom: 1px solid #bbb;
+  text-align: center;
+}
+.ucttg .items .items-list .item:hover {
+  background: rgba(25, 24, 19, 0.12);
+}
+.ucttg .items .items-list .item img {
+  flex: 0 0 24px;
+  margin-right: 5px;
+}
+.ucttg .items .items-list .item .toggle-equipped {
+  color: #888;
+}
+.ucttg .items .items-list .item .toggle-equipped.active {
+  color: #191813;
+}
+.ucttg .items .items-list .force-power {
+  line-height: 24px;
+  padding: 3px 0;
+  border-bottom: 1px solid #bbb;
+  text-align: center;
+}
+.ucttg .items .items-list .force-power:hover {
+  background: rgba(25, 24, 19, 0.12);
+}
+.ucttg .items .items-list .force-power img {
+  flex: 0 0 24px;
+  margin-right: 5px;
+}
+.ucttg .items .items-list .item-name {
+  margin: 0;
+  cursor: pointer;
+  flex: 1 0 120px;
+  text-align: left;
+  display: flex;
+}
+.ucttg .items .items-list .item-controls {
+  z-index: 500;
+  width: 20px;
+  text-align: end;
+  margin: auto;
+}
+.ucttg .items .items-list .item-controls .item-control {
+  padding: 5px;
+}
+.ucttg .item-details {
+  flex: 0 0 100%;
+  text-align: left;
+  line-height: 16px;
+  padding: 0.25em 0.5em;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px groove rgba(0, 0, 0, 0.2);
+  grid-area: inherit;
+}
+.ucttg .item-details .item-properties {
+  position: relative;
+  flex: 0 0 120px;
+  margin: 5px 5px 5px 0;
+  padding-right: 5px;
+  font-weight: bold;
+}
+.ucttg .item-details .item-properties .tag {
+  display: inline-block;
+  margin: 0 2px 0 0;
+  padding: 0 3px;
+  font-size: 10px;
+  line-height: 16px;
+  border: 1px solid #646464;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.1);
+}
+.ucttg .item-details .restricted {
+  color: #8b0000;
+}
+.ucttg .item-rollable {
+  height: 24px;
+  width: 48px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-right: 5px;
+  border: none;
+}
+.ucttg .item-rollable.rollable:hover {
+  background-image: url(/systems/ucttg/images/generic-die.svg) !important;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+.ucttg.item-card .item-details .item-properties .item-pill {
+  list-style-type: none;
+  padding: 0 5px;
+  background-color: #aaa;
+  border: 1px solid black;
+  border-radius: 12px;
+  display: inline-block;
+  margin: 1px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+.ucttg.item-card .item-details .item-properties .item-pill.adjusted {
+  color: #8b0000;
+}
+.ucttg .talents {
+  margin: 0;
+}
+.ucttg .talent-list {
+  border: 0;
+  padding: 0;
+  margin: 1em 0 0 0;
+}
+.ucttg .talent-list .item:hover {
+  background: rgba(25, 24, 19, 0.12);
+}
+.ucttg .talent-list .talents-header {
+  text-align: center;
+  padding: 3px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  background-color: #490c0b;
+  color: white;
+  font-size: 12px;
+  font-weight: normal;
+}
+.ucttg .talent-list .talents-header .header-name {
+  flex: 1 0 120px;
+  text-align: left;
+}
+.ucttg .talent-list .force-powers {
+  flex: 1 0 150px;
+}
+.ucttg .talent-list .item-controls {
+  z-index: 500;
+  width: 20px;
+  text-align: end;
+  margin: auto;
+}
+.ucttg .talent-list .item-controls .item-control {
+  padding: 5px;
+}
+.ucttg .biography .biography-values {
+  margin-bottom: 5px;
+  border: 0;
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  padding: 0;
+}
+.ucttg .biography .biography-editor {
+  height: 85%;
+}
+.ucttg .biography .bio-grid {
+  grid-column: span 5/span 5;
+  grid-template-columns: auto auto auto auto auto;
+}
+.ucttg .item-sheet-weapon .charname input {
+  color: #134103;
+}
+.ucttg .item-sheet-weapon .characteristic-item .characteristic-label {
+  background-color: #134103;
+}
+.ucttg .item-sheet-weapon .characteristic-item .characteristic {
+  border: 5px double #134103;
+}
+.ucttg .item-sheet-weapon .characteristic-item .characteristic .adjustedvalues-left {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  color: red;
+}
+.ucttg .item-sheet-weapon .characteristic-item .characteristic .adjustedvalues-left.positive {
+  color: green;
+}
+.ucttg .item-sheet-weapon .adjustedvalue {
+  color: red;
+}
+.ucttg .item-sheet-weapon .block-background {
+  background-color: #bffebf;
+}
+.ucttg .item-sheet-weapon .attribute .block-title {
+  background-color: #134103;
+}
+.ucttg .item-sheet-weapon .sheet-body {
+  height: calc(100% - 27.5rem);
+}
+.ucttg .item-sheet-weapon .pills.itemmodifier, .ucttg .item-sheet-weapon .pills.itemattachment {
+  width: auto;
+  max-width: 50%;
+  width: 50%;
+}
+.ucttg .item-sheet-weapon .pills.itemmodifier .item-pill-list, .ucttg .item-sheet-weapon .pills.itemattachment .item-pill-list {
+  max-height: 75px;
+  height: 75px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+.ucttg.sheet.item.v2 .item-sheet-weapon .container.flex-group-center {
+  padding: 0 5px 0 5px;
+  margin-bottom: 0;
+}
+.ucttg.sheet.item.v2 .item-sheet-weapon .weapon-values {
+  margin: 0 5px;
+  padding: 0 5px 0 5px;
+}
+.ucttg.sheet.item.v2 .item-sheet-weapon .sheet-body {
+  height: calc(100% - 26.6125rem);
+}
+.ucttg .item-sheet-armor .charname input {
+  color: #553113;
+}
+.ucttg .item-sheet-armor .characteristic-item .characteristic-label {
+  background-color: #553113;
+}
+.ucttg .item-sheet-armor .characteristic-item .characteristic {
+  border: 5px double #553113;
+}
+.ucttg .item-sheet-armor .characteristic-item .characteristic .adjustedvalues-left {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  color: red;
+}
+.ucttg .item-sheet-armor .characteristic-item .characteristic .adjustedvalues-left.positive {
+  color: green;
+}
+.ucttg .item-sheet-armor .adjustedvalue {
+  color: red;
+}
+.ucttg .item-sheet-armor .block-background {
+  background-color: #e9c09e;
+}
+.ucttg .item-sheet-armor .attribute .block-title {
+  background-color: #553113;
+}
+.ucttg .item-sheet-armor .sheet-body {
+  height: calc(100% - 21.3125rem);
+}
+.ucttg .item-sheet-armor .pills.itemmodifier, .ucttg .item-sheet-armor .pills.itemattachment {
+  width: auto;
+  max-width: 50%;
+  width: 50%;
+}
+.ucttg .item-sheet-armor .pills.itemmodifier .item-pill-list, .ucttg .item-sheet-armor .pills.itemattachment .item-pill-list {
+  max-height: 75px;
+  height: 75px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+.ucttg.sheet.item.v2 .item-sheet-armor .container.flex-group-center {
+  padding: 0 5px 0 5px;
+  margin-bottom: 0;
+}
+.ucttg.sheet.item.v2 .item-sheet-armor .weapon-values {
+  margin: 0 5px;
+  padding: 0 5px 0 5px;
+}
+.ucttg.sheet.item.v2 .item-sheet-armor .sheet-body {
+  height: calc(100% - 17.3125rem);
+}
+.ucttg .item-sheet-gear .charname input {
+  color: #2c0344;
+}
+.ucttg .item-sheet-gear .characteristic-item .characteristic-label {
+  background-color: #2c0344;
+}
+.ucttg .item-sheet-gear .characteristic-item .characteristic {
+  border: 5px double #2c0344;
+}
+.ucttg .item-sheet-gear .block-background {
+  background-color: #e9c6fd;
+}
+.ucttg .item-sheet-gear .attribute .block-title {
+  background-color: #2c0344;
+}
+.ucttg .item-sheet-gear .sheet-body {
+  height: calc(100% - 21.3125rem);
+  overflow: auto;
+}
+.ucttg .item-sheet-gear .profile-img {
+  height: 124px;
+  width: 100%;
+}
+.ucttg.sheet.item.v2 .item-sheet-gear .container.flex-group-center {
+  padding: 0 5px 0 5px;
+  margin-bottom: 0;
+}
+.ucttg.sheet.item.v2 .item-sheet-gear .weapon-values {
+  margin: 0 5px;
+  padding: 0 5px 0 5px;
+}
+.ucttg.sheet.item.v2 .item-sheet-gear .sheet-body {
+  height: calc(100% - 17.3125rem);
+}
+.ucttg .item-sheet-talent .charname input {
+  color: #821517;
+}
+.ucttg .item-sheet-talent .characteristic-item .characteristic-label {
+  background-color: #821517;
+}
+.ucttg .item-sheet-talent .characteristic-item .characteristic {
+  border: 5px double #821517;
+}
+.ucttg .item-sheet-talent .block-background {
+  background-color: #f2ebde;
+}
+.ucttg .item-sheet-talent .attribute .block-title {
+  background-color: #821517;
+}
+.ucttg .item-sheet-talent .sheet-body {
+  height: calc(100% - 20.3125rem);
+}
+.ucttg.sheet.item.v2 .item-sheet-talent .sheet-body {
+  height: calc(100% - 19.3125rem);
+}
+.ucttg .minion {
+  flex: auto;
+}
+.ucttg .minion .minion-name {
+  flex: 1;
+  flex-wrap: wrap;
+}
+.ucttg .minion .minion-name input {
+  border: 0;
+}
+.ucttg .minion .minion-name input:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+}
+.ucttg .minion .minion-stats {
+  width: 100%;
+  margin: 0 0 1em;
+}
+.ucttg .minion table.items {
+  margin: 1em 0;
+}
+.ucttg .minion .biography-editor {
+  height: 100%;
+}
+.ucttg .minion .profile-block {
+  margin-right: 5px;
+  margin-left: 5px;
+  height: 130px;
+  max-width: 130px;
+}
+.ucttg .minion .profile-img {
+  flex: 0 0 100px;
+  height: 124px;
+  width: auto;
+  border: 0;
+  margin: auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+}
+.ucttg .minion .resource.single {
+  width: 8.125rem;
+}
+.ucttg .minion .sheet-body {
+  height: calc(100% - 14.6875rem);
+  overflow: hidden;
+}
+.ucttg .minion .sheet-body .biography {
+  height: calc(100% - 4.6875rem);
+  overflow: auto;
+}
+.ucttg .minion .sheet-body .characteristics {
+  overflow: hidden;
+  height: calc(100% + 26.25rem);
+}
+.ucttg .minion .sheet-body .skillsTablesGrid {
+  height: calc(100% - 32.1875rem);
+  overflow: auto;
+}
+.ucttg.sheet.actor.v2 .minion .sheet-body .skillsTablesGrid {
+  height: calc(100% - 31.1rem);
+}
+.ucttg.sheet.actor.v2 .minion .profile-block {
+  margin-right: 8px;
+}
+.ucttg.sheet.actor .vehicle .header-fields .container.flex-group-center {
+  padding: 0;
+  margin-bottom: 0;
+}
+.ucttg.sheet.actor .vehicle .header-fields .grid {
+  margin: 5px;
+}
+.ucttg.sheet.actor .vehicle .header-fields .grid.grid-4col {
+  margin: 10px;
+}
+.ucttg.sheet.actor .vehicle .header-fields .block-background {
+  position: relative;
+}
+.ucttg.sheet.actor .vehicle .header-fields .flex-group-right {
+  border: 0;
+  padding: 0 5px;
+}
+.ucttg.sheet.actor .vehicle .header-fields .profile-block {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+}
+.ucttg.sheet.actor .vehicle .header-fields .profile-block .profile-img {
+  height: 200px;
+  width: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+}
+.ucttg.sheet.actor .vehicle .defense-group {
+  width: 100%;
+}
+.ucttg.sheet.actor .vehicle .defense-group .defense-decoration {
+  position: absolute;
+  width: 175px;
+  height: 175px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: conic-gradient(#c7794b 0% 25%, #dbc48e 25% 50%, #c7794b 50% 75%, #dbc48e 75% 100%);
+}
+.ucttg.sheet.actor .vehicle .defense-group .defense-decoration img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  border: 0;
+}
+.ucttg.sheet.actor .vehicle .defense-block {
+  height: 200px;
+  width: 100%;
+  position: relative;
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-block-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-transform: uppercase;
+  background-color: #21192e;
+  color: white;
+  width: 90px;
+  text-align: center;
+  --notchSize: 9px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value {
+  border-radius: 10px;
+  border: 5px double #1f1c39;
+  margin: auto;
+  position: absolute;
+  background-color: white;
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value .defense-value-label {
+  position: absolute;
+  text-transform: uppercase;
+  background-color: #490c0b;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  --notchSize: 7px;
+  -webkit-clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.fore {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.fore .defense-value-label {
+  bottom: -20px;
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.aft {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.aft .defense-value-label {
+  top: -20px;
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.port {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.port .defense-value-label {
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.starboard {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value.starboard .defense-value-label {
+  left: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value input {
+  height: 40px;
+  width: 40px;
+  border: 0;
+  font-size: 30px;
+  text-align: center;
+}
+.ucttg.sheet.actor .vehicle .defense-block .defense-value input:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+  border-radius: 5px;
+}
+.ucttg.sheet.actor .vehicle .characteristic-item {
+  width: 100%;
+}
+.ucttg.sheet.actor .vehicle .characteristic-item .characteristic-label {
+  background-color: #226cc5;
+}
+.ucttg.sheet.actor .vehicle .characteristic-item .characteristic {
+  border-radius: 10px;
+  border: 5px double #1f1c39;
+}
+.ucttg.sheet.actor .vehicle .characteristic-item .characteristic .characteristic-value input:focus {
+  border-radius: 5px;
+}
+.ucttg.sheet.actor .vehicle .attribute .block-title {
+  background-color: #1f1c39;
+}
+.ucttg.sheet.actor .vehicle .resource.single {
+  width: 115px;
+}
+.ucttg.sheet.actor .vehicle .biography-values {
+  border: 0;
+}
+.ucttg.sheet.actor .vehicle .sheet-body {
+  height: calc(100% - 28.875rem);
+  overflow: auto;
+}
+.ucttg.sheet.actor .vehicle .sheet-body .biography {
+  height: calc(100% - 6.5rem);
+  overflow: auto;
+}
+.ucttg.sheet.actor .vehicle .injuries .resource.full {
+  width: 100%;
+}
+.ucttg.sheet.actor .skillsGrid.crew {
+  justify-content: center;
+  height: 24px;
+}
+.ucttg.sheet.actor .skillsGrid.crew .dice-pool.crew {
+  margin: 0;
+}
+.ucttg.sheet.actor .homestead .sheet-header .homestead-img {
+  height: 20vmin;
+}
+.ucttg.sheet.actor .homestead .biography-values {
+  border: 0;
+}
+.ucttg.sheet.actor .homestead .sheet-body {
+  height: calc(100% - 28.875rem);
+  overflow: auto;
+}
+.ucttg.sheet.actor .homestead .sheet-body .biography {
+  height: calc(100% - 1.5rem);
+  overflow: auto;
+}
+.ucttg .item-sheet-vehicle-weapon .charname input {
+  color: #1f1c37;
+}
+.ucttg .item-sheet-vehicle-weapon .characteristic-item .characteristic-label {
+  background-color: #1f1c37;
+}
+.ucttg .item-sheet-vehicle-weapon .characteristic-item .characteristic {
+  border: 5px double #1f1c37;
+}
+.ucttg .item-sheet-vehicle-weapon .characteristic-item .characteristic .adjustedvalues-left {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  color: red;
+}
+.ucttg .item-sheet-vehicle-weapon .characteristic-item .characteristic .adjustedvalues-left.positive {
+  color: green;
+}
+.ucttg .item-sheet-vehicle-weapon .adjustedvalue {
+  color: red;
+}
+.ucttg .item-sheet-vehicle-weapon .block-background {
+  background-color: #cccae3;
+}
+.ucttg .item-sheet-vehicle-weapon .attribute .block-title {
+  background-color: #1f1c37;
+}
+.ucttg .item-sheet-vehicle-weapon .firing-arcs {
+  gap: 0px;
+  text-align: left;
+  padding: 0 10px;
+  line-height: 20px;
+}
+.ucttg .item-sheet-vehicle-weapon .firing-arcs label {
+  display: inline-block;
+  padding-left: 15px;
+  text-indent: -15px;
+  font-size: 0.675rem;
+}
+.ucttg .item-sheet-vehicle-weapon .firing-arcs input[type=checkbox] {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  width: 13px;
+  height: 13px;
+}
+.ucttg .item-sheet-vehicle-weapon .sheet-body {
+  height: calc(100% - 34.6875rem);
+}
+.ucttg .item-sheet-vehicle-weapon .pills.itemmodifier, .ucttg .item-sheet-vehicle-weapon .pills.itemattachment {
+  width: auto;
+  max-width: 50%;
+  width: 50%;
+}
+.ucttg .item-sheet-vehicle-weapon .pills.itemmodifier .item-pill-list, .ucttg .item-sheet-vehicle-weapon .pills.itemattachment .item-pill-list {
+  max-height: 75px;
+  height: 75px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+.ucttg.sheet.item.v2 .item-sheet-vehicle-weapon .container.flex-group-center {
+  padding: 0 5px 0 5px;
+  margin-bottom: 0;
+}
+.ucttg.sheet.item.v2 .item-sheet-vehicle-weapon .weapon-values {
+  margin: 0 5px;
+  padding: 0 5px 0 5px;
+}
+.ucttg.sheet.item.v2 .item-sheet-vehicle-weapon .sheet-body {
+  height: calc(100% - 17.3125rem);
+}
+.ucttg .item-sheet-vehicle-attachment .charname input {
+  color: #c87b4d;
+}
+.ucttg .item-sheet-vehicle-attachment .characteristic-item .characteristic-label {
+  background-color: #c87b4d;
+}
+.ucttg .item-sheet-vehicle-attachment .characteristic-item .characteristic {
+  border: 5px double #c87b4d;
+}
+.ucttg .item-sheet-vehicle-attachment .block-background {
+  background-color: #dfc68d;
+}
+.ucttg .item-sheet-vehicle-attachment .attribute .block-title {
+  background-color: #c87b4d;
+}
+.ucttg .item-sheet-vehicle-attachment .sheet-body {
+  height: calc(100% - 21.3125rem);
+}
+.ucttg.sheet.item.v2 .item-sheet-vehicle-attachment .container.flex-group-center {
+  padding: 0 5px 0 5px;
+  margin-bottom: 0;
+}
+.ucttg.sheet.item.v2 .item-sheet-vehicle-attachment .weapon-values {
+  margin: 0 5px;
+  padding: 0 5px 0 5px;
+}
+.ucttg.sheet.item.v2 .item-sheet-vehicle-attachment .sheet-body {
+  height: calc(100% - 17.3125rem);
+}
+.ucttg .group-manager {
+  overflow-y: auto;
+  font-family: Roboto, sans-serif;
+  color: #222222;
+  height: 100%;
+  width: auto;
+  text-align: center;
+}
+.ucttg .group-manager .PC-list {
+  margin: 20px 0;
+}
+.ucttg .group-manager .initiative-mode {
+  width: 100%;
+}
+.ucttg .group-manager .player-character:hover {
+  background: rgba(25, 24, 19, 0.03);
+  margin: 2px;
+}
+.ucttg .item:hover .hover {
+  text-decoration: underline;
+}
+.ucttg .hover:hover .tooltip {
+  opacity: 1;
+  z-index: 500;
+}
+.ucttg .hover:hover .tooltip2 {
+  opacity: 1;
+  z-index: 500;
+  pointer-events: none;
+}
+.ucttg .hover:focus .tooltip2 {
+  opacity: 1;
+  z-index: 500;
+}
+.ucttg .hover .tooltip {
+  top: 30px;
+  background-color: rgba(25, 24, 19, 0.8);
+  color: white;
+  border-radius: 5px;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 0.5s;
+  z-index: -500;
+  padding: 0 10px;
+}
+.ucttg .hover .tooltip2 {
+  width: 100%;
+  height: -webkit-max-content;
+  height: -moz-max-content;
+  height: max-content;
+  min-width: 150px;
+  max-width: 360px;
+  position: absolute;
+  transition: opacity 0.5s;
+  left: 0;
+  background: #23221d;
+  border: 1px solid #000;
+  border-radius: 5px;
+  color: #EEE;
+  z-index: -500;
+  opacity: 0;
+  padding: 5px 10px;
+}
+.ucttg .hover .tooltip2 li {
+  text-align: left;
+}
+.ucttg .hover .tooltip2 .dietype {
+  background-color: white;
+}
+.ucttg .ffg-sendtochat.hover:hover .tooltip2 {
+  background: #fff;
+  border: 1px solid #23221d;
+  color: #23221d;
+}
+.ucttg .item-sheet-criticalinjury .charname input {
+  color: #830707;
+}
+.ucttg .item-sheet-criticalinjury .block-background {
+  background-color: #da9797;
+}
+.ucttg .item-sheet-criticalinjury .block-background .block-title {
+  background-color: #830707;
+}
+.ucttg .item-sheet-criticalinjury .severity-img {
+  max-height: 15px;
+  max-width: 15px;
+  border: 0;
+}
+.ucttg .item-sheet-criticalinjury .severity-select {
+  width: 185px;
+}
+.ucttg .item-sheet-criticalinjury select:focus {
+  box-shadow: 0 0 5px #7da9c2;
+  background-color: #7da9c2;
+}
+.ucttg .item-sheet-criticalinjury .editor-wrapper {
+  display: block;
+}
+.ucttg .item-sheet-criticalinjury .block-background.block-editor {
+  padding: 10px;
+  background-color: #da9797;
+  height: 8rem;
+}
+.ucttg .item-sheet-criticalinjury .severity-block {
+  position: relative;
+}
+.ucttg .item-sheet-criticalinjury .sheet-body {
+  height: calc(100% - 19.375rem);
+}
+.ucttg .item-sheet-criticalinjury .profile-img {
+  height: 124px;
+  width: 100%;
+}
+.ucttg.sheet.item.v2 .item-sheet-criticalinjury .sheet-body {
+  height: calc(100% - 18.75rem);
+}
+.ucttg .injuries {
+  width: 100%;
+}
+.ucttg .injuries div.item {
+  cursor: pointer;
+  border-bottom: 1px solid #bbb;
+}
+.ucttg .injuries div.item:nth-last-of-type(1) {
+  border-bottom: none;
+}
+.ucttg .injuries div.item:hover {
+  background: rgba(25, 24, 19, 0.12);
+}
+.ucttg .injuries .severity {
+  position: relative;
+}
+.ucttg .injuries .severity-img {
+  max-height: 15px;
+  max-width: 15px;
+  border: 0;
+}
+.ucttg .injuries .resource.full {
+  width: 95%;
+}
+.ucttg .injuries .item-controls {
+  z-index: 500;
+  text-align: end;
+  margin: auto;
+}
+.ucttg .injuries .item-controls .item-control {
+  padding: 5px;
+}
+.ucttg.sheet.item .item-sheet-forcepower .popout-editor {
+  height: 100%;
+  width: 100%;
+  min-height: 2rem;
+  position: relative;
+}
+.ucttg .item-sheet-forcepower {
+  min-width: 700px;
+  min-height: 600px;
+}
+.ucttg .item-sheet-forcepower .required_fr input[type=text] {
+  width: 10px;
+}
+.ucttg .item-sheet-forcepower .talent-background .talent-header {
+  background-color: #0e4400;
+}
+.ucttg .item-sheet-forcepower .talent-background .talent-header div input[type=text] {
+  background-color: #1a8200;
+}
+.ucttg .item-sheet-forcepower .header-fields .talent-body {
+  margin-top: 5px;
+  padding: 0 5px;
+}
+.ucttg .item-sheet-forcepower .header-fields {
+  position: relative;
+}
+.ucttg .item-sheet-forcepower .header-fields .talent-actions {
+  position: absolute;
+  right: 10px;
+  top: 14px;
+  color: white;
+}
+.ucttg .item-sheet-forcepower .header-fields textarea {
+  max-width: 695px;
+}
+.ucttg .item-sheet-forcepower .sheet-body {
+  margin: 0;
+  height: calc(100% - 10rem);
+}
+.ucttg .item-sheet-forcepower .talent-cost {
+  bottom: -5px;
+  left: 0;
+  position: absolute;
+  background: #CCCCCC;
+  z-index: 60;
+  width: auto;
+  padding: 0 0.25rem 0 0.5rem;
+  font-size: 0.75rem;
+  height: 1.5em;
+  --notchSize: 0.5rem;
+  -webkit-clip-path: polygon(0 0, var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% 100%, calc(100% - var(--notchSize)) 100%, 0 100%, 0% calc(100% - var(--notchSize)));
+  clip-path: polygon(0 0, var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% 100%, calc(100% - var(--notchSize)) 100%, 0 100%, 0% calc(100% - var(--notchSize)));
+}
+.ucttg .item-sheet-forcepower .talent-cost input {
+  height: 1.2em;
+  width: 25px;
+  border: 0;
+  background: rgba(0, 0, 0, 0);
+}
+.ucttg .item-sheet-forcepower .talent-modifiers {
+  position: absolute;
+  right: 5px;
+  bottom: 2px;
+  z-index: 10;
+}
+.ucttg .talent-list .item.forcepower #context-menu {
+  max-width: none;
+}
+.ucttg .force-conflict {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  row-gap: 3px;
+}
+.ucttg.sheet.item .item-sheet-specialization .popout-editor {
+  height: 100%;
+  width: 100%;
+  min-height: 2rem;
+  position: relative;
+}
+.ucttg .item-sheet-specialization {
+  min-width: 700px;
+  min-height: 600px;
+}
+.ucttg .item-sheet-specialization .talent-upgrade {
+  margin: 5px 10px 10px 10px;
+}
+.ucttg .item-sheet-specialization .sheet-body {
+  margin: 0;
+  height: calc(100% - 9rem);
+  word-break: break-word;
+}
+.ucttg .item-sheet-specialization input.conflict {
+  opacity: 0.5;
+}
+.ucttg .item-sheet-specialization input.conflict:after {
+  content: "";
+  background-color: red;
+}
+.ucttg .burst-8 {
+  z-index: -1;
+  left: 7px;
+  background: white;
+  width: 26px;
+  height: 26px;
+  position: absolute;
+  text-align: center;
+  transform: rotate(20deg);
+}
+.ucttg .burst-8:before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 26px;
+  width: 26px;
+  background: white;
+  transform: rotate(135deg);
+}
+.ucttg div.conflict {
+  height: 23px;
+  width: 22px;
+  position: absolute;
+  background: red;
+  left: 9px;
+  top: 7px;
+  z-index: -1;
+}
+.ucttg.data-import .import-file-selector div {
+  display: inline-block;
+}
+.ucttg.data-import .import-invalid {
+  display: none;
+}
+.ucttg.data-import .import-hidden {
+  visibility: hidden;
+}
+.ucttg.data-import .import-progress {
+  background-color: #f1f1f1;
+  margin: 5px 5px;
+  width: 100%;
+}
+.ucttg.data-import .import-progress.current {
+  width: inherit;
+}
+.ucttg.data-import .import-progress.overall {
+  width: inherit;
+}
+.ucttg.data-import .import-progress .import-progress-bar {
+  height: 24px;
+  background-color: green;
+  text-align: center;
+}
+.ucttg.data-import .import-progress .import-progress-bar span {
+  line-height: 24px;
+}
+.ucttg.data-import .skilllist table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.ucttg.data-import .skilllist th, .ucttg.data-import .skilllist td {
+  padding: 0.3125rem;
+  text-align: center;
+  width: 7.8125rem;
+}
+.ucttg.data-import .skilllist tbody {
+  display: block;
+  overflow: auto;
+  height: 4.5rem;
+  width: 100%;
+}
+.ucttg.data-import .skilllist thead tr {
+  display: block;
+}
+.ucttg.data-import .skilllist .skilltheme {
+  text-align: left;
+}
+.ucttg.data-import .skilllist .fa-download {
+  cursor: pointer;
+}
+.ucttg.data-import .skilllist .skillactive {
+  text-align: center;
+}
+.ucttg.data-import .skilllist .skillactive .fa-check-circle {
+  color: green;
+}
+.ucttg.data-import .skilllist .skillactive .fa-times-circle {
+  color: red;
+}
+.ucttg .debug label {
+  display: block;
+  padding-left: 15px;
+  text-indent: -15px;
+}
+.ucttg .debug input[type=checkbox] {
+  position: relative;
+  padding: 0;
+  margin: 0;
+  width: 13px;
+  height: 13px;
+}
+.ucttg .item-sheet-species .sheet-header img.profile-img {
+  flex: 0 0 100px;
+  height: 124px;
+  width: auto;
+  max-width: 124px;
+  border: 0;
+  margin: auto;
+  -o-object-fit: contain;
+  object-fit: contain;
+}
+.ucttg .item-sheet-species .characteristics {
+  width: 100%;
+}
+.ucttg .item-sheet-species .characteristics .characteristic-item .characteristic-label {
+  background-color: #490c0b;
+}
+.ucttg .item-sheet-species .characteristic {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 5px double black;
+  margin: auto;
+  position: relative;
+}
+.ucttg .item-sheet-species .characteristic .characteristic-value input {
+  height: 40px;
+  border: 0;
+  font-size: 30px;
+  text-align: center;
+}
+.ucttg .item-sheet-species .characteristic .characteristic-value input:focus {
+  border-radius: 50%;
+}
+.ucttg .item-sheet-species .attribute .block-title {
+  background-color: #490c0b;
+}
+.ucttg .item-sheet-species .sheet-body {
+  height: calc(100% - 25.25rem);
+}
+.ucttg.sheet.item.v2 .item-sheet-species .container.flex-group-center {
+  padding: 0 5px 0 5px;
+  margin-bottom: 0;
+}
+.ucttg.sheet.item.v2 .item-sheet-species .weapon-values {
+  margin: 0 5px;
+  padding: 0 5px 0 5px;
+}
+.ucttg.sheet.item.v2 .item-sheet-species .sheet-body {
+  height: calc(100% - 21.1125rem);
+}
+.ucttg .item-sheet-career .sheet-body {
+  height: calc(100% - 11.75rem);
+}
+.ucttg .attributes {
+  margin: 0;
+  border: 0;
+}
+.ucttg .attributes .attributes-header {
+  padding: 5px;
+  margin: 0 0 5px 0;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid #aaa;
+  border-radius: 2px;
+  font-weight: bold;
+}
+.ucttg .attributes .attribute-label {
+  flex: 1.5;
+}
+.ucttg .attributes .attribute-control {
+  flex: 0 0 20px;
+}
+.ucttg .attributes .attributes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ucttg .attributes .attributes-list tr > * {
+  margin: 0 3px;
+  height: 28px;
+  line-height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid #aaa;
+  overflow: auto;
+}
+.ucttg .attributes .attributes-list .attribute.item {
+  position: relative;
+}
+.ucttg .attributes .attributes-list .attribute.item:hover {
+  background: rgba(25, 24, 19, 0.12);
+  margin: 2px;
+}
+.ucttg .attributes .attribute-value.checkbox {
+  text-align: center;
+}
+.ucttg.sheet.item .item-sheet-signatureability .popout-editor {
+  height: 100%;
+  width: 100%;
+  min-height: 2rem;
+  position: relative;
+}
+.ucttg .item-sheet-signatureability .talent-background .talent-header {
+  background-color: #630000;
+}
+.ucttg .item-sheet-signatureability .talent-background .talent-header div input[type=text] {
+  background-color: #fcadad;
+}
+.ucttg .item-sheet-signatureability .header-fields {
+  position: relative;
+}
+.ucttg .item-sheet-signatureability .header-fields .talent-actions {
+  position: absolute;
+  right: 10px;
+  top: 14px;
+  color: white;
+}
+.ucttg .item-sheet-signatureability .header-fields textarea {
+  max-width: 695px;
+}
+.ucttg .item-sheet-signatureability .sheet-body {
+  margin: 0;
+  overflow: hidden;
+}
+.ucttg .item-sheet-signatureability .talent-cost {
+  bottom: -5px;
+  left: 7px;
+  position: absolute;
+  z-index: 10;
+  width: 60px;
+}
+.ucttg .item-sheet-signatureability .talent-cost input {
+  width: 25px;
+  border: 0;
+  background: rgba(0, 0, 0, 0);
+}
+.ucttg .item-sheet-signatureability .talent-modifiers {
+  position: absolute;
+  right: 5px;
+  bottom: 2px;
+  z-index: 10;
+}
+.ucttg .item-sheet-modifiers .charname input {
+  color: #2c0344;
+}
+.ucttg .item-sheet-modifiers .characteristic-item .characteristic-label {
+  background-color: #2c0344;
+}
+.ucttg .item-sheet-modifiers .block-background {
+  background-color: #e9c6fd;
+}
+.ucttg .item-sheet-modifiers .attribute .block-title {
+  background-color: #2c0344;
+}
+.ucttg .item-sheet-modifiers .sheet-body {
+  height: calc(100% - 12.7rem);
+  overflow: auto;
+}
+.ucttg.sheet.item.v2 .item-sheet-modifiers .container.flex-group-center {
+  padding: 0 5px 0 5px;
+  margin-bottom: 0;
+}
+.ucttg.sheet.item.v2 .item-sheet-modifiers .weapon-values {
+  margin: 0 5px;
+  padding: 0 5px 0 5px;
+}
+.ucttg.sheet.item.v2 .item-sheet-modifiers .sheet-body {
+  height: calc(100% - 8.6rem);
+}
+.ucttg .item-sheet-itemattachment .profile-img-field {
+  width: 25%;
+}
+.ucttg .item-sheet-itemattachment .profile-img-field img.profile-img {
+  width: 100%;
+  height: auto;
+}
+.ucttg .item-sheet-itemattachment .sheet-body {
+  height: calc(100% - 19rem);
+}
+.ucttg .item-sheet-itemattachment .sheet-body table th:first-child {
+  text-align: left;
+  padding-left: 3px;
+}
+.ucttg .item-sheet-itemattachment .sheet-body table td:not(:first-child) {
+  position: relative;
+  text-align: center;
+}
+.ucttg .item-sheet-itemattachment .sheet-body table td:not(:first-child) .quantity {
+  top: 3px;
+}
+.ucttg .item-sheet-itemattachment .sheet-body table td .modifier-active i {
+  cursor: pointer;
+}
+.ucttg .item-sheet-itemattachment .sheet-body table td.add-modifier i {
+  padding: 0 2px;
+  cursor: pointer;
+}
+.ucttg.sheet.item.v2 .item-sheet-itemattachment .sheet-body {
+  height: calc(100% - 16.5rem);
+}
+.ucttg #combat-tracker .slot-Friendly {
+  background: rgba(21, 87, 134, 0.3);
+  color: #f0f0e0;
+}
+.ucttg #combat-tracker .slot-Friendly.slot-unused-true {
+  background: rgba(4, 37, 61, 0.3);
+}
+.ucttg #combat-tracker .slot-Enemy {
+  background: rgba(146, 52, 20, 0.3);
+  color: #f0f0e0;
+}
+.ucttg #combat-tracker .slot-Enemy.slot-unused-true {
+  background: rgba(87, 9, 9, 0.3);
+}
+.ucttg #combat-tracker .slot-claimed {
+  filter: grayscale(100%);
+}
+.ucttg #combat-tracker .encounter-controls .actor-header {
+  font-size: 14px;
+}
+.ucttg #combat-tracker .token-image.actor-header {
+  width: 24px;
+  height: 24px;
+  max-width: 24px;
+  max-height: 24px;
+}
+
+.initiative-dialog .pool-selector {
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+.initiative-dialog .pool-additional img {
+  vertical-align: middle;
+}
+.initiative-dialog .pool-additional input {
+  margin: 0 0.1875rem;
+}
+
+.og-character-import {
+  min-width: 96%;
+}
+.og-character-import h4 {
+  min-width: 70%;
+  text-align: center;
+}
+.og-character-import button {
+  min-width: 48%;
+  margin: 5px 2px;
+}
+
+#destiny-tracker {
+  box-shadow: none;
+  background: transparent;
+  position: absolute;
+  /* Dropdown Button */
+  /* Dropdown button on hover & focus */
+  /* The container <div> - needed to position the dropdown content */
+  /* Dropdown Content (Hidden by Default) */
+  /* Links inside the dropdown */
+  /* Change color of dropdown links on hover */
+  /* Show the dropdown menu on hover */
+  /* Change the background color of the dropdown button when the dropdown content is shown */
+  /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+}
+#destiny-tracker .window-content {
+  background: transparent;
+}
+#destiny-tracker header.window-header {
+  display: none;
+}
+#destiny-tracker .dropbtn {
+  background-color: transparent;
+  color: white;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+}
+#destiny-tracker .dropbtn i {
+  margin: 0;
+}
+#destiny-tracker .dropbtn:hover, #destiny-tracker .dropbtn:focus {
+  background-color: black;
+}
+#destiny-tracker .dropdown {
+  position: relative;
+  display: inline-block;
+}
+#destiny-tracker .dropdown-content {
+  display: contents;
+  position: absolute;
+  background: url(../../../ui/denim075.png) repeat;
+  max-width: 50px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+}
+#destiny-tracker .dropdown-content.vertical {
+  margin-top: calc(-13vh + 40px);
+}
+#destiny-tracker .dropdown-content a {
+  color: white;
+  padding: 5px 4px;
+  text-decoration: none;
+  display: block;
+  font-size: 15px;
+}
+#destiny-tracker .dropdown:hover .dropbtn {
+  background-color: #3e8e41;
+}
+#destiny-tracker .show {
+  display: block;
+  background-color: #3e8e41;
+}
+
+.swffg-destiny-container {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.swffg-destiny-bar {
+  height: 5px;
+  width: 100%;
+  background: url(../../../ui/denim075.png) repeat;
+  box-shadow: 0 0 10px #000;
+  box-sizing: content-box;
+  padding: 0 1px;
+  margin: -3px 0;
+}
+
+.swffg-destiny {
+  background: url(../../../ui/denim075.png) repeat;
+  border: 1px solid #000;
+  border-radius: 5px;
+  box-shadow: 0 0 10px #000;
+  box-sizing: content-box;
+  color: #fff;
+  font-family: "warnock-pro", "sans-serif";
+  font-size: 30px;
+  height: auto;
+  line-height: 1.2;
+  margin: 8px 8px 6px 0;
+  pointer-events: none;
+  text-align: center;
+  min-width: 84px;
+  width: 100%;
+  display: flex;
+  z-index: 70;
+}
+.swffg-destiny.swffg-groupmanager {
+  min-width: 125px;
+  flex: 1;
+  position: relative;
+  padding: 0 0 5px 0;
+  pointer-events: auto;
+  height: 55px;
+}
+.swffg-destiny .group-manager {
+  padding: 5px 0px 0px 5px;
+  position: fixed;
+}
+.swffg-destiny .destiny-points {
+  flex: 1;
+  position: relative;
+  padding: 6px 0 12px 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.swffg-destiny .destiny-points span {
+  bottom: 2px;
+  font-family: "mason-serif", "Nodesto", "Signika", "Palatino Linotype", serif;
+  font-size: 12px;
+  left: 50%;
+  line-height: 1;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 80px;
+}
+.swffg-destiny .destiny-points.display-menu {
+  margin-left: 35px;
+}
+.swffg-destiny #context-menu {
+  font-size: 0.875rem;
+}
+
+.ffg-destiny-roll {
+  cursor: pointer;
+}
+
+.destiny-flip {
+  text-align: center;
+  border-radius: 15px;
+  box-shadow: 0 0 20px #000;
+}
+.destiny-flip .destiny-title {
+  font-size: 23px;
+}
+.destiny-flip .destiny-title span {
+  font-weight: bold;
+}
+.destiny-flip.dPoolDark {
+  background-color: khaki;
+}
+.destiny-flip.dPoolLight {
+  background-color: #b8383b;
+  color: white;
+}
+.ucttg.sheet.item .item-sheet-career .signatureability-pill.item-pill2, .ucttg.sheet.item .item-sheet-career .specialization-pill.item-pill2 {
+  padding: 0.1rem 0.5rem;
+  background-color: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 1rem;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.ucttg.sheet.item .item-sheet-career .signatureability-pill.item-pill2 .item-delete, .ucttg.sheet.item .item-sheet-career .specialization-pill.item-pill2 .item-delete {
+  cursor: pointer;
+}

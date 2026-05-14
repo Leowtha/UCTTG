@@ -1,0 +1,387 @@
+=== UCTTG MOBILE SUIT SYSTEM — FILE REFERENCE ===
+
+PROJECT: Custom Foundry VTT system (forked from Star Wars FFG)
+SYSTEM ID: ucttg
+PURPOSE: Gundam-flavored TTRPG using Genesys/FFG dice mechanics.
+         Original FFG plumbing left intact; UCTTG-specific additions
+         layered on top. This sheet tracks the layered-on parts.
+
+--- ACTOR TYPES ---
+character, nemesis, rival, ace, minion, mobilesuit, vehicle, homestead
+
+UCTTG-specific or heavily-modified:
+  - mobilesuit  : new actor type, pilot-linked, MS frame locations
+  - ace         : new actor type, has kills + hangar like character
+  - character   : extended with kills, hangar, downtime, MS bonus toggles
+
+Inherited mostly-untouched:
+  - nemesis, rival, minion, vehicle, homestead
+
+=================================================================
+                          KEY FILES
+=================================================================
+
+1. SHEET CLASS (one file, all actor types):
+   File: actor-sheet-ffg.js  (exports ActorSheetFFG extends ActorSheet)
+
+   Template selection: get template() returns
+     `systems/ucttg/templates/actors/ffg-${this.actor.type}-sheet.html`
+
+   getData() — UCTTG additions:
+     • Normalizes hangar + downtime entry-lists for character & ace
+       via _normalizeEntryList() (handles legacy arrays/scalars)
+     • Computes per-row downtime "available" = weeks + months*4
+     • Sums downtimeTotals across rnd/production/customization/downtime
+       and exposes at TOP LEVEL of data (not data.data)
+     • Mobile Suit pilot-linking block:
+         if (this.actor.type === "mobilesuit" && this.actor.system.pilotId)
+       — Looks up pilot actor (game.actors.get)
+       — Builds enriched pilot.talentList for read-only display
+         (resolves activation/description from owned-item OR world-item OR talent)
+       — Scans MS-owned items for modifier types (see list below),
+         then ALSO scans pilot-owned items for the same types
+         EXCEPT Characteristic (pilot's chars already include their own item bonuses)
+       — Overwrites MS characteristics with pilot's + MS bonus
+       — Copies pilot's pre-computed skill dice fields (boost/setback/upgrades/
+         advantage/threat/triumph/etc + all *source arrays for tooltips)
+         then layers MS modifiers on top
+       — Resets defence to 0 then re-adds StatDefence modifiers
+         + equipped armour defence (melee + ranged both get armour.defence.value)
+       — Adds talent/ability soak (NOT gear soak — gear soak is separate)
+     • If MS has pilotId set but pilot actor is gone → data.pilot = null,
+       reset MS skills/chars to zeros
+     • If MS with no pilot at all → reset MS skills/chars to zeros
+       (MS has no meaningful base stats by design)
+
+   _onDropActor() — Mobile Suit pilot assignment:
+     • Only runs for mobilesuit actor type (other types fall through to super)
+     • Valid pilot types: character, nemesis, rival, ace
+     • Sets system.pilotId on the MS actor
+
+   _onDropItem() — UCTTG additions:
+     • character + species drop → grants species startingXP (xpLogEarn)
+     • character + talent/specialization/signatureability/forcepower drop →
+       prompts "Purchase or Grant" dialog if affordable
+
+   _updateObject() — UCTTG additions:
+     • Strips synthetic trailing inputs before calling ActorHelpers.updateActor:
+       - "hangar-new-entry" key
+       - any key starting with "downtime-new-"
+     These are handled by their own change listeners (see activateListeners).
+
+   activateListeners() — UCTTG-specific listeners:
+     • .remove-hangar          → delete hangar entry by id
+     • input.hangar-new        → create new hangar entry on change (auto-expand)
+     • .remove-downtime        → delete downtime entry from any section
+     • input.downtime-new      → create new downtime entry on change (auto-expand)
+                                 reads name/weeks/months from sibling inputs in row
+     • .ms-pilot-remove        → clears system.pilotId
+     • .ms-pilot-open          → opens pilot sheet
+     • .ms-pilot-name          → opens pilot sheet (clicking name link)
+     • Standard FFG: skill rolls, item drops, crew, XP adjustment, etc.
+
+   ActorOptions registration is per-type (see end of activateListeners).
+   Mobilesuit registers: enableAutoSoakCalculation (default false),
+                         enableForcePool, enableCriticalInjuries (default true),
+                         talentSorting
+
+   _normalizeEntryList(value, validFields):
+     Robust handler for legacy data shapes. Accepts:
+       - arrays (legacy) → re-keyed object with random IDs
+       - keyed-entries object → returned as-is
+       - legacy flat-fields object (scalar values) → discarded as {}
+       - null/undefined/scalar → {}
+     Used for both hangar and the four downtime sections.
+
+2. ACTOR HELPERS:
+   File: helpers/actor-helpers.js
+   Exports: ActorHelpers (default), xpLogSpend, xpLogEarn
+
+   updateActor() — single funnel for ALL actor form submissions.
+     Per-type pipeline branching:
+       - homestead, mobilesuit  : SKIPS the characteristic/stat/skill
+                                  modifier-delta calculations entirely
+                                  (MS uses pilot data; homestead has no stats)
+       - vehicle                : runs vehicle_stats branch (shields special-cased)
+       - character/nemesis/rival/ace/minion : runs full character pipeline
+     Mechanism: form values minus item-modifier totals = base attribute value
+     (i.e. user-entered totals are reverse-engineered into attrs via the
+     ModifierHelpers.getCalculateValueForAttribute deltas).
+
+   xpLogSpend / xpLogEarn:
+     Append HTML-formatted entries to actor.flags.ucttg.xpLog (red=spend, green=earn).
+     xpLogSpend also whispers GM if "notifyOnXpSpend" setting enabled.
+
+3. MODIFIER HELPERS:
+   File: helpers/modifiers.js  (exports ModifierHelpers)
+
+   getCalculateValueForAttribute(key, attrs, items, modtype):
+     Returns total = attrs[key].value + sum of item modifiers matching key+modtype.
+     Special-cases "Shields" (returns array of 4 shield values).
+
+   getCalculatedValueFromItems(items, key, modtype, includeSource):
+     Recursive item modifier scanner.
+     Recurses into:
+       - equipped armour/weapon → itemmodifier + itemattachment children
+       - forcepower/signatureability → learned upgrades (.islearned)
+       - specialization → learned talents (.islearned)
+     Talent rank multiplier: if item.system.ranks.ranked, value *= ranks.current
+     Soak/Defence have direct properties on armour items (item.system.soak.adjusted)
+     "Career Skill" / "Force Boost" modtype returns boolean (checked) instead of total.
+     includeSource=true returns {total, sources} with per-modifier provenance.
+
+   getCalculatedValueFromCurrentAndArray(item, items, key, modtype, includeSource):
+     Like getCalculatedValueFromItems but ALSO factors in attributes on the
+     current item itself (multiplied by item.system.rank). Used by dice pool builder.
+
+   getDicePoolModifiers(pool, item, items):
+     Stacks all dice/result/roll modtypes onto a DicePoolFFG instance.
+
+   getBaseValue(items, key, modtype):
+     Sums modifiers from species items only. Used for characteristic XP cost
+     calculation (so species bonuses don't inflate cost).
+
+=================================================================
+                       MS PILOT LINKING DESIGN
+=================================================================
+
+Storage: system.pilotId on the MS actor (string, empty when unset).
+
+Design rationale:
+  - MS has no meaningful base stats (zeros).
+  - Pilot's characteristics/skills are the source of truth.
+  - Pilot's pre-computed skill dice fields (boost/upgrades/advantage/etc)
+    already include the pilot's own talent bonuses because Foundry's
+    prepareData() ran on the pilot first.
+  - MS-owned items add modifiers on TOP of pilot's values.
+  - Pilot-owned items also re-scanned at MS getData() time for non-Characteristic
+    modifier types (Skill Boost/Upgrade/Advantage, Stat-Defence, Armor-Stat-soak).
+    Pilot Characteristic mods are SKIPPED here because they're already baked
+    into pilot.system.characteristics.
+
+Why scan twice?
+  - The FFG modifier pipeline runs before getData(), processing MS-owned items
+    against the MS actor (whose stats are zero). So MS items' Characteristic
+    bonuses never land anywhere by default. We re-scan MS items in getData()
+    to add them on top of pilot characteristics.
+  - The same scan covers other modtypes for completeness.
+
+MS PILOT MODIFIER TYPES SCANNED:
+  Modifier scan happens in getData() over BOTH this.actor.items (the MS) and
+  pilot.items. Stored in msModifiers object with these keys:
+
+  - "Characteristic"     → adds to pilot's base characteristic
+                           (MS items only — pilot items skipped)
+  - "Skill Boost"        → boost dice for specific skill
+  - "Skill Add Upgrade"  → upgrade dice for specific skill (or "*" for all)
+  - "Skill Add Advantage"→ auto-advantage for specific skill
+  - "Stat" + mod="Defence-Ranged" / "Defence-Melee" → defence bonuses
+  - "Armor Stat" + mod="soak" → soak bonus
+
+NOT scanned this way (handled separately in getData()):
+  - Equipped armour items: armour.system.defence.value adds to BOTH melee & ranged
+  - Talent/ability soak: separate loop after the main scan, only types
+    "talent" and "ability", only modtype "Armor Stat" mod "soak"
+    (deliberately excludes gear-derived soak which is handled by FFG's
+    native pipeline on the MS items already)
+
+Valid pilot actor types: character, nemesis, rival, ace
+"AI pilot" pattern: create a regular character/nemesis actor and drop it.
+
+=================================================================
+                       DOWNTIME / HANGAR SYSTEM
+=================================================================
+
+Available on: character, ace (NOTE: ace partially supported — see GOTCHAS)
+Block partial: templates/parts/actor/ffg-downtime.html
+Section partial: templates/parts/actor/ffg-downtime-section.html
+Kills+Hangar partial: templates/parts/actor/ffg-kills-hangar.html
+
+Data fields (sibling to system.stats, NOT nested under system.downtime.*):
+  system.rnd            — keyed object of {name, weeks, months}
+  system.production     — keyed object of {name, weeks, months}
+  system.customization  — keyed object of {name, weeks, months}
+  system.downtime       — keyed object of {name, weeks, months} (the "Activities" section)
+  system.hangar         — keyed object of {value}
+  system.kills          — flat object: smallVehicles, mediumVessels, largeVessels,
+                          transportVessels, mobileSuits, ace (all numbers)
+
+Per-row "available" (computed at getData(), not stored):
+  available = weeks + months * 4
+
+Total row at bottom of downtime block:
+  downtimeTotals = { weeks: Σ, months: Σ, available: Σ }
+  Exposed at data.downtimeTotals (top-level, not under data.data)
+
+Auto-expand pattern (used by hangar + all four downtime sections):
+  - Trailing empty <input class="hangar-new" /> or "downtime-new" row in template
+  - On "change" event, listener creates a real keyed entry via foundry.utils.randomID()
+  - _updateObject strips synthetic input names before calling updateActor
+    so they never become persisted fields
+
+=================================================================
+              UCTTG ACTOR-SPECIFIC SHEET FEATURES
+=================================================================
+
+Mobilesuit sheet (templates/actors/ffg-mobilesuit-sheet.html):
+  - Title card at top
+  - ms-profile-block on left (current configuration / scheme / portrait)
+  - Pilot assignment block on right (drop zone or assigned pilot card)
+  - Characteristics: read-only when pilot linked, editable when not
+  - "Pilot Talents" read-only reference table on Talents tab when linked
+  - Biography tab has 6 frame locations in 3x2 grid:
+      head, fuel, leftarm, rightarm, leftleg, rightleg
+      Each: label (string), armor (string), value/max (HP) via ffg-block split
+  - Bottom of biography: rolloutDate, costToManufacture
+  - NO encumbrance, credits, medical block
+  - Has criticalinjury support (enableCriticalInjuries default true)
+
+Character/Ace sheets:
+  - Title card "ACE" on ace sheet
+  - Both include kills + hangar + downtime in biography tab
+  - msBonus characteristic toggles (Brawn/Agility/etc → boolean)
+    used by MS pilot linking? [referenced in template.json, usage TBC]
+
+=================================================================
+                       SHARED PARTIALS
+=================================================================
+
+Shared template partials we lean on (not modified often, but referenced):
+
+  templates/parts/shared/ffg-block.html
+    Universal block primitive. Args:
+      blocktype: "single" | "double" | "split" | "full" | "pills"
+      type:      "Number" | "String" | "Boolean" | "Dropdown" |
+                 "Multicheckbox" | "PopoutEditor" | "Button"
+      title, name, value, fields[], disabled, headerlink, etc.
+    "split" expects fields=[{name,value,type,label}, {name,value,type,label}]
+      and renders a shadow row underneath with the two field labels.
+
+  templates/parts/shared/ffg-tabs.html
+    Renders sheet tab nav. Pass items=[{tab,label,icon,cls,isHidden,...}]
+
+  templates/parts/actor/ffg-skills.html
+    Renders data.skilllist (the two-column array built by
+    actor-sheet-ffg._createSkillColumns()). Each column is a flat list
+    where {id:"header", ...} entries indicate group headers.
+    Skill row shows: name (with optional purchase button for character),
+    careerskill/groupskill checkbox, rank input, roll button.
+    DiceHelpers.addSkillDicePool() injects the dice pool image post-render.
+
+  templates/parts/actor/ffg-talents.html
+    Renders this.actor.talentList (built by _updateSpecialization()).
+    Shows: name | activation | rank | tier (genesys only) | edit/info icons
+
+  templates/parts/actor/ffg-weapon-armor-gear.html
+    Per-type weapons/armour/gear lists (character path) OR shipweapon/
+    shipattachment/crew/cargo lists (vehicle path).
+    Mobilesuit takes the character path; the "Armour" header shows
+    "Shields"/"Armor" labels instead when actor.type === "mobilesuit".
+
+  templates/parts/actor/ffg-abilities.html
+  templates/parts/actor/ffg-forcepowers.html
+  templates/parts/actor/ffg-signatureability.html
+  templates/parts/actor/ffg-criticalinjury.html
+  templates/parts/actor/ffg-healingitem.html
+  templates/parts/shared/ffg-modifiers.html
+    [referenced but not directly indexed — open if needed]
+
+=================================================================
+                       DATA MODEL (template.json)
+=================================================================
+
+Structure: Foundry "templates" pattern (composable mixins per type).
+File: template.json (top-level of system)
+
+Templates referenced by actor types:
+  biography, species, career, specialisation, stats, characteristics,
+  skills, attributes, general
+
+Mobilesuit declared templates: biography, characteristics, skills, attributes
+  + own: pilotId, stats (with armour, customizationHardPoints, etc.),
+         msModel, msManufacturer, operatingEnviro {ground/air/space/water}
+
+Stats template includes MS frame location fields (head/fuel/leftarm/rightarm/
+leftleg/rightleg), each with {value, min, max, adjusted, label, armor}.
+These exist on ALL actor types that use the "stats" template (because
+template.json mixin is shared) but are only displayed on the MS sheet.
+
+Character-specific custom fields (declared in template.json under "character"):
+  faction, rank, monthlyIncome, incomeModifier, newtypeAwakened,
+  msBonus {Brawn/Agility/Intellect/Cunning/Willpower/Presence: bool},
+  kills {6 fields}, downtime{}, hangar{}, rnd{}, production{},
+  customization{}, aceTalent {name, ranks}
+
+Ace-specific (template.json under "ace"):
+  kills {6 fields}, hangar{}
+  → MISSING: downtime{}, rnd{}, production{}, customization{} (see GOTCHAS)
+
+=================================================================
+                       FLAGS / SETTINGS
+=================================================================
+
+Per-actor flags (actor.flags.ucttg.*):
+  config.enableForcePool          (bool) — show Force Pool block
+  config.enableStrainThreshold    (bool, default true) — show Strain block
+  config.enableObligation         (bool)
+  config.enableDuty               (bool)
+  config.enableMorality           (bool)
+  config.enableConflict           (bool)
+  config.enableAutoSoakCalculation (bool)
+  config.enableCriticalInjuries   (bool)
+  config.medicalItemName          (string)
+  config.talentSorting            (array index)
+  loaded                          (bool) — first-load flag for spec init
+  xpLog                           (array of HTML strings)
+  crew                            (vehicle only)
+
+World settings (game.settings.get("ucttg", ...)):
+  maxAttribute, maxSkill, skillSorting, enableSoakCalc,
+  HealingItemAction, medItemName, notifyOnXpSpend,
+  arrayCrewRoles, specializationCompendiums, signatureAbilityCompendiums,
+  forcePowerCompendiums, talentCompendiums
+
+=================================================================
+                       GOTCHAS / FLAGGED ISSUES
+=================================================================
+
+1. data.downtimeTotals is at TOP LEVEL of data, not data.data
+   - In the partial, refer to {{downtimeTotals.weeks}} not {{data.downtimeTotals.weeks}}
+   - Easy mistake when editing the totals row.
+
+2. MS frame location fields (head/fuel/leftarm/etc) live in shared "stats" template
+   - All character-type actors technically have these fields in their data
+     model, even though only MS displays them. Don't remove from template.json
+     without considering migration impact.
+
+3. _normalizeEntryList "looksLegacy" detection
+   - If a downtime/hangar entry's stored value contains scalar properties
+     instead of nested objects, the WHOLE FIELD is wiped and returned as {}.
+     This is intentional (handles legacy schema migrations) but surprising
+     if you ever store a non-object entry by mistake.
+
+4. updateActor reverse-engineers attrs from form totals
+   - For non-MS character-type actors, the form shows TOTALS (after item
+     modifiers). updateActor subtracts the item modifier total and assigns
+     the remainder to system.attributes[key].value. If you display raw
+     base values in a form, this will double-count.
+   - MS is exempt from this whole pipeline; MS form values store as-is
+     (only matters for the no-pilot case since with-pilot fields are read-only).
+
+=================================================================
+                       NOT YET INDEXED
+=================================================================
+
+Files referenced but not directly read (open if relevant work touches them):
+  - swffg-main.js              (system entry, hooks, itemPillHover export)
+  - swffg-config.js            (CONFIG.FFG.* — skills, characteristics, stats)
+  - System CSS                 (.downtime-grid, .ms-pilot-block, .kills-table, etc.)
+  - helpers/dice-helpers.js    (DiceHelpers.rollSkill, addSkillDicePool, etc.)
+  - helpers/crew.js            (vehicle crew register/roll)
+  - helpers/item-helpers.js
+  - helpers/embeddeditem-helpers.js
+  - importer/import-helpers.js
+  - migration.js               (migrateDataToSystem — called in updateActor)
+  - popout-editor.js, popout-modifiers.js
+  - Other actor templates: nemesis, rival, minion, vehicle, homestead
+  - Item sheet templates and item-sheet-ffg.js

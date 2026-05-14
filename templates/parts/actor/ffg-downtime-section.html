@@ -1,0 +1,84 @@
+{{!-- A single downtime section (Activities, R&D, Production, or Customization) --}}
+<div class="downtime-section" data-section="{{sectionKey}}">
+  <table class="downtime-table">
+    <thead>
+      <tr>
+        <th class="downtime-name-header">{{localize nameHeaderKey}}</th>
+        <th class="downtime-num-header">{{localize "ucttg.Downtime.Header.Weeks"}}</th>
+        <th class="downtime-num-header">{{localize "ucttg.Downtime.Header.Months"}}</th>
+        <th class="downtime-num-header">{{localize "ucttg.Downtime.Header.Spent"}}</th>
+        <th class="downtime-controls-header"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each entries as |entry id|}}
+        <tr>
+          <td class="downtime-name">
+            <input type="text"
+                   name="data.{{../sectionKey}}.{{id}}.name"
+                   value="{{entry.name}}"
+                   data-dtype="String"
+                   placeholder="{{localize ../placeholderKey}}" />
+          </td>
+          <td class="downtime-weeks">
+            <input type="text"
+                   name="data.{{../sectionKey}}.{{id}}.weeks"
+                   value="{{#if entry.weeks}}{{entry.weeks}}{{else}}0{{/if}}"
+                   data-dtype="Number" />
+          </td>
+          <td class="downtime-months">
+            <input type="text"
+                   name="data.{{../sectionKey}}.{{id}}.months"
+                   value="{{#if entry.months}}{{entry.months}}{{else}}0{{/if}}"
+                   data-dtype="Number" />
+          </td>
+          <td class="downtime-spent">
+            {{entry.spent}}
+          </td>
+          <td class="downtime-controls">
+            <a class="remove-downtime"
+               data-section="{{../sectionKey}}"
+               data-id="{{id}}"
+               title="{{localize 'ucttg.Downtime.Remove'}}">
+              <i class="fas fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+      {{/each}}
+
+      {{!-- Trailing empty row for auto-expand --}}
+      <tr>
+        <td class="downtime-name">
+          <input type="text"
+                 class="downtime-new"
+                 data-section="{{sectionKey}}"
+                 data-field="name"
+                 name="downtime-new-{{sectionKey}}-name"
+                 value=""
+                 data-dtype="String"
+                 placeholder="{{localize placeholderKey}}" />
+        </td>
+        <td class="downtime-weeks">
+          <input type="text"
+                 class="downtime-new"
+                 data-section="{{sectionKey}}"
+                 data-field="weeks"
+                 name="downtime-new-{{sectionKey}}-weeks"
+                 value="0"
+                 data-dtype="Number" />
+        </td>
+        <td class="downtime-months">
+          <input type="text"
+                 class="downtime-new"
+                 data-section="{{sectionKey}}"
+                 data-field="months"
+                 name="downtime-new-{{sectionKey}}-months"
+                 value="0"
+                 data-dtype="Number" />
+        </td>
+        <td class="downtime-spent"></td>
+        <td class="downtime-controls"></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

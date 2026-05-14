@@ -1,0 +1,66 @@
+{{!-- Downtime block: Activities, R&D, Production, Customization --}}
+{{!-- Per-row "spent" = weeks + (months * 4). Totals summed across all sections. --}}
+{{!-- "Available" is a user-set budget; total spent is measured against it. --}}
+
+<div class="resource full">
+  <div class="attribute flex-group-center">
+    <div class="block-background">
+      <div class="block-title">
+        {{localize "ucttg.Downtime.Title"}}
+      </div>
+      <div class="block-attribute">
+        <div class="downtime-grid">
+
+          {{!-- Downtime Activities --}}
+          {{> "systems/ucttg/templates/parts/actor/ffg-downtime-section.html"
+              sectionKey="downtime"
+              entries=data.downtime
+              nameHeaderKey="ucttg.Downtime.Activities.NameHeader"
+              placeholderKey="ucttg.Downtime.Activities.Placeholder" }}
+
+          {{!-- R&D --}}
+          {{> "systems/ucttg/templates/parts/actor/ffg-downtime-section.html"
+              sectionKey="rnd"
+              entries=data.rnd
+              nameHeaderKey="ucttg.Downtime.RnD.NameHeader"
+              placeholderKey="ucttg.Downtime.RnD.Placeholder" }}
+
+          {{!-- Production --}}
+          {{> "systems/ucttg/templates/parts/actor/ffg-downtime-section.html"
+              sectionKey="production"
+              entries=data.production
+              nameHeaderKey="ucttg.Downtime.Production.NameHeader"
+              placeholderKey="ucttg.Downtime.Production.Placeholder" }}
+
+          {{!-- Customization --}}
+          {{> "systems/ucttg/templates/parts/actor/ffg-downtime-section.html"
+              sectionKey="customization"
+              entries=data.customization
+              nameHeaderKey="ucttg.Downtime.Customization.NameHeader"
+              placeholderKey="ucttg.Downtime.Customization.Placeholder" }}
+
+        </div>
+
+        {{!-- Totals row, styled like a section header (gray bar) with 5 cells --}}
+        <table class="downtime-table downtime-totals {{#if downtimeTotals.overspent}}overspent{{/if}}">
+          <thead>
+            <tr>
+              <th class="downtime-name-header">{{localize "ucttg.Downtime.TotalSpent"}}</th>
+              <th class="downtime-num-header">{{downtimeTotals.weeks}}</th>
+              <th class="downtime-num-header">{{downtimeTotals.months}}</th>
+              <th class="downtime-num-header">{{downtimeTotals.spent}}</th>
+              <th class="downtime-available-cell">
+                <input type="text"
+                      name="data.downtimeAvailable"
+                      value="{{downtimeTotals.available}}"
+                      data-dtype="Number"
+                      placeholder="{{localize 'ucttg.Downtime.Available'}}"
+                      title="{{localize 'ucttg.Downtime.AvailableTooltip'}}" />
+              </th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
