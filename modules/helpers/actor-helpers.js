@@ -16,8 +16,8 @@ export default class ActorHelpers {
           }
         });
       }
-      if (this.object.type !== "homestead" && this.object.type !== "mobilesuit") {
-        if (this.object.type !== "vehicle") {
+      if (this.object.type !== "homestead" && this.object.type !== "mobilesuit" && this.object.type !== "mobilearmor" && this.object.type !== "mobileweapon") {
+        if (this.object.type !== "vehicle" && this.object.type !== "vessel") {
           // Handle characteristic updates
           Object.keys(CONFIG.FFG.characteristics).forEach((key) => {
             let total = ModifierHelpers.getCalculateValueForAttribute(key, this.actor.system.attributes, ownedItems, "Characteristic");

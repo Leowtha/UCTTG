@@ -135,8 +135,9 @@ export class ActorSheetFFG extends ActorSheet {
 
   /** @override */
   async _onDropActor(event, data) {
-  // Only handle pilot assignment for mobilesuit actors
-  if (this.actor.type !== "mobilesuit") {
+  // Only handle pilot assignment for pilotable mech actors
+  const pilotableTypes = ["mobilesuit", "mobilearmor", "mobileweapon"];
+  if (!pilotableTypes.includes(this.actor.type)) {
     return super._onDropActor(event, data);
   }
 
@@ -291,11 +292,13 @@ if (["character", "ace"].includes(this.actor.type)) {
       case "rival":
       case "ace":
       case "mobilesuit":
+      case "mobilearmor":
+      case "mobileweapon":
         if (data.limited && Number.isFinite(this.position.height)) {
           this.position.height = 165;
         }
         // we need to update all specialization talents with the latest talent information
-        if (!this.actor.flags.ucttg?.loaded && this.actor.type !== "rival" && this.actor.type !== "mobilesuit") {
+        if (!this.actor.flags.ucttg?.loaded && this.actor.type !== "rival" && this.actor.type !== "mobilesuit" && this.actor.type !== "mobilearmor" && this.actor.type !== "mobileweapon") {
           await this._updateSpecialization(data);
           await this.object._prepareCharacterData(data);
         }
@@ -310,8 +313,8 @@ if (["character", "ace"].includes(this.actor.type)) {
         }
         data.maxAttribute = game.settings.get("ucttg", "maxAttribute");
 
-       // Mobile Suit Pilot Linking
-if (this.actor.type === "mobilesuit" && this.actor.system.pilotId) {
+       // Pilot Linking (Mobile Suit, Mobile Armor & Mobile Weapon)
+if (["mobilesuit", "mobilearmor", "mobileweapon"].includes(this.actor.type) && this.actor.system.pilotId) {
   const pilot = game.actors.get(this.actor.system.pilotId);
   if (pilot) {
     // Build enriched talent list for pilot display
@@ -581,8 +584,8 @@ if (this.actor.type === "mobilesuit" && this.actor.system.pilotId) {
     // Pilot ID is set but actor doesn't exist anymore
     data.pilot = null;
   }
-} else if (this.actor.type === "mobilesuit") {
-  // No pilot linked — reset skills and characteristics to MS defaults (zeros)
+} else if (["mobilesuit", "mobilearmor", "mobileweapon"].includes(this.actor.type)) {
+  // No pilot linked — reset skills and characteristics to defaults (zeros)
   data.pilot = null;
 
   for (const key in data.data.skills) {
@@ -800,7 +803,7 @@ if (this.actor.type === "mobilesuit" && this.actor.system.pilotId) {
           ui.notifications.warn("Critical Damage can only be added to 'vehicle' actor types.");
           return false;
         }
-        if (item.type === "criticalinjury" && !["character", "nemesis", "rival", "ace", "mobilesuit"].includes(actor.type)) {
+        if (item.type === "criticalinjury" && !["character", "nemesis", "rival", "ace", "mobilesuit", "mobilearmor", "mobileweapon"].includes(actor.type)) {
           ui.notifications.warn("Critical Injuries can only be added to character-type or mobile suit actors.");
           return false;
         }
@@ -1031,56 +1034,52 @@ if (this.actor.type === "mobilesuit" && this.actor.system.pilotId) {
     }
 
     if (this.actor.type === "mobilesuit") {
-      this.sheetoptions = new ActorOptions(this, html);
-      this.sheetoptions.register("enableAutoSoakCalculation", {
-        name: game.i18n.localize("SWFFG.EnableSoakCalc"),
-        hint: game.i18n.localize("SWFFG.EnableSoakCalcHint"),
-        type: "Boolean",
-        default: false,
-      });
-      this.sheetoptions.register("enableForcePool", {
-        name: game.i18n.localize("SWFFG.EnableForcePool"),
-        hint: game.i18n.localize("SWFFG.EnableForcePoolHint"),
-        type: "Boolean",
-        default: false,
-      });
-      this.sheetoptions.register("enableCriticalInjuries", {
-        name: game.i18n.localize("SWFFG.EnableCriticalInjuries"),
-        hint: game.i18n.localize("SWFFG.EnableCriticalInjuriesHint"),
-        type: "Boolean",
-        default: true,
-      });
-      this.sheetoptions.register("talentSorting", {
-        name: game.i18n.localize("SWFFG.EnableSortTalentsByActivation"),
-        hint: game.i18n.localize("SWFFG.EnableSortTalentsByActivationHint"),
-        type: "Array",
-        default: 0,
-        options: [game.i18n.localize("SWFFG.UseGlobalSetting"), game.i18n.localize("SWFFG.OptionValueYes"), game.i18n.localize("SWFFG.OptionValueNo")],
-      });
+  this.sheetoptions = new ActorOptions(this, html);
+  this.sheetoptions.register("enableAutoSoakCalculation", {
+    name: game.i18n.localize("SWFFG.EnableSoakCalc"),
+    hint: game.i18n.localize("SWFFG.EnableSoakCalcHint"),
+    type: "Boolean",
+    default: false,
+  });
+  this.sheetoptions.register("enableCriticalInjuries", {
+    name: game.i18n.localize("SWFFG.EnableCriticalInjuries"),
+    hint: game.i18n.localize("SWFFG.EnableCriticalInjuriesHint"),
+    type: "Boolean",
+    default: true,
+  });
+  this.sheetoptions.register("talentSorting", {
+    name: game.i18n.localize("SWFFG.EnableSortTalentsByActivation"),
+    hint: game.i18n.localize("SWFFG.EnableSortTalentsByActivationHint"),
+    type: "Array",
+    default: 0,
+    options: [game.i18n.localize("SWFFG.UseGlobalSetting"), game.i18n.localize("SWFFG.OptionValueYes"), game.i18n.localize("SWFFG.OptionValueNo")],
+  });
+}
 
-      // Mobile Suit pilot controls
-      html.find(".ms-pilot-remove").click(async (ev) => {
-        ev.preventDefault();
-        await this.actor.update({ "system.pilotId": "" });
-        ui.notifications.info("Pilot removed.");
-      });
+  // Pilot controls — shared between Mobile Suit and Mobile Weapon
+  if (["mobilesuit", "mobilearmor", "mobileweapon"].includes(this.actor.type)) {
+    html.find(".ms-pilot-remove").click(async (ev) => {
+      ev.preventDefault();
+      await this.actor.update({ "system.pilotId": "" });
+      ui.notifications.info("Pilot removed.");
+    });
 
-      html.find(".ms-pilot-open").click(async (ev) => {
-        ev.preventDefault();
-        const actorId = ev.currentTarget.dataset.actorId;
-        const pilot = game.actors.get(actorId);
-        if (pilot) pilot.sheet.render(true);
-      });
+    html.find(".ms-pilot-open").click(async (ev) => {
+      ev.preventDefault();
+      const actorId = ev.currentTarget.dataset.actorId;
+      const pilot = game.actors.get(actorId);
+      if (pilot) pilot.sheet.render(true);
+    });
 
-      html.find(".ms-pilot-name").click(async (ev) => {
-        ev.preventDefault();
-        const actorId = ev.currentTarget.dataset.actorId;
-        const pilot = game.actors.get(actorId);
-        if (pilot) pilot.sheet.render(true);
-      });
-    }
+    html.find(".ms-pilot-name").click(async (ev) => {
+      ev.preventDefault();
+      const actorId = ev.currentTarget.dataset.actorId;
+      const pilot = game.actors.get(actorId);
+      if (pilot) pilot.sheet.render(true);
+    });
+  }
 
-    if (this.actor.type === "vehicle") {
+    if (["vehicle", "vessel"].includes(this.actor.type)) {
       this.sheetoptions = new ActorOptions(this, html);
       this.sheetoptions.register("enableHyperdrive", {
         name: game.i18n.localize("SWFFG.EnableHyperdrive"),

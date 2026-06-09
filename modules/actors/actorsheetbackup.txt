@@ -133,6 +133,34 @@ export class ActorSheetFFG extends ActorSheet {
     }
   }
 
+  /** @override */
+  async _onDropActor(event, data) {
+  // Only handle pilot assignment for mobilesuit actors
+  if (this.actor.type !== "mobilesuit") {
+    return super._onDropActor(event, data);
+  }
+
+  const droppedActor = await Actor.implementation.fromDropData(data);
+  if (!droppedActor) return;
+
+  // Only allow character-type actors as pilots
+  const validPilotTypes = ["character", "nemesis", "rival", "ace"];
+  if (!validPilotTypes.includes(droppedActor.type)) {
+    ui.notifications.warn("Only character-type actors can be assigned as pilots.");
+    return;
+  }
+
+  // Players can only assign characters they own as pilots.
+  // GMs are exempt (isOwner is always true for GMs anyway, but explicit is clearer).
+  if (!game.user.isGM && !droppedActor.isOwner) {
+    ui.notifications.warn(`You do not have ownership of ${droppedActor.name} and cannot assign them as a pilot.`);
+    return;
+  }
+
+  await this.actor.update({ "system.pilotId": droppedActor.id });
+  ui.notifications.info(`${droppedActor.name} assigned as pilot of ${this.actor.name}.`);
+}
+
   async calcPurchasePrice(itemData) {
     let cost = 0;
     if (itemData.type === "specialization") {
@@ -177,8 +205,47 @@ export class ActorSheetFFG extends ActorSheet {
     const actorData = this.actor.toObject(false);
     data.actor = actorData;
     data.data = actorData.system;
+// Normalize all entry-list fields: legacy arrays/scalars → keyed objects
+if (["character", "ace"].includes(this.actor.type)) {
+  // Hangar
+  data.data.hangar = this._normalizeEntryList(data.data.hangar, ["value"]);
+
+  // Downtime sections: normalize and compute per-row "spent"
+  const downtimeSections = ["downtime", "rnd", "production", "customization"];
+  const downtimeTotals = { weeks: 0, months: 0, spent: 0 };
+
+  for (const section of downtimeSections) {
+    data.data[section] = this._normalizeEntryList(
+      data.data[section],
+      ["name", "weeks", "months"]
+    );
+
+    for (const id of Object.keys(data.data[section])) {
+      const entry = data.data[section][id];
+      const weeks = parseInt(entry.weeks) || 0;
+      const months = parseInt(entry.months) || 0;
+      const spent = weeks + months * 4;
+
+      entry.weeks = weeks;
+      entry.months = months;
+      entry.spent = spent;
+
+      downtimeTotals.weeks += weeks;
+      downtimeTotals.months += months;
+      downtimeTotals.spent += spent;
+    }
+  }
+
+  // Compute remaining budget for visual cue
+  const available = parseInt(data.data.downtimeAvailable) || 0;
+  downtimeTotals.available = available;
+  downtimeTotals.overspent = downtimeTotals.spent > available;
+
+  data.downtimeTotals = downtimeTotals;
+}
     data.talentList = this.actor.talentList;
     data.rollData = this.actor.getRollData.bind(this.actor);
+    data.img = this.actor.img || "icons/svg/mystery-man.svg";
 
     data.token = this.token;
     data.items = this.actor.items;
@@ -206,20 +273,29 @@ export class ActorSheetFFG extends ActorSheet {
       enableCriticalInjuries: this.actor.flags?.ucttg?.config?.enableCriticalInjuries,
     };
 
-    // Establish sheet width and height using either saved persistent values or default values defined in swffg-config.js
-    this.position.width = this.sheetWidth || CONFIG.FFG.sheets.defaultWidth[this.actor.type];
-    this.position.height = this.sheetHeight || CONFIG.FFG.sheets.defaultHeight[this.actor.type];
+    // Establish sheet width and height using saved persistent values, then
+    // CONFIG defaults, then the class's defaultOptions as a final fallback.
+    // Never assign undefined to position.* — Foundry will skip applying any
+    // dimension to the DOM and the element will balloon to natural content size.
+    const cfgW = CONFIG.FFG?.sheets?.defaultWidth?.[this.actor.type];
+    const cfgH = CONFIG.FFG?.sheets?.defaultHeight?.[this.actor.type];
+    const fallbackW = this.constructor.defaultOptions.width ?? 710;
+    const fallbackH = this.constructor.defaultOptions.height ?? 650;
+
+    this.position.width  = this.sheetWidth  || cfgW || fallbackW;
+    this.position.height = this.sheetHeight || cfgH || fallbackH;
 
     switch (this.actor.type) {
       case "character":
       case "nemesis":
       case "rival":
       case "ace":
-        if (data.limited) {
+      case "mobilesuit":
+        if (data.limited && Number.isFinite(this.position.height)) {
           this.position.height = 165;
         }
         // we need to update all specialization talents with the latest talent information
-        if (!this.actor.flags.ucttg?.loaded && this.actor.type !== "rival") {
+        if (!this.actor.flags.ucttg?.loaded && this.actor.type !== "rival" && this.actor.type !== "mobilesuit") {
           await this._updateSpecialization(data);
           await this.object._prepareCharacterData(data);
         }
@@ -228,9 +304,303 @@ export class ActorSheetFFG extends ActorSheet {
           data.data.stats.credits.value = data.data.stats.credits.value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
         data.data.enrichedBio = await TextEditor.enrichHTML(this.actor.system.biography, {secrets: !data.limited});
-        data.data.general.enrichedNotes = await TextEditor.enrichHTML(this.actor.system.general?.notes) || "";
-        data.data.general.enrichedFeatures = await TextEditor.enrichHTML(this.actor.system.general?.features) || "";
+        if (data.data.general) {
+          data.data.general.enrichedNotes = await TextEditor.enrichHTML(this.actor.system.general?.notes) || "";
+          data.data.general.enrichedFeatures = await TextEditor.enrichHTML(this.actor.system.general?.features) || "";
+        }
         data.maxAttribute = game.settings.get("ucttg", "maxAttribute");
+
+       // Mobile Suit Pilot Linking
+if (this.actor.type === "mobilesuit" && this.actor.system.pilotId) {
+  const pilot = game.actors.get(this.actor.system.pilotId);
+  if (pilot) {
+    // Build enriched talent list for pilot display
+    const enrichedTalentList = [];
+          for (const talent of (pilot.talentList || [])) {
+        // Try both sources
+        const ownedItem = pilot.items.get(talent.itemId);
+        const worldItem = game.items.get(talent.itemId);
+
+        // Activation: prefer owned (already localized), fall back to world (needs localize)
+        const rawActivation = ownedItem?.system?.activation?.value 
+          || worldItem?.system?.activation?.value 
+          || talent.activation 
+          || "Passive";
+
+        // Description: prefer world item's short description, fall back to owned item's full description, then talent's own description
+          const description = worldItem?.system?.short
+          || worldItem?.system?.description
+          || ownedItem?.system?.short
+          || ownedItem?.system?.description
+          || talent.description
+          || "";
+
+        // Activation label: try both
+        const activationLabel = ownedItem?.system?.activation?.label 
+          || worldItem?.system?.activation?.label 
+          || "";
+
+        enrichedTalentList.push({
+          name: talent.name,
+          itemId: talent.itemId,
+          isRanked: talent.isRanked,
+          rank: talent.rank || (talent.isRanked ? 1 : "N/A"),
+          activation: game.i18n.localize(rawActivation),
+          activationLabel: activationLabel,
+          description: description,
+        });
+      }
+
+    data.pilot = {
+      name: pilot.name,
+      img: pilot.img,
+      id: pilot.id,
+      characteristics: foundry.utils.duplicate(pilot.system.characteristics),
+      skills: foundry.utils.duplicate(pilot.system.skills),
+      talentList: enrichedTalentList,
+    };
+
+    // Collect ALL MS talent/item modifiers by type
+    const msModifiers = {
+      Characteristic: {},    // key: characteristic name, value: total bonus
+      SkillBoost: {},        // key: skill name, value: total boost dice
+      SkillUpgrade: {},      // key: skill name or "*", value: total upgrades
+      SkillAdvantage: {},    // key: skill name, value: total auto-advantages
+      StatDefence: {},       // key: "ranged" or "melee", value: total bonus
+      Soak: 0,              // flat soak bonus
+    };
+
+    for (const item of this.actor.items) {
+      if (item.system?.attributes) {
+        for (const attr of Object.values(item.system.attributes)) {
+          const val = parseInt(attr.value) || 0;
+          if (!val) continue;
+
+          switch (attr.modtype) {
+            case "Characteristic":
+              if (!msModifiers.Characteristic[attr.mod]) msModifiers.Characteristic[attr.mod] = 0;
+              msModifiers.Characteristic[attr.mod] += val;
+              break;
+
+            case "Skill Boost":
+              if (!msModifiers.SkillBoost[attr.mod]) msModifiers.SkillBoost[attr.mod] = 0;
+              msModifiers.SkillBoost[attr.mod] += val;
+              break;
+
+            case "Skill Add Upgrade":
+              if (!msModifiers.SkillUpgrade[attr.mod]) msModifiers.SkillUpgrade[attr.mod] = 0;
+              msModifiers.SkillUpgrade[attr.mod] += val;
+              break;
+
+            case "Skill Add Advantage":
+              if (!msModifiers.SkillAdvantage[attr.mod]) msModifiers.SkillAdvantage[attr.mod] = 0;
+              msModifiers.SkillAdvantage[attr.mod] += val;
+              break;
+
+            case "Stat":
+              if (attr.mod === "Defence-Ranged") {
+                if (!msModifiers.StatDefence["ranged"]) msModifiers.StatDefence["ranged"] = 0;
+                msModifiers.StatDefence["ranged"] += val;
+              } else if (attr.mod === "Defence-Melee") {
+                if (!msModifiers.StatDefence["melee"]) msModifiers.StatDefence["melee"] = 0;
+                msModifiers.StatDefence["melee"] += val;
+              }
+              break;
+
+              case "Armor Stat":
+              if (attr.mod === "soak") {
+                msModifiers.Soak += val;
+              }
+              break;
+          }
+        }
+      }
+    }
+
+    // ── PILOT TALENT/ITEM MODIFIER SCAN ──
+    // Scan the pilot actor's owned items (talents, abilities, gear, etc.)
+    // for the same modifier types and merge them into msModifiers.
+    // This ensures pilot talents that grant boost dice, upgrades,
+    // advantages, defence, or soak are reflected on the MS sheet.
+    for (const item of pilot.items) {
+      if (item.system?.attributes) {
+        for (const attr of Object.values(item.system.attributes)) {
+          const val = parseInt(attr.value) || 0;
+          if (!val) continue;
+
+          switch (attr.modtype) {
+              case "Characteristic":
+              // Skip: pilot.system.characteristics already includes
+              // the pilot's own item bonuses from prepareData().
+              // Only MS-owned items should add Characteristic modifiers.
+              break;
+
+            case "Skill Boost":
+              if (!msModifiers.SkillBoost[attr.mod]) msModifiers.SkillBoost[attr.mod] = 0;
+              msModifiers.SkillBoost[attr.mod] += val;
+              break;
+
+            case "Skill Add Upgrade":
+              if (!msModifiers.SkillUpgrade[attr.mod]) msModifiers.SkillUpgrade[attr.mod] = 0;
+              msModifiers.SkillUpgrade[attr.mod] += val;
+              break;
+
+            case "Skill Add Advantage":
+              if (!msModifiers.SkillAdvantage[attr.mod]) msModifiers.SkillAdvantage[attr.mod] = 0;
+              msModifiers.SkillAdvantage[attr.mod] += val;
+              break;
+
+            case "Stat":
+              if (attr.mod === "Defence-Ranged") {
+                if (!msModifiers.StatDefence["ranged"]) msModifiers.StatDefence["ranged"] = 0;
+                msModifiers.StatDefence["ranged"] += val;
+              } else if (attr.mod === "Defence-Melee") {
+                if (!msModifiers.StatDefence["melee"]) msModifiers.StatDefence["melee"] = 0;
+                msModifiers.StatDefence["melee"] += val;
+              }
+              break;
+
+            case "Armor Stat":
+              if (attr.mod === "soak") {
+                msModifiers.Soak += val;
+              }
+              break;
+          }
+        }
+      }
+    }
+
+    // Store modifiers on data for template access
+    data.msModifiers = msModifiers;
+
+    // Apply Characteristic modifiers: pilot base + MS bonus
+    for (const [key, char] of Object.entries(pilot.system.characteristics)) {
+      if (data.data.characteristics[key]) {
+        const baseValue = char.value;
+        const msBonus = msModifiers.Characteristic[key] || 0;
+        data.data.characteristics[key].value = baseValue + msBonus;
+      }
+    }
+
+        // Apply Skill data: copy pilot's fully-computed skill values
+    // (which already include pilot talent bonuses from prepareData()),
+    // then add MS-owned-item modifiers on top.
+    for (const [key, skill] of Object.entries(pilot.system.skills)) {
+      if (data.data.skills[key]) {
+        data.data.skills[key].rank = skill.rank;
+        data.data.skills[key].careerskill = skill.careerskill;
+
+        // Copy the pilot's computed dice modifier fields.
+        // These already include bonuses from pilot-owned talents/items
+        // because Foundry's prepareData() processed them on the pilot actor.
+        data.data.skills[key].boost = (skill.boost || 0);
+        data.data.skills[key].setback = (skill.setback || 0);
+        data.data.skills[key].force = (skill.force || 0);
+        data.data.skills[key].advantage = (skill.advantage || 0);
+        data.data.skills[key].dark = (skill.dark || 0);
+        data.data.skills[key].light = (skill.light || 0);
+        data.data.skills[key].failure = (skill.failure || 0);
+        data.data.skills[key].threat = (skill.threat || 0);
+        data.data.skills[key].success = (skill.success || 0);
+        data.data.skills[key].triumph = (skill.triumph || 0);
+        data.data.skills[key].despair = (skill.despair || 0);
+        data.data.skills[key].upgrades = (skill.upgrades || 0);
+        data.data.skills[key].remsetback = (skill.remsetback || 0);
+
+        // Copy source tracking arrays for tooltip display
+        data.data.skills[key].ranksource = skill.ranksource || [];
+        data.data.skills[key].boostsource = skill.boostsource || [];
+        data.data.skills[key].setbacksource = skill.setbacksource || [];
+        data.data.skills[key].remsetbacksource = skill.remsetbacksource || [];
+        data.data.skills[key].advantagesource = skill.advantagesource || [];
+        data.data.skills[key].darksource = skill.darksource || [];
+        data.data.skills[key].lightsource = skill.lightsource || [];
+        data.data.skills[key].failuresource = skill.failuresource || [];
+        data.data.skills[key].threatsource = skill.threatsource || [];
+        data.data.skills[key].successsource = skill.successsource || [];
+        data.data.skills[key].triumphsource = skill.triumphsource || [];
+        data.data.skills[key].despairsource = skill.despairsource || [];
+        data.data.skills[key].upgradessource = skill.upgradessource || [];
+
+        // Add MS-owned-item modifiers on top of the pilot's values
+        const msBoost = (msModifiers.SkillBoost[key] || 0);
+        const msUpgrade = (msModifiers.SkillUpgrade[key] || 0) + (msModifiers.SkillUpgrade["*"] || 0);
+        const msAdvantage = (msModifiers.SkillAdvantage[key] || 0);
+
+        data.data.skills[key].boost += msBoost;
+        data.data.skills[key].upgrades += msUpgrade;
+        data.data.skills[key].advantage += msAdvantage;
+
+        // Keep display-only fields for template reference
+        data.data.skills[key].msBoost = msBoost;
+        data.data.skills[key].msUpgrade = msUpgrade;
+        data.data.skills[key].msAdvantage = msAdvantage;
+      }
+    }
+
+        // Reset defence before recalculating
+    if (data.data.stats?.defence) {
+      data.data.stats.defence.melee = 0;
+      data.data.stats.defence.ranged = 0;
+    }
+
+    // Apply Defence modifiers to MS stats
+    if (data.data.stats?.defence) {
+      data.data.stats.defence.ranged += (msModifiers.StatDefence["ranged"] || 0);
+      data.data.stats.defence.melee += (msModifiers.StatDefence["melee"] || 0);
+    }
+
+    // Apply Defence from equipped armour items directly
+    const equippedArmour = data.items.filter(i =>
+      i.type === "armour" && i.system?.equippable?.equipped === true
+    );
+    for (const armour of equippedArmour) {
+      const armourDef = parseInt(armour.system?.defence?.value, 10) || 0;
+      if (armourDef > 0) {
+        data.data.stats.defence.melee += armourDef;
+        data.data.stats.defence.ranged += armourDef;
+      }
+    }
+
+    // Apply Soak modifier to MS stats (talents/abilities only, not gear)
+    let talentSoakBonus = 0;
+    for (const item of this.actor.items) {
+      if (["talent", "ability"].includes(item.type) && item.system?.attributes) {
+        for (const attr of Object.values(item.system.attributes)) {
+          if (attr.modtype === "Armor Stat" && attr.mod === "soak") {
+            talentSoakBonus += (parseInt(attr.value) || 0);
+          }
+        }
+      }
+    }
+    if (data.data.stats?.soak) {
+      data.data.stats.soak.value += talentSoakBonus;
+    }
+
+  } else {
+    // Pilot ID is set but actor doesn't exist anymore
+    data.pilot = null;
+  }
+} else if (this.actor.type === "mobilesuit") {
+  // No pilot linked — reset skills and characteristics to MS defaults (zeros)
+  data.pilot = null;
+
+  for (const key in data.data.skills) {
+    data.data.skills[key].rank = 0;
+    data.data.skills[key].careerskill = false;
+    data.data.skills[key].msBoost = 0;
+    data.data.skills[key].msUpgrade = 0;
+    data.data.skills[key].msAdvantage = 0;
+  }
+
+  for (const key in data.data.characteristics) {
+    data.data.characteristics[key].value = 0;
+  }
+
+  data.msModifiers = null;
+}
+
+
         break;
       case "vehicle":
         data.data.enrichedBio = await TextEditor.enrichHTML(this.actor.system.biography);
@@ -307,6 +677,69 @@ export class ActorSheetFFG extends ActorSheet {
   activateListeners(html) {
     super.activateListeners(html);
 
+      // Remove a hangar entry
+    html.find(".remove-hangar").on("click", async (event) => {
+      event.preventDefault();
+      const id = event.currentTarget.dataset.id;
+      await this.object.update({ "system.hangar": { [`-=${id}`]: null } });
+    });
+
+    // Capture trailing empty hangar input on submit and convert to a real entry
+    html.find("input.hangar-new").on("change", async (event) => {
+      event.preventDefault();
+      const value = (event.currentTarget.value || "").trim();
+      if (!value) return;
+      const newId = foundry.utils.randomID();
+      // Clear the synthetic input so _updateObject doesn't see leftover state
+      event.currentTarget.value = "";
+      await this.object.update({
+        [`system.hangar.${newId}`]: { value: value }
+      });
+    });
+
+    // ── Downtime: remove entry from any section ──
+    html.find(".remove-downtime").on("click", async (event) => {
+      event.preventDefault();
+      const section = event.currentTarget.dataset.section;
+      const id = event.currentTarget.dataset.id;
+      await this.object.update({
+        [`system.${section}`]: { [`-=${id}`]: null }
+      });
+    });
+
+    // ── Downtime: capture trailing empty row on change in any section ──
+    html.find("input.downtime-new").on("change", async (event) => {
+      event.preventDefault();
+      const input = event.currentTarget;
+      const section = input.dataset.section;
+      const row = input.closest("tr");
+      if (!row) return;
+
+      const nameInput = row.querySelector('input.downtime-new[data-field="name"]');
+      const weeksInput = row.querySelector('input.downtime-new[data-field="weeks"]');
+      const monthsInput = row.querySelector('input.downtime-new[data-field="months"]');
+
+      const name = (nameInput?.value || "").trim();
+      const weeks = parseInt(weeksInput?.value) || 0;
+      const months = parseInt(monthsInput?.value) || 0;
+
+      if (!name && weeks === 0 && months === 0) return;
+
+      const newId = foundry.utils.randomID();
+
+      if (nameInput) nameInput.value = "";
+      if (weeksInput) weeksInput.value = "0";
+      if (monthsInput) monthsInput.value = "0";
+
+      await this.object.update({
+        [`system.${section}.${newId}`]: {
+          name: name,
+          weeks: weeks,
+          months: months,
+        }
+      });
+    });
+
     // Activate tabs
     let tabs = html.find(".tabs");
     let initial = this._sheetTab;
@@ -356,19 +789,19 @@ export class ActorSheetFFG extends ActorSheet {
                 actor.items.get(i.id).delete();
             });
           }
-          else if (actor.type === "minion") {
-            ui.notifications.warn(`Item type '${item.type}' cannot be added to 'minion' actor types.`);
+          else if (actor.type === "minion" || actor.type === "mobilesuit") {
+            ui.notifications.warn(`Item type '${item.type}' cannot be added to '${actor.type}' actor types.`);
             return false;
           }
         }
 
-        // Critical Damage can only be added to "vehicle" actors and Critical Injury can only be added to "character" actors.
+        // Critical Damage can only be added to "vehicle" actors and Critical Injury can only be added to character-type or mobilesuit actors.
         if (item.type === "criticaldamage" && actor.type !== "vehicle") {
           ui.notifications.warn("Critical Damage can only be added to 'vehicle' actor types.");
           return false;
         }
-        if (item.type === "criticalinjury" && !["character", "nemesis", "rival", "ace"].includes(actor.type)) {
-          ui.notifications.warn("Critical Injuries can only be added to 'character' actor types.");
+        if (item.type === "criticalinjury" && !["character", "nemesis", "rival", "ace", "mobilesuit"].includes(actor.type)) {
+          ui.notifications.warn("Critical Injuries can only be added to character-type or mobile suit actors.");
           return false;
         }
 
@@ -514,7 +947,8 @@ export class ActorSheetFFG extends ActorSheet {
         default: false,
       });
     }
-    if (this.actor.type === "character", "ace") {
+
+    if (this.actor.type === "character" || this.actor.type === "ace") {
       this.sheetoptions = new ActorOptions(this, html);
       this.sheetoptions.register("enableAutoSoakCalculation", {
         name: game.i18n.localize("SWFFG.EnableSoakCalc"),
@@ -593,6 +1027,56 @@ export class ActorSheetFFG extends ActorSheet {
         type: "Array",
         default: 0,
         options: [game.i18n.localize("SWFFG.UseGlobalSetting"), game.i18n.localize("SWFFG.OptionValueYes"), game.i18n.localize("SWFFG.OptionValueNo")],
+      });
+    }
+
+    if (this.actor.type === "mobilesuit") {
+      this.sheetoptions = new ActorOptions(this, html);
+      this.sheetoptions.register("enableAutoSoakCalculation", {
+        name: game.i18n.localize("SWFFG.EnableSoakCalc"),
+        hint: game.i18n.localize("SWFFG.EnableSoakCalcHint"),
+        type: "Boolean",
+        default: false,
+      });
+      this.sheetoptions.register("enableForcePool", {
+        name: game.i18n.localize("SWFFG.EnableForcePool"),
+        hint: game.i18n.localize("SWFFG.EnableForcePoolHint"),
+        type: "Boolean",
+        default: false,
+      });
+      this.sheetoptions.register("enableCriticalInjuries", {
+        name: game.i18n.localize("SWFFG.EnableCriticalInjuries"),
+        hint: game.i18n.localize("SWFFG.EnableCriticalInjuriesHint"),
+        type: "Boolean",
+        default: true,
+      });
+      this.sheetoptions.register("talentSorting", {
+        name: game.i18n.localize("SWFFG.EnableSortTalentsByActivation"),
+        hint: game.i18n.localize("SWFFG.EnableSortTalentsByActivationHint"),
+        type: "Array",
+        default: 0,
+        options: [game.i18n.localize("SWFFG.UseGlobalSetting"), game.i18n.localize("SWFFG.OptionValueYes"), game.i18n.localize("SWFFG.OptionValueNo")],
+      });
+
+      // Mobile Suit pilot controls
+      html.find(".ms-pilot-remove").click(async (ev) => {
+        ev.preventDefault();
+        await this.actor.update({ "system.pilotId": "" });
+        ui.notifications.info("Pilot removed.");
+      });
+
+      html.find(".ms-pilot-open").click(async (ev) => {
+        ev.preventDefault();
+        const actorId = ev.currentTarget.dataset.actorId;
+        const pilot = game.actors.get(actorId);
+        if (pilot) pilot.sheet.render(true);
+      });
+
+      html.find(".ms-pilot-name").click(async (ev) => {
+        ev.preventDefault();
+        const actorId = ev.currentTarget.dataset.actorId;
+        const pilot = game.actors.get(actorId);
+        if (pilot) pilot.sheet.render(true);
       });
     }
 
@@ -1612,15 +2096,29 @@ export class ActorSheetFFG extends ActorSheet {
   }
   /* -------------------------------------------- */
 
-  /** @override */
-  async _updateObject(event, formData) {
-    const actorUpdate = ActorHelpers.updateActor.bind(this);
-    // Save persistent sheet height and width for future use.
-    this.sheetWidth = this.position.width;
-    this.sheetHeight = this.position.height;
+/** @override */
+async _updateObject(event, formData) {
+  const actorUpdate = ActorHelpers.updateActor.bind(this);
+  // Save persistent sheet height and width for future use.
+  this.sheetWidth = this.position.width;
+  this.sheetHeight = this.position.height;
 
-    await actorUpdate(event, formData);
+  // Drop the synthetic trailing hangar input — it's handled by its own
+  // change listener and must not leak into the actor's stored data.
+  if ("hangar-new-entry" in formData) {
+    delete formData["hangar-new-entry"];
   }
+
+  // Drop synthetic trailing downtime inputs (any key starting with "downtime-new-")
+  // — handled by their own change listener and must not leak into stored data.
+  for (const key of Object.keys(formData)) {
+    if (key.startsWith("downtime-new-")) {
+      delete formData[key];
+    }
+  }
+
+  await actorUpdate(event, formData);
+}
 
   /**
    * Drag Event function for creating Hotbar macros for skill rolls
@@ -1797,69 +2295,118 @@ export class ActorSheetFFG extends ActorSheet {
       top: windowTop,
     }).render(true);
   }
+/**
+ * Normalize a field that may be a legacy array, scalar, legacy-flat-object,
+ * or undefined into an object keyed by random IDs. Each entry will only
+ * retain the listed fields.
+ * @param {*} value - The raw field value
+ * @param {string[]} validFields - Names of fields to preserve on each entry
+ * @returns {Object}
+ */
+_normalizeEntryList(value, validFields) {
+  // Legacy array form: [{ ... }, { ... }] → keyed object
+  if (Array.isArray(value)) {
+    const normalized = {};
+    for (const entry of value) {
+      if (entry && typeof entry === "object") {
+        const hasContent = validFields.some(
+          f => entry[f] !== undefined && entry[f] !== "" && entry[f] !== 0
+        );
+        if (!hasContent) continue;
 
-  /**
-   * Creates two even columns of skills for display while also sorting them.
-   * @param  {Object} data
-   */
-  _createSkillColumns(data) {
-    const numberSkills = Object.values(data.data.skills).length;
-    const totalRows = numberSkills + Object.values(data.data.skilltypes).length;
-
-    let colRowCount = Math.ceil(totalRows / 2.0);
-
-    const cols = [[], []];
-
-    let currentColumn = 0;
-    let rowsLeft = colRowCount;
-
-    data.data.skilltypes.forEach((type) => {
-      // filter and sort skills for current skill category
-      let sortFunction = (a, b) => {
-        if (a.toLowerCase() > b.toLowerCase()) return 1;
-        if (a.toLowerCase() < b.toLowerCase()) return -1;
-        return 0;
-      };
-      if (game.settings.get("ucttg", "skillSorting")) {
-        sortFunction = (a, b) => {
-          return data.data.skills[a].label.localeCompare(data.data.skills[b].label, game.i18n.lang);
-        };
-      }
-
-      const skills = Object.keys(data.data.skills)
-        .filter((s) => data.data.skills[s].type === type.type)
-        .sort(sortFunction);
-
-      // if the skill list is larger that the column row count then take into account the added header row.
-      if (skills.length >= colRowCount) {
-        if (skills.length - colRowCount > 2) {
-          colRowCount = Math.ceil((totalRows + 1) / 2.0);
-          rowsLeft = colRowCount;
-        } else {
-          colRowCount = skills.length + 1;
-          rowsLeft = colRowCount;
+        const cleaned = {};
+        for (const f of validFields) {
+          if (entry[f] !== undefined) cleaned[f] = entry[f];
         }
+        normalized[foundry.utils.randomID()] = cleaned;
       }
-
-      cols[currentColumn].push({ id: "header", ...type });
-      rowsLeft -= 1;
-      skills.forEach((s, index) => {
-        cols[currentColumn].push({ name: s, ...data.data.skills[s] });
-        rowsLeft -= 1;
-        if (rowsLeft <= 0 && currentColumn === 0) {
-          currentColumn += 1;
-          rowsLeft = colRowCount;
-
-          if (index + 1 < skills.length) {
-            cols[currentColumn].push({ id: "header", ...type });
-            rowsLeft -= 1;
-          }
-        }
-      });
-    });
-
-    return cols;
+    }
+    return normalized;
   }
+
+  // Null/undefined/scalar → empty object
+  if (!value || typeof value !== "object") {
+    return {};
+  }
+
+  // Object form — but it could be either:
+  //   (a) a proper keyed-entries object: { abc123: { name, weeks, months }, ... }
+  //   (b) a legacy flat-fields object:    { days: 0, weeks: 0, totalMonths: 0 }
+  // Detect (b) by checking whether any value is NOT an object.
+  // If we find scalar values, treat the whole thing as legacy and discard.
+  const values = Object.values(value);
+  const looksLegacy = values.length > 0 && values.some(
+    v => v === null || typeof v !== "object" || Array.isArray(v)
+  );
+  if (looksLegacy) {
+    return {};
+  }
+
+  // Otherwise it's already a proper keyed-entries object — return as-is.
+  return value;
+}
+  /**
+ * Creates two even columns of skills for display while also sorting them.
+ * @param  {Object} data
+ */
+_createSkillColumns(data) {
+  // Build an ordered list of skill type groups, each with a header + sorted skills
+  const groups = [];
+
+  data.data.skilltypes.forEach((type) => {
+    let sortFunction = (a, b) => {
+      if (a.toLowerCase() > b.toLowerCase()) return 1;
+      if (a.toLowerCase() < b.toLowerCase()) return -1;
+      return 0;
+    };
+    if (game.settings.get("ucttg", "skillSorting")) {
+      sortFunction = (a, b) => {
+        return data.data.skills[a].label.localeCompare(data.data.skills[b].label, game.i18n.lang);
+      };
+    }
+
+    const skills = Object.keys(data.data.skills)
+      .filter((s) => data.data.skills[s].type === type.type)
+      .sort(sortFunction);
+
+    // Each group takes 1 header row + N skill rows
+    groups.push({
+      type,
+      skills,
+      rowCount: 1 + skills.length,
+    });
+  });
+
+  // Find the best split point between groups to balance the two columns
+  const totalRows = groups.reduce((sum, g) => sum + g.rowCount, 0);
+  const halfRows = Math.ceil(totalRows / 2.0);
+
+  let bestSplit = 1; // split after at least the first group
+  let bestDiff = Infinity;
+  let runningTotal = 0;
+
+  for (let i = 0; i < groups.length; i++) {
+    runningTotal += groups[i].rowCount;
+    const diff = Math.abs(runningTotal - (totalRows - runningTotal));
+    if (i < groups.length - 1 && diff < bestDiff) {
+      bestDiff = diff;
+      bestSplit = i + 1; // split after group index i
+    }
+  }
+
+  // Build the two columns
+  const cols = [[], []];
+
+  groups.forEach((group, i) => {
+    const col = i < bestSplit ? 0 : 1;
+    cols[col].push({ id: "header", ...group.type });
+    group.skills.forEach((s) => {
+      cols[col].push({ name: s, ...data.data.skills[s] });
+    });
+  });
+
+  return cols;
+}
 
   async _buyCore(event) {
     const action = $(event.target).data("buy-action");

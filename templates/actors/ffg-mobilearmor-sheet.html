@@ -1,0 +1,270 @@
+<form class="{{cssClass}} character mobilearmor" autocomplete="off">
+  {{!-- Sheet Header --}}
+  <header class="sheet-header">
+    <div id="actor-id" data-actor="{{actor._id}}" style="display: none;"></div>
+
+    <div class="header-fields">
+      {{!-- MA Details Container --}}
+      <div class="container" style="flex-wrap: nowrap;">
+        <div class="profile-block ms-profile-frame">
+          <div class="ms-profile-header">{{localize "ucttg.MACurrentConfiguration"}}</div>
+          <div class="ms-profile-info">{{localize "ucttg.MAIdentifyingScheme"}}</div>
+          <div class="ms-profile-portrait">
+            <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" />
+          </div>
+          <div class="ms-profile-info">
+            <span class="ms-profile-name">{{name}}</span>
+          </div>
+        </div>
+
+        <div class="container">
+          <div class="header-name header-description-block">
+            <div class="title-card mobilearmor">{{ localize "ucttg.MobileArmor" }}</div>
+            <div>
+              <h2><input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'SWFFG.Name'}}" data-dtype="String" /></h2>
+            </div>
+            <table class="character-details-table">
+              <tbody>
+                <tr>
+                  <td>{{localize "ucttg.MAType"}}:</td>
+                  <td>
+                    <input type="text" name="system.maType" value="{{system.maType}}" data-dtype="String" placeholder="Mobile Armor" />
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{localize "ucttg.MAManufacturer"}}:</td>
+                  <td>
+                    <input type="text" name="system.manufacturer" value="{{system.manufacturer}}" data-dtype="String" placeholder="" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {{!-- Pilot Assignment Block --}}
+        <div class="container ms-pilot-block">
+          <div class="ms-pilot-header">
+            <span class="ms-pilot-label">{{localize "ucttg.MAPilot"}}</span>
+          </div>
+          {{#if pilot}}
+            <div class="ms-pilot-assigned">
+              <div class="ms-pilot-portrait">
+                <img src="{{pilot.img}}" title="{{pilot.name}}" height="120" width="120" />
+              </div>
+              <div class="ms-pilot-info">
+                <a class="ms-pilot-name" data-actor-id="{{pilot.id}}">{{pilot.name}}</a>
+                <div class="ms-pilot-mode">{{localize "ucttg.MAPilotLinked"}}</div>
+              </div>
+              <div class="ms-pilot-controls">
+                <a class="ms-pilot-open" data-actor-id="{{pilot.id}}" title="Open Pilot Sheet"><i class="fas fa-external-link-alt"></i></a>
+                <a class="ms-pilot-remove" title="{{localize 'ucttg.MARemovePilot'}}"><i class="fas fa-times"></i></a>
+              </div>
+            </div>
+          {{else}}
+            <div class="ms-pilot-empty" data-drop-target="pilot">
+              <div class="ms-pilot-dropzone">
+                <i class="fas fa-user-plus"></i>
+                <span>{{localize "ucttg.MAAssignPilot"}}</span>
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      {{!-- Primary Stats Container --}}
+      <div class="container" style="flex-wrap: nowrap;{{#if limited}}display:none;{{/if}}">
+        <div class="container flex-group-center">
+          {{!-- Wounds Box (Hull Integrity) --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="split" title="SWFFG.Wounds"
+              fields=(array
+                (object name="system.stats.wounds.max" value=system.stats.wounds.max type="Number" label="SWFFG.Threshold")
+                (object name="system.stats.wounds.value" value=system.stats.wounds.value type="Number" label="SWFFG.Current")
+              )
+            )
+          }}
+          {{!-- Armor Box --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="single" title="ucttg.MAArmor" type="Number" name="system.stats.soak.value" value=system.stats.soak.value)
+          }}
+          {{!-- Defence Box --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="split" title="SWFFG.Defense"
+              fields=(array
+                (object name="system.stats.defence.melee" value=system.stats.defence.melee type="Number" label="SWFFG.DefenseMelee")
+                (object name="system.stats.defence.ranged" value=system.stats.defence.ranged type="Number" label="SWFFG.DefenseRanged")
+              )
+            )
+          }}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {{!-- Sheet Tab Navigation --}}
+  {{> "systems/ucttg/templates/parts/shared/ffg-tabs.html"
+    displayLimited=true limited=limited
+    items=(array
+      (object tab="characteristics" label="SWFFG.TabCharacteristics" icon="fas fa-user-circle" cls=classType)
+      (object tab="items" label="SWFFG.TabGear" icon="fas fa-toolbox" cls=classType)
+      (object tab="talents" label="SWFFG.TabTalents" icon="fab fa-superpowers" cls=classType)
+      (object tab="crits" label="SWFFG.TabCrits" icon="fa-solid fa-notes-medical" cls=classType)
+      (object tab="description" label="SWFFG.TabBiography" icon="fas fa-sticky-note" cls=classType)
+    )
+  }}
+
+  {{!-- Sheet Body --}}
+  <section class="sheet-body" style="{{#if limited}}display:none;{{/if}}">
+
+    {{!-- ===================== CHARACTERISTICS TAB ===================== --}}
+    <div class="tab characteristics active" data-group="primary" data-tab="characteristics">
+
+      {{!-- Characteristics: read-only if pilot linked --}}
+      <div class="grid grid-6col">
+        {{#each system.characteristics as |characteristic id|}}
+        <div class="characteristic-item flex-group-center" data-ability="{{id}}">
+          <div class="characteristic">
+            <div class="characteristic-value">
+              {{#if ../pilot}}
+                <input type="text" name="system.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" disabled class="pilot-linked-readonly" title="{{localize 'ucttg.MAPilotStats'}}" />
+              {{else}}
+                <input type="text" name="system.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" pattern="[0-9]" />
+              {{/if}}
+            </div>
+          </div>
+          <div class="characteristic-label">
+            {{characteristic.label}}
+          </div>
+        </div>
+        {{/each}}
+      </div>
+
+      {{!-- Pilot indicator banner --}}
+      {{#if pilot}}
+        <div class="ms-pilot-stats-banner">
+          <i class="fas fa-link"></i> {{localize "ucttg.MAPilotStats"}} — {{pilot.name}}
+        </div>
+      {{/if}}
+
+      {{!-- Skills --}}
+      {{> "systems/ucttg/templates/parts/actor/ffg-skills.html"}}
+    </div>
+
+    {{!-- ===================== GEAR TAB ===================== --}}
+    <div class="tab items" data-group="primary" data-tab="items">
+      {{> "systems/ucttg/templates/parts/actor/ffg-weapon-armor-gear.html"}}
+    </div>
+
+    {{!-- ===================== TALENTS TAB ===================== --}}
+    <div class="tab talents items" data-group="primary" data-tab="talents">
+
+      {{> "systems/ucttg/templates/parts/actor/ffg-talents.html"}}
+      {{> "systems/ucttg/templates/parts/actor/ffg-abilities.html"}}
+
+      {{!-- Pilot Talents (read-only reference) --}}
+      {{#if pilot}}
+        {{#if pilot.talentList.length}}
+          <div class="ms-pilot-talents-section">
+            <div class="items-header flexrow">
+              <h3 class="item-name"><i class="fas fa-link"></i> Pilot Talents ({{pilot.name}}) — Reference Only</h3>
+            </div>
+            <ol class="item-list">
+              <li class="item flexrow ms-pilot-talent-header">
+                <div class="item-name"><strong>Talent</strong></div>
+                <div class="item-detail talent-activation"><strong>Activation</strong></div>
+                <div class="item-detail talent-rank"><strong>Rank</strong></div>
+              </li>
+              {{#each pilot.talentList as |talent|}}
+                <li class="item flexrow ms-pilot-talent-row">
+                  <div class="item-name"><span>{{talent.name}}</span></div>
+                  <div class="item-detail talent-activation">{{talent.activation}}</div>
+                  <div class="item-detail talent-rank">
+                    {{#if talent.isRanked}}{{talent.rank}}{{else}}N/A{{/if}}
+                  </div>
+                </li>
+                {{#if talent.description}}
+                  <li class="ms-pilot-talent-desc">
+                    <div class="item-detail talent-short-desc">{{{talent.description}}}</div>
+                  </li>
+                {{/if}}
+              {{/each}}
+            </ol>
+          </div>
+        {{/if}}
+      {{/if}}
+
+      {{> "systems/ucttg/templates/parts/actor/ffg-signatureability.html"}}
+    </div>
+
+    {{!-- ===================== CRITS TAB ===================== --}}
+    <div class="tab crits items" data-group="primary" data-tab="crits">
+      {{> "systems/ucttg/templates/parts/actor/ffg-criticalinjury.html" type="criticalinjury"}}
+    </div>
+
+    {{!-- ===================== BIOGRAPHY / FRAME LOCATIONS TAB ===================== --}}
+    <div class="tab biography active" data-group="primary" data-tab="description">
+
+      <div class="ms-biography-fields">
+
+        {{!-- Row 1: Funnels & Fuel --}}
+        <div class="grid grid-2col">
+          {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
+            key="funnels" titleKey="ucttg.MAFunnels" armorKey="ucttg.MABinders" loc=system.stats.funnels
+          }}
+          {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
+            key="fuel" titleKey="ucttg.MAFuel" armorKey="ucttg.MAFuelArmor" loc=system.stats.fuel
+          }}
+        </div>
+
+        {{!-- Row 2: Fore & Aft --}}
+        <div class="grid grid-2col">
+          {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
+            key="fore" titleKey="ucttg.MAFore" armorKey="ucttg.MAArmor" loc=system.stats.fore
+          }}
+          {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
+            key="aft" titleKey="ucttg.MAAft" armorKey="ucttg.MAArmor" loc=system.stats.aft
+          }}
+        </div>
+
+        {{!-- Row 3: Port & Starboard --}}
+        <div class="grid grid-2col">
+          {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
+            key="port" titleKey="ucttg.MAPort" armorKey="ucttg.MAArmor" loc=system.stats.port
+          }}
+          {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
+            key="starboard" titleKey="ucttg.MAStarboard" armorKey="ucttg.MAArmor" loc=system.stats.starboard
+          }}
+        </div>
+
+        {{!-- Row 4: Rollout Date & Cost to Manufacture --}}
+        <div class="grid grid-2col">
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="single" title="ucttg.MARolloutDate" type="String" name="system.rolloutDate" value=system.rolloutDate)
+          }}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+            (object blocktype="single" title="ucttg.MACostToManufacture" type="String" name="system.costToManufacture" value=system.costToManufacture)
+          }}
+        </div>
+
+      </div>
+
+      {{!-- Biography Editor --}}
+      <div class="biography-editor">
+        {{editor system.biography target="system.biography" button=true owner=owner editable=editable}}
+      </div>
+
+      <div class="container flex-group-center biography-values">
+        {{#if (contains classType "V2")}}{{else}}
+          {{> "systems/ucttg/templates/parts/actor/ffg-criticalinjury.html" type="criticalinjury"}}
+        {{/if}}
+      </div>
+    </div>
+
+    {{!-- Modifiers Tab --}}
+    <div class="tab attributes" data-group="primary" data-tab="attributes">
+      {{> "systems/ucttg/templates/parts/shared/ffg-modifiers.html"}}
+    </div>
+
+  </section>
+</form>

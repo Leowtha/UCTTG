@@ -182,7 +182,7 @@ Hooks.once("init", async function () {
   };
 
   // Load character templates so that dynamic skills lists work correctly
-  loadTemplates(["systems/ucttg/templates/actors/ffg-character-sheet.html", "systems/ucttg/templates/actors/ffg-minion-sheet.html", "systems/ucttg/templates/parts/actor/ffg-kills-hangar.html", "systems/ucttg/templates/parts/actor/ffg-downtime.html", "systems/ucttg/templates/parts/actor/ffg-downtime-section.html"]);
+  loadTemplates(["systems/ucttg/templates/actors/ffg-character-sheet.html", "systems/ucttg/templates/actors/ffg-minion-sheet.html", "systems/ucttg/templates/parts/actor/ffg-kills-hangar.html", "systems/ucttg/templates/parts/actor/ffg-downtime.html", "systems/ucttg/templates/parts/actor/ffg-downtime-section.html", "systems/ucttg/templates/parts/actor/ffg-ma-location.html"]);
 
   SettingsHelpers.initLevelSettings();
 
@@ -480,6 +480,12 @@ Hooks.once("init", async function () {
   Actors.registerSheet("ffg", ActorSheetFFGV2, { types: ["ace"], makeDefault: true, label: "Ace Sheet v2" });
   Actors.registerSheet("ffg", ActorSheetFFG, { types: ["mobilesuit"], label: "Mobile Suit Sheet v1" });
   Actors.registerSheet("ffg", ActorSheetFFGV2, { types: ["mobilesuit"], makeDefault: true, label: "Mobile Suit Sheet v2" });
+  Actors.registerSheet("ffg", ActorSheetFFG, { types: ["mobilearmor"], label: "Mobile Armor Sheet v1" });
+  Actors.registerSheet("ffg", ActorSheetFFGV2, { types: ["mobilearmor"], makeDefault: true, label: "Mobile Armor Sheet v2" });
+  Actors.registerSheet("ffg", ActorSheetFFG, { types: ["mobileweapon"], label: "Mobile Weapon Sheet v1" });
+  Actors.registerSheet("ffg", ActorSheetFFGV2, { types: ["mobileweapon"], makeDefault: true, label: "Mobile Weapon Sheet v2" });
+  Actors.registerSheet("ffg", ActorSheetFFG, { types: ["vessel"], label: "Vessel Sheet v1"});
+  Actors.registerSheet("ffg", ActorSheetFFGV2, { types: ["vessel"], makeDefault: true, label: "Vessel Sheet v2"});
   Items.unregisterSheet("core", ItemSheet);
   Items.registerSheet("ffg", ItemSheetFFG, { label: "Item Sheet v1" });
   Items.registerSheet("ffg", ItemSheetFFGV2, { makeDefault: true, label: "Item Sheet v2" });
@@ -499,6 +505,12 @@ Hooks.once("init", async function () {
 
   // Register Handlebars utilities
   Handlebars.registerHelper("json", JSON.stringify);
+
+  // Concat re: MA Sheet
+  Handlebars.registerHelper("concat", function (...args) {
+  // Last arg is the Handlebars options object; drop it.
+  return args.slice(0, -1).join("");
+});
 
   // Allows {if X = Y} type syntax in html using handlebars
   Handlebars.registerHelper("iff", function (a, operator, b, opts) {
@@ -1142,7 +1154,7 @@ Hooks.once("ready", async () => {
     if (token?.actor?.type === "minion") {
       drawMinionCount(token);
     }
-    if (["character", "nemesis", "rival", "ace", "mobilesuit"].includes(token?.actor?.type)) {
+    if (["character", "nemesis", "rival", "ace", "mobilesuit", "mobilearmor", "mobileweapon", "vessel"].includes(token?.actor?.type)) {
       drawAdversaryCount(token);
     }
     return token;

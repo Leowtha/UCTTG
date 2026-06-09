@@ -10,7 +10,7 @@ export default class PauseFFG extends Pause {
   getData() {
     let icon = game.settings.get("ucttg", "ui-pausedImage");
     if (icon?.length <= 0) {
-      icon = "icons/svg/clockwork.svg";
+      icon = "systems/ucttg/images/paused.png";
     }
 
     return {

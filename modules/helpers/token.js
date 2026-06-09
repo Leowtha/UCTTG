@@ -52,58 +52,52 @@ export function drawMinionCount(token) {
   }
 
   const tokenWidth = token.w;
-  const markerWidth = 7;
-  const markerHeight = 15;
-  const insideGap = 5;
-  const availableSpace = tokenWidth - ((markerWidth * maxCount) + (insideGap * (maxCount - 1)));
+  const markerRadius = 3;
+  const markerDiameter = markerRadius * 2;
+  const insideGap = 2;
+  const slotWidth = markerDiameter + insideGap;
+  const availableSpace = tokenWidth - ((markerDiameter * maxCount) + (insideGap * (maxCount - 1)));
   const outsideGap = availableSpace / 2;
+  const bottomPadding = -3;
 
   if (maxCount > maxRender) {
     const text = new PIXI.Text(
       "∞",
       {
         fontFamily: "Arial",
-        fontSize: 48,
+        fontSize: 24,
         fill: overflowColor,
         align: "center",
         stroke: "0x000000",
         strokeThickness: 1,
-        fontWeight: "bold" ,
+        fontWeight: "bold",
       }
     );
     text.anchor.set(0.5);
     text.x = tokenWidth / 2;
-    text.y = token.h - 12;
+    text.y = token.h - 6;
     token.minionCount.addChild(text);
   } else {
     for (let i = 0; i < curCount; i++) {
       const element = new PIXI.Graphics();
-      // add the border
       element.lineStyle(borderWidth, "0x000000", 1);
-      // draw the rectangle
       element.beginFill(friendlyColor);
-      element.drawRoundedRect(0, 0, markerWidth, markerHeight, 2);
+      element.drawCircle(0, 0, markerRadius);
       element.endFill();
-      element.endFill();
-      // position it
-      element.x = (i * (markerWidth + insideGap)) + outsideGap;
-      element.y = token.h - markerHeight - 2;
-      // add it to the container
+      // position: x is the center of the i-th slot
+      element.x = outsideGap + markerRadius + (i * slotWidth);
+      element.y = token.h - markerRadius - bottomPadding;
       token.minionCount.addChild(element);
     }
 
     for (let i = 0; i < maxCount - curCount; i++) {
       const element = new PIXI.Graphics();
-      // add the border
       element.lineStyle(borderWidth, "0x000000", 1);
-      // draw the rectangle
       element.beginFill(enemyColor);
-      element.drawRoundedRect(0, 0, markerWidth, markerHeight, 2);
+      element.drawCircle(0, 0, markerRadius);
       element.endFill();
-      // position it
-      element.x = ((i + curCount) * (markerWidth + insideGap)) + outsideGap;
-      element.y = token.h - markerHeight - 2;
-      // add it to the container
+      element.x = outsideGap + markerRadius + ((i + curCount) * slotWidth);
+      element.y = token.h - markerRadius - bottomPadding;
       token.minionCount.addChild(element);
     }
   }
@@ -120,24 +114,39 @@ export function drawAdversaryCount(token) {
   adversaryItems.forEach(function (item) {
     adversaryLevel += item?.system?.ranks?.current || 0;
   });
-  if (adversaryLevel > 0) {
-    // attempt to draw it on the token directly
-    // check for existing copies of the container
-    if (!token.children.find(i => i.name === "adversaryLevel")) {
-      const countContainer = new PIXI.Container();
-      countContainer.name = "adversaryLevel";
-      token.adversaryLevel = token.addChild(countContainer);
+ if (adversaryLevel > 0) {
+    // 1. Safe access/creation of the container
+    let countContainer = token.getChildByName("adversaryLevel");
+    
+    if (!countContainer) {
+        countContainer = new PIXI.Container();
+        countContainer.name = "adversaryLevel";
+        token.addChild(countContainer);
     } else {
-      token.adversaryLevel.removeChildren().forEach(i => i.destroy());
+        // Just clear the children, don't re-add the container to the token
+        countContainer.removeChildren();
     }
-    const sprite = PIXI.Sprite.from(`systems/ucttg/images/adversary/adversary-${adversaryLevel}.png`);
-    sprite.scale.set(0.15, 0.15);
-    sprite.x = (token.w / 2) - 20;
-    sprite.y = token.h / 2 + 15;
+
+    // 2. Logic for rendering
+    const sprite = PIXI.Sprite.from(`systems/ucttg/images/adversary/adversary-${adversaryLevel > 5 ? 6 : adversaryLevel}.png`);
+    sprite.scale.set(0.025, 0.025);
+
+    // 3. Position (Using the dynamic height after scale)
+    sprite.x = 2 - 2; 
+    sprite.y = token.h / 2 + 12;
+
     if (adversaryLevel > 5) {
-      sprite.tint = overflowColor;
-      adversaryLevel = 6;
+        // Comment out or remove if you don't want the tint
+        // sprite.tint = parseInt(overflowColor, 16); 
+        adversaryLevel = 6;
     }
-    token.adversaryLevel.addChild(sprite);
+    
+    countContainer.addChild(sprite);
+} else {
+    // Clean up if adversaryLevel is 0
+    const countContainer = token.getChildByName("adversaryLevel");
+    if (countContainer) {
+        countContainer.destroy({children: true});
+    }
   }
 }

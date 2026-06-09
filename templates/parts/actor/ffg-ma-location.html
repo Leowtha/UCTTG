@@ -1,0 +1,30 @@
+<div class="ms-frame-location">
+  <div class="ms-frame-location-label">
+    <span class="ms-frame-location-title">{{localize titleKey}}</span>
+  </div>
+  <div class="ms-frame-location-details">
+    <div class="ms-frame-location-part">
+      <input type="text"
+             name="system.stats.{{key}}.label"
+             value="{{loc.label}}"
+             data-dtype="String"
+             placeholder="{{localize 'ucttg.MAPartDefault'}}" />
+    </div>
+    <div class="ms-frame-location-armor">
+      <div class="ms-frame-location-armor-label">{{localize armorKey}}</div>
+      <input type="text"
+             name="system.stats.{{key}}.armor"
+             value="{{loc.armor}}"
+             data-dtype="String"
+             placeholder="—" />
+    </div>
+  </div>
+  {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
+    (object blocktype="split" title="ucttg.MAFrameIntegrity"
+      fields=(array
+        (object name=(concat "system.stats." key ".max")   value=loc.max   type="Number" label="ucttg.MAFrameThreshold")
+        (object name=(concat "system.stats." key ".value") value=loc.value type="Number" label="SWFFG.Current")
+      )
+    )
+  }}
+</div>

@@ -1,6 +1,6 @@
 {
   "Actor": {
-    "types": ["character", "minion", "vehicle", "homestead", "rival", "nemesis", "ace", "mobilesuit"],
+    "types": ["character", "minion", "vehicle", "homestead", "rival", "nemesis", "ace", "mobilesuit", "mobilearmor", "mobileweapon", "vessel"],
     "templates": {
       "biography": {
         "biography": ""
@@ -699,7 +699,56 @@
         "space": false,
         "water": false
       }
+    },
+  "mobilearmor": {
+  "templates": ["biography", "characteristics", "skills", "attributes"],
+  "pilotId": "",
+  "maType": "",
+  "manufacturer": "",
+  "rolloutDate": "",
+  "costToManufacture": "",
+  "stats": {
+    "wounds":      { "value": 0, "min": 0, "max": 0, "adjusted": 0 },
+    "strain":      { "value": 0, "min": 0, "max": 0, "adjusted": 0 },
+    "soak":        { "value": 0, "adjusted": 0 },
+    "defence":     { "ranged": 0, "melee": 0, "adjusted": 0 },
+    "encumbrance": { "value": 0, "max": 0, "adjusted": 0 },
+    "credits":     { "value": 0, "type": "Number", "label": "Credits", "adjusted": 0 },
+    "armour":      { "value": 0, "type": "Number", "label": "Armour", "adjusted": 0 },
+    "customizationHardPoints": { "value": 0, "type": "Number", "label": "Hard Points", "adjusted": 0 },
+
+    "funnels":   { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+    "fuel":      { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+    "fore":      { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+    "aft":       { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+    "port":      { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+    "starboard": { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" }
+  }
+},
+  "mobileweapon": {
+    "templates": ["biography", "characteristics", "skills", "attributes"],
+    "pilotId": "",
+    "mwType": "",
+    "manufacturer": "",
+    "rolloutDate": "",
+    "costToManufacture": "",
+    "stats": {
+      "wounds":      { "value": 0, "min": 0, "max": 0, "adjusted": 0 },
+      "strain":      { "value": 0, "min": 0, "max": 0, "adjusted": 0 },
+      "soak":        { "value": 0, "adjusted": 0 },
+      "defence":     { "ranged": 0, "melee": 0, "adjusted": 0 },
+      "encumbrance": { "value": 0, "max": 0, "adjusted": 0 },
+      "credits":     { "value": 0, "type": "Number", "label": "Credits", "adjusted": 0 },
+      "armour":      { "value": 0, "type": "Number", "label": "Armour", "adjusted": 0 },
+      "customizationHardPoints": { "value": 0, "type": "Number", "label": "Hard Points", "adjusted": 0 },
+
+      "fuel":      { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+      "fore":      { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+      "aft":       { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+      "port":      { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
+      "starboard": { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" }
     }
+}
   },
   "Item": {
     "types": [
@@ -785,7 +834,7 @@
       "templates": ["core", "basic", "itemattachments", "qualities"]
     },
     "weapon": {
-      "templates": ["core", "basic", "hardpoints", "ammo", "magazines", "equippable", "itemattachments", "qualities"],
+      "templates": ["core", "basic", "hardpoints", "ammo", "equippable", "itemattachments", "qualities"],
       "skill": {
         "value": "Ranged: Light",
         "type": "String",
@@ -853,7 +902,7 @@
       "talentCategory": "infantry"
     },
     "shipweapon": {
-      "templates": ["core", "basic", "hardpoints", "ammo", "magazines", "equippable", "itemattachments", "qualities"],
+      "templates": ["core", "basic", "hardpoints", "ammo", "equippable", "itemattachments", "qualities"],
       "label": "Ship Weapon",
       "firingarc": {
         "fore": false,

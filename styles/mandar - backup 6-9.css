@@ -4543,16 +4543,7 @@ img {
 
 
 /* ============================================================================
- * 3. MECH SHEETS — SHARED CHROME
- * ----------------------------------------------------------------------------
- * Styling shared by Mobile Suit (.mobilesuit), Mobile Armor (.mobilearmor),
- * and Mobile Weapon (.mobileweapon) actor sheets. These three actor types
- * share the same profile-frame / pilot-block / frame-location visual chrome
- * via the `ms-*` class prefix (originally MS-only, now system-wide).
- *
- * Mech-specific layout (the MA frame-location 2-col grid, the MW defense
- * ring) lives in its own section below. This section is the chrome
- * (headers, info bars, pilot drop zones, characteristics styling).
+ * 3. MOBILE SUIT SHEET
  * ============================================================================ */
 
 
@@ -4562,9 +4553,7 @@ img {
 
 /* Don't fucking touch my shit Foundry — the header img wants to flex and
    add margins regardless of what we set elsewhere. */
-form.mobilesuit header.sheet-header img,
-form.mobilearmor header.sheet-header img,
-form.mobileweapon header.sheet-header img {
+form.mobilesuit header.sheet-header img {
   flex: none !important;
   height: auto !important;
   margin-right: 0 !important;
@@ -4575,55 +4564,41 @@ form.mobileweapon header.sheet-header img {
  * 3b. Title card & header layout
  * --------------------------------------------------------------------------*/
 
-.mobilesuit .title-card.mobilesuit,
-.mobilearmor .title-card.mobilearmor,
-.mobileweapon .title-card.mobileweapon {
+.mobilesuit .title-card.mobilesuit {
   background: #4a5568;
   color: #e2e8f0;
 }
 
-form.mobilesuit .header-fields .header-description-block,
-form.mobilearmor .header-fields .header-description-block,
-form.mobileweapon .header-fields .header-description-block {
+form.mobilesuit .header-fields .header-description-block {
   height: auto !important;
   overflow-y: visible !important;
   text-align: center;
 }
 
-form.mobilesuit .header-fields .header-name,
-form.mobilearmor .header-fields .header-name,
-form.mobileweapon .header-fields .header-name {
+form.mobilesuit .header-fields .header-name {
   width: auto !important;
 }
 
-form.mobilesuit .header-fields > .container,
-form.mobilearmor .header-fields > .container,
-form.mobileweapon .header-fields > .container {
+form.mobilesuit .header-fields > .container {
   flex: 1 1 0;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-form.mobilesuit .header-fields > .container:first-child,
-form.mobilearmor .header-fields > .container:first-child,
-form.mobileweapon .header-fields > .container:first-child {
+form.mobilesuit .header-fields > .container:first-child {
   display: flex !important;
   flex-wrap: nowrap !important;
   align-items: stretch !important;
   overflow: hidden !important;
 }
 
-form.mobilesuit .header-fields > .container:first-child > .container,
-form.mobilearmor .header-fields > .container:first-child > .container,
-form.mobileweapon .header-fields > .container:first-child > .container {
+form.mobilesuit .header-fields > .container:first-child > .container {
   width: auto;
   flex-wrap: nowrap;
 }
 
-form.mobilesuit .header-fields > .container:first-child > .container:not(.ms-pilot-block),
-form.mobilearmor .header-fields > .container:first-child > .container:not(.ms-pilot-block),
-form.mobileweapon .header-fields > .container:first-child > .container:not(.ms-pilot-block) {
+form.mobilesuit .header-fields > .container:first-child > .container:not(.ms-pilot-block) {
   flex: 1 1 0 !important;
   min-width: 0 !important;
   width: 0 !important;
@@ -4632,9 +4607,7 @@ form.mobileweapon .header-fields > .container:first-child > .container:not(.ms-p
   align-items: center;
 }
 
-.mobilesuit div.container,
-.mobilearmor div.container,
-.mobileweapon div.container {
+.mobilesuit div.container {
   width: 100%;
   height: auto;
   display: flex;
@@ -4647,9 +4620,7 @@ form.mobileweapon .header-fields > .container:first-child > .container:not(.ms-p
  * 3c. MS portrait frame (left side)
  * --------------------------------------------------------------------------*/
 
-form.mobilesuit .header-fields .profile-block.ms-profile-frame,
-form.mobilearmor .header-fields .profile-block.ms-profile-frame,
-form.mobileweapon .header-fields .profile-block.ms-profile-frame {
+form.mobilesuit .header-fields .profile-block.ms-profile-frame {
   flex: 0 0 180px !important;
   max-width: 180px !important;
   min-width: 180px !important;
@@ -4671,9 +4642,7 @@ form.mobileweapon .header-fields .profile-block.ms-profile-frame {
   clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
 }
 
-.mobilesuit .ms-profile-header,
-.mobilearmor .ms-profile-header,
-.mobileweapon .ms-profile-header {
+.mobilesuit .ms-profile-header {
   width: 100%;
   text-align: center;
   font-weight: bold;
@@ -4686,9 +4655,7 @@ form.mobileweapon .header-fields .profile-block.ms-profile-frame {
   letter-spacing: 0.5px;
 }
 
-.mobilesuit .ms-profile-portrait,
-.mobilearmor .ms-profile-portrait,
-.mobileweapon .ms-profile-portrait {
+.mobilesuit .ms-profile-portrait {
   width: 100%;
   display: flex;
   align-items: center;
@@ -4697,16 +4664,12 @@ form.mobileweapon .header-fields .profile-block.ms-profile-frame {
   overflow: hidden;
 }
 
-.mobilesuit .ms-profile-portrait img.profile-img,
-.mobilearmor .ms-profile-portrait img.profile-img,
-.mobileweapon .ms-profile-portrait img.profile-img {
+.mobilesuit .ms-profile-portrait img.profile-img {
   margin: 0 auto !important;
   display: block !important;
 }
 
-form.mobilesuit .header-fields .profile-img,
-form.mobilearmor .header-fields .profile-img,
-form.mobileweapon .header-fields .profile-img {
+form.mobilesuit .header-fields .profile-img {
   width: 140px !important;
   height: 140px !important;
   max-width: 140px !important;
@@ -4716,9 +4679,7 @@ form.mobileweapon .header-fields .profile-img {
   -webkit-clip-path: none !important;
 }
 
-.mobilesuit .ms-profile-info,
-.mobilearmor .ms-profile-info,
-.mobileweapon .ms-profile-info {
+.mobilesuit .ms-profile-info {
   width: 100%;
   text-align: center;
   font-weight: bold;
@@ -4733,17 +4694,7 @@ form.mobileweapon .header-fields .profile-img {
   order: 99;
 }
 
-/* MA-specific: the FIRST .ms-profile-info ("Identifying Scheme" subtitle
-   under the header) should sit at the top, not be auto-pushed to the
-   bottom. Override order/margin for the first occurrence only. */
-.mobilearmor .ms-profile-frame .ms-profile-info:first-of-type {
-  order: 0;
-  margin-top: 0;
-}
-
-.mobilesuit .ms-profile-name,
-.mobilearmor .ms-profile-name,
-.mobileweapon .ms-profile-name {
+.mobilesuit .ms-profile-name {
   font-weight: bold;
   display: block;
   font-size: 0.75em;
@@ -4912,9 +4863,7 @@ form.mobilesuit .container.ms-pilot-block {
  * --------------------------------------------------------------------------*/
 
 /* Pilot-linked stat numbers display in black against the green tile. */
-.mobilesuit .characteristics .characteristic-item .characteristic .characteristic-value input,
-.mobilearmor .characteristics .characteristic-item .characteristic .characteristic-value input,
-.mobileweapon .characteristics .characteristic-item .characteristic .characteristic-value input {
+.mobilesuit .characteristics .characteristic-item .characteristic .characteristic-value input {
   color: #000000;
 }
 
@@ -4923,9 +4872,7 @@ form.mobilesuit .container.ms-pilot-block {
  * 3f. Pilot stats banner & talent reference
  * --------------------------------------------------------------------------*/
 
-.mobilesuit .ms-pilot-stats-banner,
-.mobilearmor  .ms-pilot-stats-banner,
-.mobileweapon .ms-pilot-stats-banner {
+.mobilesuit .ms-pilot-stats-banner {
   background: rgba(65, 80, 100, 0.85);
   border: 1px solid rgba(65, 80, 100, 0.95);
   border-radius: 3px;
@@ -4940,30 +4887,22 @@ form.mobilesuit .container.ms-pilot-block {
   clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
 }
 
-.mobilesuit .ms-pilot-stats-banner a,
-.mobilearmor .ms-pilot-stats-banner a,
-.mobileweapon .ms-pilot-stats-banner a {
+.mobilesuit .ms-pilot-stats-banner a {
   color: #7cb3ff;
 }
 
-.mobilesuit .ms-pilot-stats-banner a:hover,
-.mobilearmor .ms-pilot-stats-banner a:hover,
-.mobileweapon .ms-pilot-stats-banner a:hover {
+.mobilesuit .ms-pilot-stats-banner a:hover {
   color: #ffffff;
   text-decoration: underline;
 }
 
-.mobilesuit .ms-pilot-talents-section,
-.mobilearmor .ms-pilot-talents-section,
-.mobileweapon .ms-pilot-talents-section {
+.mobilesuit .ms-pilot-talents-section {
   margin-top: 8px;
   border-top: 1px solid #444;
   padding-top: 8px;
 }
 
-.mobilesuit .ms-pilot-talent-row,
-.mobilearmor .ms-pilot-talent-row,
-.mobileweapon .ms-pilot-talent-row {
+.mobilesuit .ms-pilot-talent-row {
   opacity: 0.75;
   font-style: italic;
 }
@@ -4973,15 +4912,11 @@ form.mobilesuit .container.ms-pilot-block {
  * 3g. Frame location blocks (head, arms, legs, fuel)
  * --------------------------------------------------------------------------*/
 
-.mobilesuit .ms-biography-fields,
-.mobilearmor .ms-biography-fields,
-.mobileweapon .ms-biography-fields {
+.mobilesuit .ms-biography-fields {
   margin-bottom: 8px;
 }
 
-.mobilesuit .ms-frame-location,
-.mobilearmor .ms-frame-location,
-.mobileweapon .ms-frame-location {
+.mobilesuit .ms-frame-location {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -4989,9 +4924,7 @@ form.mobilesuit .container.ms-pilot-block {
 }
 
 /* Location name banner (HEAD, LEFT ARM, etc.) */
-.mobilesuit .ms-frame-location .ms-frame-location-label,
-.mobilearmor .ms-frame-location .ms-frame-location-label,
-.mobileweapon .ms-frame-location .ms-frame-location-label {
+.mobilesuit .ms-frame-location .ms-frame-location-label {
   width: 100%;
   text-align: center;
   background-color: rgba(73, 12, 11, 0.85);
@@ -5007,9 +4940,7 @@ form.mobilesuit .container.ms-pilot-block {
 }
 
 /* Two-column row: part name (left) + armor (right) */
-.mobilesuit .ms-frame-location .ms-frame-location-details,
-.mobilearmor  .ms-frame-location .ms-frame-location-details,
-.mobileweapon .ms-frame-location .ms-frame-location-details {
+.mobilesuit .ms-frame-location .ms-frame-location-details {
   display: flex;
   flex-direction: row;
   width: 100%;
@@ -5018,18 +4949,14 @@ form.mobilesuit .container.ms-pilot-block {
   border-right: 1px solid #ccc;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-part,
-.mobilearmor .ms-frame-location .ms-frame-location-part,
-.mobileweapon .ms-frame-location .ms-frame-location-part {
+.mobilesuit .ms-frame-location .ms-frame-location-part {
   flex: 1 1 auto;
   padding: 3px 5px;
   display: flex;
   align-items: center;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-part input,
-.mobilearmor .ms-frame-location .ms-frame-location-part input,
-.mobileweapon .ms-frame-location .ms-frame-location-part input {
+.mobilesuit .ms-frame-location .ms-frame-location-part input {
   width: 100%;
   border: 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
@@ -5041,24 +4968,18 @@ form.mobilesuit .container.ms-pilot-block {
   padding: 2px 0;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-part input::placeholder,
-.mobilearmor .ms-frame-location .ms-frame-location-part input::placeholder,
-.mobileweapon .ms-frame-location .ms-frame-location-part input::placeholder {
+.mobilesuit .ms-frame-location .ms-frame-location-part input::placeholder {
   font-style: italic;
   font-weight: normal;
   color: #999;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-part input:focus,
-.mobilearmor .ms-frame-location .ms-frame-location-part input:focus,
-.mobileweapon .ms-frame-location .ms-frame-location-part input:focus {
+.mobilesuit .ms-frame-location .ms-frame-location-part input:focus {
   box-shadow: 0 0 5px #7da9c2;
   background-color: #7da9c2;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-armor,
-.mobilearmor .ms-frame-location .ms-frame-location-armor,
-.mobileweapon .ms-frame-location .ms-frame-location-armor {
+.mobilesuit .ms-frame-location .ms-frame-location-armor {
   flex: 0 0 5rem;
   display: flex;
   flex-direction: column;
@@ -5069,9 +4990,7 @@ form.mobilesuit .container.ms-pilot-block {
   background-color: #e2e2e2;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-armor-label 
-.mobilearmor .ms-frame-location .ms-frame-location-armor-label,
-.mobileweapon .ms-frame-location .ms-frame-location-armor-label {
+.mobilesuit .ms-frame-location .ms-frame-location-armor-label {
   font-size: 0.55rem;
   font-weight: bold;
   text-transform: uppercase;
@@ -5081,9 +5000,7 @@ form.mobilesuit .container.ms-pilot-block {
   margin-bottom: 1px;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-armor input,
-.mobilearmor .ms-frame-location .ms-frame-location-armor input,
-.mobileweapon .ms-frame-location .ms-frame-location-armor input {
+.mobilesuit .ms-frame-location .ms-frame-location-armor input {
   width: 100%;
   border: 0;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
@@ -5095,18 +5012,14 @@ form.mobilesuit .container.ms-pilot-block {
   padding: 1px 0;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-armor input::placeholder,
-.mobilearmor .ms-frame-location .ms-frame-location-armor input::placeholder,
-.mobileweapon .ms-frame-location .ms-frame-location-armor input::placeholder {
+.mobilesuit .ms-frame-location .ms-frame-location-armor input::placeholder {
   font-style: italic;
   font-weight: normal;
   color: #bbb;
   font-size: 0.75rem;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-armor input:focus,
-.mobilearmor .ms-frame-location .ms-frame-location-armor input:focus,
-.mobileweapon .ms-frame-location .ms-frame-location-armor input:focus {
+.mobilesuit .ms-frame-location .ms-frame-location-armor input:focus {
   box-shadow: 0 0 5px #7da9c2;
   background-color: #7da9c2;
 }
@@ -5114,9 +5027,7 @@ form.mobilesuit .container.ms-pilot-block {
 /* Force the ffg-block resource inside frame locations to fill full width.
    Without this, the embedded ffg-block partial uses its default flex
    sizing and ends up narrower than the Part/Armor row above it. */
-.mobilesuit .ms-frame-location .resource,
-.mobilearmor .ms-frame-location .resource,
-.mobileweapon .ms-frame-location .resource {
+.mobilesuit .ms-frame-location .resource {
   flex: 1 1 100% !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -5126,13 +5037,7 @@ form.mobilesuit .container.ms-pilot-block {
 
 .mobilesuit .ms-frame-location .resource .attribute,
 .mobilesuit .ms-frame-location .resource .block-background,
-.mobilesuit .ms-frame-location .resource .block-background-shadow,
-.mobilearmor .ms-frame-location .resource .attribute,
-.mobilearmor .ms-frame-location .resource .block-background,
-.mobilearmor .ms-frame-location .resource .block-background-shadow,
-.mobileweapon .ms-frame-location .resource .attribute,
-.mobileweapon .ms-frame-location .resource .block-background,
-.mobileweapon .ms-frame-location .resource .block-background-shadow {
+.mobilesuit .ms-frame-location .resource .block-background-shadow {
   width: 100%;
 }
 
@@ -5153,61 +5058,40 @@ form.mobilesuit .container.ms-pilot-block {
 
 form.mobilesuit,
 form.mobilesuit .sheet-body,
-form.mobilesuit .sheet-body > .tab,
-form.mobilearmor,
-form.mobilearmor .sheet-body,
-form.mobilearmor .sheet-body > .tab,
-form.mobileweapon,
-form.mobileweapon .sheet-body,
-form.mobileweapon .sheet-body > .tab {
+form.mobilesuit .sheet-body > .tab {
   max-width: 100%;
   min-width: 0;
 }
 
 form.mobilesuit .sheet-body,
 form.mobilesuit .sheet-body > .tab,
-form.mobilesuit .tab.items,
-form.mobilearmor .sheet-body,
-form.mobilearmor .sheet-body > .tab,
-form.mobilearmor .tab.items,
-form.mobileweapon .sheet-body,
-form.mobileweapon .sheet-body > .tab,
-form.mobileweapon .tab.items {
+form.mobilesuit .tab.items {
   overflow: auto;
 }
 
-form.mobilesuit .ms-pilot-talents-section,
-form.mobilearmor .ms-pilot-talents-section,
-form.mobileweapon .ms-pilot-talents-section {
+/* Pilot talent descriptions contain user-authored HTML (triple-braced in
+   the template), which can include wide tables, long unbroken strings,
+   or oversized images. Constrain everything inside. */
+form.mobilesuit .ms-pilot-talents-section {
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
 }
 
 form.mobilesuit .ms-pilot-talent-desc,
-form.mobilesuit .ms-pilot-talent-desc *,
-form.mobilearmor .ms-pilot-talent-desc,
-form.mobilearmor .ms-pilot-talent-desc *,
-form.mobileweapon .ms-pilot-talent-desc,
-form.mobileweapon .ms-pilot-talent-desc * {
+form.mobilesuit .ms-pilot-talent-desc * {
   max-width: 100%;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
 
 form.mobilesuit .ms-pilot-talent-desc img,
-form.mobilesuit .ms-pilot-talent-desc table,
-form.mobilearmor .ms-pilot-talent-desc img,
-form.mobilearmor .ms-pilot-talent-desc table,
-form.mobileweapon .ms-pilot-talent-desc img,
-form.mobileweapon .ms-pilot-talent-desc table {
+form.mobilesuit .ms-pilot-talent-desc table {
   max-width: 100%;
   height: auto;
 }
 
-form.mobilesuit .ms-pilot-talent-desc table,
-form.mobilearmor .ms-pilot-talent-desc table,
-form.mobileweapon .ms-pilot-talent-desc table {
+form.mobilesuit .ms-pilot-talent-desc table {
   table-layout: fixed;
 }
 
@@ -5217,97 +5101,3 @@ form.mobileweapon .ms-pilot-talent-desc table {
   z-index: 100000;
   pointer-events: auto;
 }
-
-/* ============================================================================
- * 4. MOBILE WEAPON — DEFENSE RING
- * ----------------------------------------------------------------------------
- * MW-specific layout for the 5-zone defense ring on the biography tab.
- * Renders fore/port/starboard/aft frame-location blocks around a central
- * chassis image in a 3×3 CSS grid with empty corners.
- *
- * All shared chrome (location labels, part/armor inputs, hull bars) is
- * inherited from Section 3 — these rules only do layout.
- * ============================================================================ */
-
-.mobileweapon .mw-defense-ring {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: auto 1fr auto;
-  grid-template-areas:
-    ".    fore       .        "
-    "port center     starboard"
-    ".    aft        .        ";
-  gap: 0.5rem;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.mobileweapon .mw-zone-fore      { grid-area: fore; }
-.mobileweapon .mw-zone-port      { grid-area: port; }
-.mobileweapon .mw-zone-center    { grid-area: center; display: flex; align-items: center; justify-content: center; }
-.mobileweapon .mw-zone-starboard { grid-area: starboard; }
-.mobileweapon .mw-zone-aft       { grid-area: aft; }
-
-/* Each ring zone wraps an .ms-frame-location partial; the frame-location
-   CSS (Section 3g) styles the contents. The wrapper just provides the
-   grid cell and stacks the location flush. */
-.mobileweapon .mw-zone-fore .ms-frame-location,
-.mobileweapon .mw-zone-port .ms-frame-location,
-.mobileweapon .mw-zone-starboard .ms-frame-location,
-.mobileweapon .mw-zone-aft .ms-frame-location {
-  margin-bottom: 0;
-}
-
-/* Center chassis image: occupies the middle grid cell, sized to fit. */
-.mobileweapon .mw-chassis-img {
-  max-width: 100%;
-  max-height: 200px;
-  object-fit: contain;
-  display: block;
-  opacity: 0.85;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-/* Empty-state placeholder when no chassis image is set. */
-.mobileweapon .mw-zone-center .mw-chassis-empty {
-  width: 100%;
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed rgba(65, 80, 100, 0.4);
-  color: #888;
-  font-size: 0.75em;
-  font-style: italic;
-  text-align: center;
-  padding: 1rem;
-}
-
-/* Below-ring row: Rollout Date / Fuel / Cost in three equal columns. */
-.mobileweapon .mw-below-ring {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.5rem;
-  width: 100%;
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-}
-
-.mobileweapon .mw-below-ring > * {
-  min-width: 0;
-}
-
-/* ============================================================================
- * 5. MOBILE ARMOR — MA-SPECIFIC LAYOUT
- * ----------------------------------------------------------------------------
- * MA's frame-location grid (Funnels/Fuel, Fore/Aft, Port/Starboard) uses
- * the standard .grid.grid-2col wrappers from the FFG base theme, so no
- * MA-specific grid CSS is needed — the shared .ms-frame-location chrome
- * styles each cell. This section is reserved for future MA-only overrides.
- *
- * One MA-specific rule lives in Section 3c: the :first-of-type override
- * for .ms-profile-info that keeps the "Identifying Scheme" subtitle at
- * the top of the profile frame instead of being auto-pushed to the bottom.
- * ============================================================================ */
-
-/* (empty for now — MA fully uses shared chrome) */
