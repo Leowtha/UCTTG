@@ -135,6 +135,23 @@ export class ActorSheetFFG extends ActorSheet {
 
   /** @override */
   async _onDropActor(event, data) {
+  // Record the DOM drop target so crew.js can tell a hangar drop from a crew drop
+  globalThis.__ucttgLastDropTarget = event?.target ?? null;
+
+  // Vessel: if the drop landed on the hangar dropzone, store the unit and stop.
+  if (this.actor.type === "vessel") {
+    const onHangar = event?.target?.closest?.("[data-hangar-dropzone]");
+    if (onHangar) {
+      const dropped = await Actor.implementation.fromDropData(data);
+      if (dropped) {
+        const { addToHangar } = await import("../helpers/hangar.js");
+        await addToHangar(this.actor, dropped);
+      }
+      return false; // consume drop; skip pilot + crew
+    }
+    // non-hangar drop on a vessel → fall through to super so crew.js can claim it
+  }
+
   // Only handle pilot assignment for pilotable mech actors
   const pilotableTypes = ["mobilesuit", "mobilearmor", "mobileweapon"];
   if (!pilotableTypes.includes(this.actor.type)) {
@@ -606,6 +623,7 @@ if (["mobilesuit", "mobilearmor", "mobileweapon"].includes(this.actor.type) && t
 
         break;
       case "vehicle":
+      case "vessel":
         data.data.enrichedBio = await TextEditor.enrichHTML(this.actor.system.biography);
         // add the crew to the items of the vehicle
         data.crew = [];
@@ -637,12 +655,28 @@ if (["mobilesuit", "mobilearmor", "mobileweapon"].includes(this.actor.type) && t
               'roll': roll,
               'link': crew[i]?.link,
             })
-          }
+           }
         }
-      default:
+        // Vessel hangar: resolve stored unit references and compute capacity
+        if (this.actor.type === "vessel") {
+          const { buildHangarData } = await import("../helpers/hangar.js");
+          data.hangar = buildHangarData(this.actor);
+        }
+         // Captain's Strain mirror (read-only). Reuses the crew flag already read above.
+        let captainStrain = { value: null, max: null, display: "—" };
+        const captainEntry = (crew || []).find((c) => c.role === "Captain");
+        if (captainEntry) {
+        const captain = game.actors.get(captainEntry.actor_id);
+        const cs = captain?.system?.stats?.strain;
+        if (cs && typeof cs.value === "number") {
+          captainStrain = { value: cs.value, max: cs.max, display: `${cs.value} / ${cs.max}` };
+        }
+      }
+      data.captainStrain = captainStrain;
+    default:
     }
 
-    if (this.actor.type !== "vehicle" && this.actor.type !== "homestead") {
+    if (!["vehicle", "vessel", "homestead"].includes(this.actor.type)) {
       // Filter out skills that are not custom (manually added) or part of the current system skill list
       Object.keys(data.data.skills)
       .filter(s => !data.data.skills[s].custom && !CONFIG.FFG.skills[s])
@@ -680,11 +714,26 @@ if (["mobilesuit", "mobilearmor", "mobileweapon"].includes(this.actor.type) && t
   activateListeners(html) {
     super.activateListeners(html);
 
-      // Remove a hangar entry
+    // Remove a hangar entry
     html.find(".remove-hangar").on("click", async (event) => {
       event.preventDefault();
       const id = event.currentTarget.dataset.id;
       await this.object.update({ "system.hangar": { [`-=${id}`]: null } });
+    });
+
+    // Vessel hangar: eject a stored unit (reference removal, source actor untouched)
+    html.find(".hangar-eject").on("click", async (event) => {
+      event.preventDefault();
+      const id = event.currentTarget.dataset.unitId;
+      const { ejectFromHangar } = await import("../helpers/hangar.js");
+      await ejectFromHangar(this.actor, id);
+    });
+
+    // Vessel hangar: open a stored unit's sheet
+    html.find(".hangar-open").on("click", (event) => {
+      event.preventDefault();
+      const id = event.currentTarget.dataset.unitId;
+      game.actors.get(id)?.sheet?.render(true);
     });
 
     // Capture trailing empty hangar input on submit and convert to a real entry

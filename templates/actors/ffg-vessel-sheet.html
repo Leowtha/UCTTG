@@ -1,0 +1,223 @@
+<form class="{{cssClass}} vehicle vessel" autocomplete="off">
+  {{!-- Sheet Header --}}
+  <header class="sheet-header">
+    <div id="actor-id" data-actor="{{actor._id}}" style="display: none;"></div>
+    <div class="header-fields">
+      <div class="grid grid-2col">
+        <div class="block-background vehicle-img" style="min-height: 200px; min-width: 280px;">
+          <div class="profile-block">
+            <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" height="100" width="100" />
+          </div>
+        </div>
+        <div class="container flex-group-right">
+          {{#if limited}}{{else}}
+            <div class="block-background defense-group">
+              <div class="defense-decoration"></div>
+              <div class="defense-block">
+                <div class="defense-block-title">{{localize "ucttg.VesselDefense"}}</div>
+                <div class="defense-value fore">
+                  <input type="text" name="data.stats.shields.fore" value="{{data.stats.shields.fore}}" data-dtype="Number" />
+                  <div class="defense-value-label">{{localize "ucttg.VesselDefenseStarboard"}}</div>
+                </div>
+                <div class="defense-value aft">
+                  <input type="text" name="data.stats.shields.aft" value="{{data.stats.shields.aft}}" data-dtype="Number" />
+                  <div class="defense-value-label">{{localize "ucttg.VesselDefensePort"}}</div>
+                </div>
+                <div class="defense-value port">
+                  <input type="text" name="data.stats.shields.port" value="{{data.stats.shields.port}}" data-dtype="Number" />
+                  <div class="defense-value-label">{{localize "ucttg.VesselDefenseFore"}}</div>
+                </div>
+                <div class="defense-value starboard">
+                  <input type="text" name="data.stats.shields.starboard" value="{{data.stats.shields.starboard}}" data-dtype="Number" />
+                  <div class="defense-value-label">{{localize "ucttg.VesselDefenseAft"}}</div>
+                </div>
+                <img class="defense-img" src="{{ data.silhouetteImage }}" data-edit="system.silhouetteImage"/>
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+
+      <div class="container">
+        <div class="container flex-group-center item-name">
+          <div class="title-card mobilesuit">{{ localize "ucttg.Vessel" }}</div>
+          <h1 class="charname"><input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'SWFFG.VehicleName'}}" /></h1>
+        </div>
+      </div>
+
+      {{#if limited}}{{else}}
+      <div class="container characteristics flex-group-center">
+        <div class="grid grid-3col">
+          <div class="characteristic-item flex-group-center">
+            <div class="characteristic"><div class="characteristic-value">
+              <input type="text" name="data.stats.armour.value" value="{{data.stats.armour.value}}" data-dtype="Number" />
+            </div></div>
+            <div class="characteristic-label">{{localize "ucttg.VesselArmor"}}</div>
+          </div>
+          <div class="characteristic-item flex-group-center">
+            <div class="characteristic"><div class="characteristic-value">
+              <input type="text" name="data.stats.speed.value" value="{{data.stats.speed.value}}" data-dtype="Number" />
+            </div></div>
+            <div class="characteristic-label">{{localize "ucttg.VesselSpeed"}}</div>
+          </div>
+          <div class="characteristic-item flex-group-center">
+            <div class="characteristic"><div class="characteristic-value">
+              <input type="text" name="data.stats.customizationHardPoints.value" value="{{data.stats.customizationHardPoints.value}}" data-dtype="Number" />
+            </div></div>
+            <div class="characteristic-label">{{localize "ucttg.VesselHardpoints"}}</div>
+          </div>
+        </div>
+      </div>
+
+       <div class="container flex-group-center">
+        <div class="grid grid-4col">
+          {{!-- Fuel — editable, Current/Threshold --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="split" title="ucttg.VesselFuel" fields=(array (object name="data.vesselFuel.max" value=data.vesselFuel.max type="Number" label="SWFFG.Threshold") (object name="data.vesselFuel.value" value=data.vesselFuel.value type="Number" label="SWFFG.Current") ))}}
+
+          {{!-- Hull Trauma — editable, Current/Threshold --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="split" title="ucttg.VesselHullTrauma" fields=(array (object name="data.stats.hullTrauma.max" value=data.stats.hullTrauma.max type="Number" label="SWFFG.Threshold") (object name="data.stats.hullTrauma.value" value=data.stats.hullTrauma.value type="Number" label="SWFFG.Current") ))}}
+
+          {{!-- Captain's Strain — READ-ONLY mirror of the assigned Captain --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="split" title="ucttg.CaptainStrain" disabled=true fields=(array (object name="captainStrain.max" value=captainStrain.max type="Number" label="SWFFG.Threshold") (object name="captainStrain.value" value=captainStrain.value type="Number" label="SWFFG.Current") ))}}
+
+          {{!-- Hangar — READ-ONLY used/capacity mirror (capacity editable on Hangar tab) --}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="split" title="ucttg.HangarCapacity" disabled=true fields=(array (object name="hangar.capacity" value=hangar.capacity type="Number" label="SWFFG.Threshold") (object name="hangar.used" value=hangar.used type="Number" label="SWFFG.Current") ))}}
+        </div>
+      </div>
+      {{/if}}
+    </div>
+  </header>
+
+  {{#if limited}}{{else}}
+  {{!-- Tab Navigation: added Hangar between Crew and Cargo --}}
+  {{> "systems/ucttg/templates/parts/shared/ffg-tabs.html" displayLimited=true limited=limited items=(array
+      (object tab="components" label="SWFFG.VehicleTabComponents" icon="fa-solid fa-cannon" cls=classType)
+      (object tab="crew" label="SWFFG.VehicleTabCrew" icon="fa-solid fa-person" cls=classType)
+      (object tab="hangar" label="ucttg.VesselTabHangar" icon="fa-solid fa-warehouse" cls=classType)
+      (object tab="items" label="SWFFG.VehicleTabCargo" icon="fas fa-toolbox" cls=classType)
+      (object tab="description" label="SWFFG.VehicleTabDescription" icon="fas fa-sticky-note" cls=classType)
+      (object tab="damage" label="SWFFG.CriticalDamage" icon="fas fa-exclamation-triangle" cls=classType)
+      (object tab="sources" label="SWFFG.TabSources" icon="fa-light fa-book-open-cover" cls=classType)
+  )}}
+
+  <section class="sheet-body vehicle vessel">
+    {{!-- Components Tab --}}
+    <div class="tab components" data-group="primary" data-tab="components">
+      {{> "systems/ucttg/templates/parts/actor/ffg-vehicle-weapon-attachments.html"}}
+    </div>
+
+    {{!-- Crew Tab --}}
+    <div class="tab crew" data-group="primary" data-tab="crew">
+            <div class="crew-dropzone-hint">
+        <i class="fas fa-users"></i>
+        {{localize "ucttg.CrewDropHint"}}
+      </div>
+      <div class="container flex-group-center biography-values">
+        {{#if (or (eq actor.flags.ucttg.config.enableHyperdrive undefined) (eq actor.flags.ucttg.config.enableHyperdrive true) )}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="split" title="ucttg.VesselTemporary" fields=(array (object name="data.stats.hyperdrive.value" value=data.stats.hyperdrive.value type="Number" label="ucttg.VesselTemporary1") (object name="data.stats.hyperdrive.backup" value=data.stats.hyperdrive.backup type="Number" label="ucttg.VesselTemporary2") ))}}
+        {{/if}}
+        {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="ucttg.VesselPassengers" type="Number" name="data.stats.passengerCapacity.value" value=data.stats.passengerCapacity.value )}}
+        {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="split" title="ucttg.VesselConsumables" fields=(array (object name="data.stats.consumables.value" value=data.stats.consumables.value type="Number" label="SWFFG.ConsumablesAmount") (object name="data.stats.consumables.duration" value=data.stats.consumables.duration type="String" label="SWFFG.ConsumablesDuration") ))}}
+      </div>
+      <div class="container flex-group-center biography-values">
+        {{#if (or (eq actor.flags.ucttg.config.enableSensors undefined) (eq actor.flags.ucttg.config.enableSensors true) )}}
+          {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="ucttg.VesselSensorRange" type="Dropdown" name="data.stats.sensorRange.value" value=data.stats.sensorRange.value options=this.FFG.sensor_ranges)}}
+        {{/if}}
+        {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="ucttg.VesselMinovskyCraftSystem" type="Boolean" name="data.stats.navicomputer.value" value=data.stats.navicomputer.value)}}
+        {{> "systems/ucttg/templates/parts/shared/ffg-block.html" (object blocktype="single" title="Space Vehicle" type="Boolean" name="data.spaceShip" value=data.spaceShip)}}
+      </div>
+
+      {{!-- Crew List (same partial as vehicle; reads ucttg.crew flag) --}}
+      {{> "systems/ucttg/templates/parts/actor/ffg-vehicle-crew.html"}}
+    </div>
+
+    {{!-- ===================== HANGAR TAB (new) ===================== --}}
+    <div class="tab hangar" data-group="primary" data-tab="hangar" data-hangar-dropzone="true">
+
+      {{!-- Capacity readout --}}
+      <div class="hangar-capacity-bar {{#if hangar.overCapacity}}hangar-over{{/if}}">
+        <div class="hangar-capacity-fields">
+          <label>{{localize "ucttg.HangarTrueCapacity"}}</label>
+          <input type="text" name="data.hangar.capacity" value="{{data.hangar.capacity}}" data-dtype="Number" />
+        </div>
+        <div class="hangar-capacity-readout">
+          <span class="hangar-used">{{hangar.used}}</span>
+          <span class="hangar-sep">/</span>
+          <span class="hangar-cap">{{hangar.capacity}}</span>
+          <span class="hangar-unit-label">{{localize "ucttg.HangarSlotsMS"}}</span>
+        </div>
+        {{#if hangar.overCapacity}}
+          <div class="hangar-warning">
+            <i class="fas fa-triangle-exclamation"></i> {{localize "ucttg.HangarOverCapacityBanner"}}
+          </div>
+        {{/if}}
+      </div>
+
+      {{!-- Dropzone hint --}}
+      <div class="hangar-dropzone-hint">
+        <i class="fas fa-arrow-down-to-bracket"></i>
+        {{localize "ucttg.HangarDropHint"}}
+      </div>
+
+      {{!-- Stored units --}}
+      {{#if hangar.units.length}}
+        <ol class="item-list hangar-unit-list">
+          <li class="item flexrow hangar-unit-header">
+            <div class="item-name"><strong>{{localize "ucttg.HangarUnit"}}</strong></div>
+            <div class="item-detail"><strong>{{localize "ucttg.HangarUnitType"}}</strong></div>
+            <div class="item-detail"><strong>{{localize "ucttg.HangarUnitCost"}}</strong></div>
+            <div class="item-detail"><strong>{{localize "ucttg.HangarUnitCondition"}}</strong></div>
+            <div class="item-controls"></div>
+          </li>
+          {{#each hangar.units as |unit|}}
+          <li class="item flexrow hangar-unit-row" data-unit-id="{{unit.id}}">
+            <div class="item-name">
+              <img class="hangar-unit-img" src="{{unit.img}}" width="28" height="28" />
+              <span>{{unit.name}}</span>
+            </div>
+            <div class="item-detail hangar-unit-type">{{unit.typeLabel}}</div>
+            <div class="item-detail hangar-unit-cost">{{unit.cost}}</div>
+            <div class="item-detail hangar-unit-condition">
+              {{#if unit.wounds}}{{unit.wounds.value}} / {{unit.wounds.max}}{{else}}—{{/if}}
+            </div>
+            <div class="item-controls">
+              <a class="hangar-open" data-unit-id="{{unit.id}}" title="{{localize 'ucttg.HangarOpen'}}"><i class="fas fa-external-link-alt"></i></a>
+              <a class="hangar-eject" data-unit-id="{{unit.id}}" title="{{localize 'ucttg.HangarEject'}}"><i class="fas fa-arrow-up-from-bracket"></i></a>
+            </div>
+          </li>
+          {{/each}}
+        </ol>
+      {{else}}
+        <div class="hangar-empty">{{localize "ucttg.HangarEmpty"}}</div>
+      {{/if}}
+    </div>
+
+    {{!-- Cargo Tab --}}
+    <div class="tab items" data-group="primary" data-tab="items">
+      {{> "systems/ucttg/templates/parts/actor/ffg-vehicle-cargo.html"}}
+    </div>
+
+    {{!-- Bio Tab --}}
+    <div class="tab biography active" data-group="primary" data-tab="description">
+      <div class="biography-editor">
+        {{editor data.enrichedBio target="system.biography" button=true editable=editable}}
+      </div>
+    </div>
+
+    {{!-- Critical Damage Tab --}}
+    <div class="tab damage" data-group="primary" data-tab="damage">
+      {{> "systems/ucttg/templates/parts/actor/ffg-criticalinjury.html" type="criticaldamage"}}
+    </div>
+
+    {{!-- Modifiers Tab --}}
+    <div class="tab attributes" data-group="primary" data-tab="attributes">
+      {{> "systems/ucttg/templates/parts/shared/ffg-modifiers.html"}}
+    </div>
+
+    {{!-- Sources Tab --}}
+    <div class="tab sources" data-group="primary" data-tab="sources">
+      {{> "systems/ucttg/templates/parts/shared/ffg-sources.html" data=data}}
+    </div>
+  </section>
+  {{/if}}
+</form>

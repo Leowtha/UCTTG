@@ -748,6 +748,36 @@
       "port":      { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" },
       "starboard": { "value": 0, "min": 0, "max": 0, "adjusted": 0, "label": "", "armor": "" }
     }
+  },
+  "vessel": {
+  "templates": ["biography", "attributes"],
+  "stats": {
+    "silhouette": { "value": 1, "type": "Number", "label": "Silhouette" },
+    "speed": { "value": 0, "max": 0, "type": "Number", "label": "Speed" },
+    "handling": { "value": 0, "type": "Number", "label": "Handling" },
+    "hullTrauma": { "value": 0, "min": 0, "max": 10, "label": "Hull Trauma" },
+    "systemStrain": { "value": 0, "min": 0, "max": 10, "label": "System Strain" },
+    "vesselFuel": {"value": 0, "max": 0},
+    "hangar": {"capacity": 0, "units": {}},
+    "shields": { "fore": 0, "port": 0, "starboard": 0, "aft": 0, "label": "Shields" },
+    "armour": { "value": 0, "type": "Number", "label": "Armour", "adjusted": 0 },
+    "sensorRange": { "value": "Short", "type": "String" },
+    "crew": {},
+    "passengerCapacity": { "value": 0, "type": "Number", "label": "Passenger Capacity" },
+    "encumbrance": { "value": 0, "min": 0, "max": 10, "adjusted": 0 },
+    "cost": { "value": 0, "type": "Number", "label": "Cost", "adjusted": 0 },
+    "rarity": { "value": 0, "isrestricted": false, "type": "Number", "label": "Rarity", "adjusted": 0 },
+    "customizationHardPoints": { "value": 0, "type": "Number", "label": "Hard Points", "adjusted": 0 },
+    "hyperdrive": { "value": 1, "type": "Number", "label": "SWFFG.Hyperdrive" },
+    "consumables": { "value": 1, "duration": "months", "type": "Number", "label": "SWFFG.Consumables" },
+    "navicomputer": { "value": false, "type": "Boolean", "label": "SWFFG.VehicleNavicomputer" }
+  },
+  "spaceShip": false,
+  "silhouetteImage": "systems/ucttg/images/shipdefence.png",
+  "vesselType": "",
+  "manufacturer": "",
+  "rolloutDate": "",
+  "costToManufacture": ""
 }
   },
   "Item": {

@@ -431,7 +431,7 @@ Hooks.once("init", async function () {
     }
 
     Hooks.on("createActor", (actor) => {
-      if (actor.type !== "vehicle" && actor.type !== "homestead") {
+      if (!["vehicle", "homestead", "vessel"].includes(actor.type)) {
         if (CONFIG.FFG?.alternateskilllists?.length) {
           let skilllist = game.settings.get("ucttg", "skilltheme");
           try {
@@ -1399,6 +1399,12 @@ async function registerCrewRoles() {
       "role_skill":  game.i18n.localize("SWFFG.SkillsNameGunnery"),
       "use_weapons": true,
       "use_handling": false
+    },
+    {
+      "role_name":  game.i18n.localize("SWFFG.Crew.Roles.Captain.Name"),
+      "role_skill": game.i18n.localize("SWFFG.SkillsNameLeadership"),
+      "use_weapons": false,
+      "use_handling": false,
     }
   ];
   game.settings.registerMenu("ucttg", "arrayCrewRoles", {

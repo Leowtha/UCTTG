@@ -9,10 +9,8 @@ import DiceHelpers from "../helpers/dice-helpers.js";
  */
 export async function register_crew(...args) {
     CONFIG.logger.debug("Got possible register crew request");
-    // check if this is an actor being dragged onto a vehicle
     let vehicle_actor;
     if (args[1].token) {
-      // this is a token, not a real actor
       vehicle_actor = args[1].token?.actor;
       if (!vehicle_actor) {
         CONFIG.logger.debug("Not registering crew as entity is a token without a matching actor");
@@ -20,23 +18,31 @@ export async function register_crew(...args) {
     } else {
       vehicle_actor = args[0];
     }
-    if (vehicle_actor.type !== 'vehicle' || args[2].type !== 'Actor') {
-        // the target is not a vehicle or the actor being dragged onto it is a vehicle
-        CONFIG.logger.debug("Not registering crew as item is not an actor or the target is not a vehicle");
+
+    // NEW: accept both vehicle and vessel
+    if (!['vehicle', 'vessel'].includes(vehicle_actor.type) || args[2].type !== 'Actor') {
+        CONFIG.logger.debug("Not registering crew as item is not an actor or the target is not a vehicle/vessel");
         return args;
     }
+
+        // NEW: if the drop landed on the vessel hangar dropzone, this is a hangar add, not crew
+    if (globalThis.__ucttgLastDropTarget?.closest?.("[data-hangar-dropzone]")) {
+        CONFIG.logger.debug("Not registering crew; drop targeted the hangar dropzone");
+        globalThis.__ucttgLastDropTarget = null;
+        return args;
+    }
+
     let drag_actor = null;
     if (args[2].hasOwnProperty('uuid')) {
         drag_actor = game.actors.get(args[2].uuid.split('.').pop());
     } else {
         drag_actor = game.actors.get(args[2].id);
     }
-    if (drag_actor.type === 'vehicle') {
-      CONFIG.logger.debug("Not registering crew as item is a vehicle");
+    if (['vehicle', 'vessel'].includes(drag_actor.type)) {   // NEW: don't crew a vehicle/vessel onto another
+      CONFIG.logger.debug("Not registering crew as item is a vehicle/vessel");
       return args;
     }
 
-    // prompt the user to select roles
     await selectRoles(vehicle_actor, drag_actor.id);
     return args;
 }

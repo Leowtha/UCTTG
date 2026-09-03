@@ -28,13 +28,13 @@
                 <tr>
                   <td>{{localize "ucttg.MAType"}}:</td>
                   <td>
-                    <input type="text" name="system.maType" value="{{system.maType}}" data-dtype="String" placeholder="Mobile Armor" />
+                    <input type="text" name="data.maType" value="{{data.maType}}" data-dtype="String" placeholder="Mobile Armor" />
                   </td>
                 </tr>
                 <tr>
                   <td>{{localize "ucttg.MAManufacturer"}}:</td>
                   <td>
-                    <input type="text" name="system.manufacturer" value="{{system.manufacturer}}" data-dtype="String" placeholder="" />
+                    <input type="text" name="data.manufacturer" value="{{data.manufacturer}}" data-dtype="String" placeholder="" />
                   </td>
                 </tr>
               </tbody>
@@ -79,21 +79,21 @@
           {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
             (object blocktype="split" title="SWFFG.Wounds"
               fields=(array
-                (object name="system.stats.wounds.max" value=system.stats.wounds.max type="Number" label="SWFFG.Threshold")
-                (object name="system.stats.wounds.value" value=system.stats.wounds.value type="Number" label="SWFFG.Current")
+                (object name="data.stats.wounds.max" value=data.stats.wounds.max type="Number" label="SWFFG.Threshold")
+                (object name="data.stats.wounds.value" value=data.stats.wounds.value type="Number" label="SWFFG.Current")
               )
             )
           }}
           {{!-- Armor Box --}}
           {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
-            (object blocktype="single" title="ucttg.MAArmor" type="Number" name="system.stats.soak.value" value=system.stats.soak.value)
+            (object blocktype="single" title="ucttg.MAArmor" type="Number" name="data.stats.soak.value" value=data.stats.soak.value)
           }}
           {{!-- Defence Box --}}
           {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
             (object blocktype="split" title="SWFFG.Defense"
               fields=(array
-                (object name="system.stats.defence.melee" value=system.stats.defence.melee type="Number" label="SWFFG.DefenseMelee")
-                (object name="system.stats.defence.ranged" value=system.stats.defence.ranged type="Number" label="SWFFG.DefenseRanged")
+                (object name="data.stats.defence.melee" value=data.stats.defence.melee type="Number" label="SWFFG.DefenseMelee")
+                (object name="data.stats.defence.ranged" value=data.stats.defence.ranged type="Number" label="SWFFG.DefenseRanged")
               )
             )
           }}
@@ -122,14 +122,14 @@
 
       {{!-- Characteristics: read-only if pilot linked --}}
       <div class="grid grid-6col">
-        {{#each system.characteristics as |characteristic id|}}
+        {{#each data.characteristics as |characteristic id|}}
         <div class="characteristic-item flex-group-center" data-ability="{{id}}">
           <div class="characteristic">
             <div class="characteristic-value">
               {{#if ../pilot}}
-                <input type="text" name="system.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" disabled class="pilot-linked-readonly" title="{{localize 'ucttg.MAPilotStats'}}" />
+                <input type="text" name="data.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" disabled class="pilot-linked-readonly" title="{{localize 'ucttg.MAPilotStats'}}" />
               {{else}}
-                <input type="text" name="system.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" pattern="[0-9]" />
+                <input type="text" name="data.characteristics.{{id}}.value" value="{{characteristic.value}}" data-dtype="Number" maxlength="1" pattern="[0-9]" />
               {{/if}}
             </div>
           </div>
@@ -210,40 +210,40 @@
         {{!-- Row 1: Funnels & Fuel --}}
         <div class="grid grid-2col">
           {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
-            key="funnels" titleKey="ucttg.MAFunnels" armorKey="ucttg.MABinders" loc=system.stats.funnels
+            key="funnels" titleKey="ucttg.MAFunnels" armorKey="ucttg.MABinders" loc=data.stats.funnels
           }}
           {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
-            key="fuel" titleKey="ucttg.MAFuel" armorKey="ucttg.MAFuelArmor" loc=system.stats.fuel
+            key="fuel" titleKey="ucttg.MAFuel" armorKey="ucttg.MAFuelArmor" loc=data.stats.fuel
           }}
         </div>
 
         {{!-- Row 2: Fore & Aft --}}
         <div class="grid grid-2col">
           {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
-            key="fore" titleKey="ucttg.MAFore" armorKey="ucttg.MAArmor" loc=system.stats.fore
+            key="fore" titleKey="ucttg.MAFore" armorKey="ucttg.MAArmor" loc=data.stats.fore
           }}
           {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
-            key="aft" titleKey="ucttg.MAAft" armorKey="ucttg.MAArmor" loc=system.stats.aft
+            key="aft" titleKey="ucttg.MAAft" armorKey="ucttg.MAArmor" loc=data.stats.aft
           }}
         </div>
 
         {{!-- Row 3: Port & Starboard --}}
         <div class="grid grid-2col">
           {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
-            key="port" titleKey="ucttg.MAPort" armorKey="ucttg.MAArmor" loc=system.stats.port
+            key="port" titleKey="ucttg.MAPort" armorKey="ucttg.MAArmor" loc=data.stats.port
           }}
           {{> "systems/ucttg/templates/parts/actor/ffg-ma-location.html"
-            key="starboard" titleKey="ucttg.MAStarboard" armorKey="ucttg.MAArmor" loc=system.stats.starboard
+            key="starboard" titleKey="ucttg.MAStarboard" armorKey="ucttg.MAArmor" loc=data.stats.starboard
           }}
         </div>
 
         {{!-- Row 4: Rollout Date & Cost to Manufacture --}}
         <div class="grid grid-2col">
           {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
-            (object blocktype="single" title="ucttg.MARolloutDate" type="String" name="system.rolloutDate" value=system.rolloutDate)
+            (object blocktype="single" title="ucttg.MARolloutDate" type="String" name="data.rolloutDate" value=data.rolloutDate)
           }}
           {{> "systems/ucttg/templates/parts/shared/ffg-block.html"
-            (object blocktype="single" title="ucttg.MACostToManufacture" type="String" name="system.costToManufacture" value=system.costToManufacture)
+            (object blocktype="single" title="ucttg.MACostToManufacture" type="String" name="data.costToManufacture" value=data.costToManufacture)
           }}
         </div>
 

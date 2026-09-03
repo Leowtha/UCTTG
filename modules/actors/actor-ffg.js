@@ -49,7 +49,25 @@ export class ActorFFG extends Actor {
         break;
       case "mobilesuit":
         createData.prototypeToken = {
-          actorLink: true,
+          actorLink: false,
+          disposition: CONST.TOKEN_DISPOSITIONS.NEUTRAL,
+        };
+        break;
+      case "mobilearmor":
+        createData.prototypeToken = {
+          actorLink: false,
+          disposition: CONST.TOKEN_DISPOSITIONS.NEUTRAL,
+        };
+        break;
+      case "mobileweapon":
+        createData.prototypeToken = {
+          actorLink: false,
+          disposition: CONST.TOKEN_DISPOSITIONS.NEUTRAL,
+        };
+        break;
+      case "vessel":
+        createData.prototypeToken = {
+          actorLink: false,
           disposition: CONST.TOKEN_DISPOSITIONS.NEUTRAL,
         };
         break;
@@ -65,6 +83,12 @@ export class ActorFFG extends Actor {
     const actor = this;
     const data = actor.system;
     const flags = actor.flags;
+
+    if (["vessel", "vehicle"].includes(actor.type)) {
+  data.vesselFuel ??= { value: 0, max: 0 };
+  data.hangar     ??= { capacity: 0, units: {} };
+  data.hangar.units ??= {};
+}
 
     // Make separate methods for each Actor type (character, minion, etc.) to keep
     // things organized.
@@ -97,7 +121,7 @@ export class ActorFFG extends Actor {
       data.stats.strainOverThreshold = data.stats.strain.value - data.stats.strain.max;
     } else if (["rival", "minion", "mobilesuit"].includes(actor.type)) {
       data.stats.woundsOverThreshold = data.stats.wounds.value - data.stats.wounds.max;
-    } else if (["vehicle"].includes(actor.type)) {
+    } else if (["vehicle", "vessel"].includes(actor.type)) {
       data.stats.hullOverThreshold = data.stats.hullTrauma.value - data.stats.hullTrauma.max;
       data.stats.systemStrainOverThreshold = data.stats.systemStrain.value - data.stats.systemStrain.max;
     }
@@ -105,7 +129,7 @@ export class ActorFFG extends Actor {
     this._prepareSharedData.bind(this);
     this._prepareSharedData(actor);
     if (actor.type === "minion") this._prepareMinionData(actor);
-    if (["character", "nemesis", "rival", "ace", "mobilesuit"].includes(actor.type)) this._prepareCharacterData(actor);
+    if (["character", "nemesis", "rival", "ace", "mobilesuit", "mobilearmor", "mobileweapon", "vessel"].includes(actor.type)) this._prepareCharacterData(actor);
   }
 
   _prepareSharedData(actorData) {
@@ -113,7 +137,7 @@ export class ActorFFG extends Actor {
     //data.biography = PopoutEditor.replaceRollTags(data.biography, actorData);
 
     // localize characteristic names
-    if (actorData.type !== "vehicle" && actorData.type !== "homestead") {
+    if (actorData.type !== "vehicle" && actorData.type !== "vessel" && actorData.type !== "homestead") {
       for (let characteristic of Object.keys(data.characteristics)) {
         const strId = `SWFFG.Characteristic${this._capitalize(characteristic)}`;
         const localizedField = game.i18n.localize(strId);
@@ -142,7 +166,7 @@ export class ActorFFG extends Actor {
       if (game.settings.get("ucttg", "enableSoakCalc")) {
         this._calculateDerivedValues(actorData);
       }
-    } else if (["vehicle"].includes(actorData.type)) {
+    } else if (["vehicle", "vessel"].includes(actorData.type)) {
       this._applyVehicleModifiers(actorData);
       this._calculateDerivedValues(actorData);
     }

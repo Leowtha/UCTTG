@@ -4756,7 +4756,9 @@ form.mobileweapon .header-fields .profile-img {
  * 3d. Pilot block (right side)
  * --------------------------------------------------------------------------*/
 
-form.mobilesuit .container.ms-pilot-block {
+form.mobilesuit .container.ms-pilot-block,
+form.mobilearmor .container.ms-pilot-block,
+form.mobileweapon .container.ms-pilot-block {
   flex: 0 0 180px !important;
   max-width: 180px !important;
   min-width: 180px !important;
@@ -4777,7 +4779,9 @@ form.mobilesuit .container.ms-pilot-block {
   clip-path: polygon(0% var(--notchSize), var(--notchSize) 0%, calc(100% - var(--notchSize)) 0%, 100% var(--notchSize), 100% calc(100% - var(--notchSize)), calc(100% - var(--notchSize)) 100%, var(--notchSize) 100%, 0% calc(100% - var(--notchSize)));
 }
 
-.mobilesuit .ms-pilot-header {
+.mobilesuit .ms-pilot-header,
+.mobilearmor .ms-pilot-header,
+.mobileweapon .ms-pilot-header {
   width: 100%;
   text-align: center;
   font-weight: bold;
@@ -4792,7 +4796,9 @@ form.mobilesuit .container.ms-pilot-block {
 
 /* ── Assigned pilot ── */
 
-.mobilesuit .ms-pilot-assigned {
+.mobilesuit .ms-pilot-assigned,
+.mobilearmor .ms-pilot-assigned,
+.mobileweapon .ms-pilot-assigned {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4802,7 +4808,9 @@ form.mobilesuit .container.ms-pilot-block {
   position: relative;
 }
 
-.mobilesuit .ms-pilot-portrait {
+.mobilesuit .ms-pilot-portrait,
+.mobilearmor .ms-pilot-portrait,
+.mobileweapon .ms-pilot-portrait {
   width: 100%;
   display: flex;
   align-items: center;
@@ -4810,16 +4818,22 @@ form.mobilesuit .container.ms-pilot-block {
   padding: 2px 0;
 }
 
-.mobilesuit .ms-pilot-portrait img {
-  width: 140px;
-  height: 140px;
+/* !important here defeats the template's hardcoded height/width="120"
+   attributes on the MA/MW pilot <img>. */
+.mobilesuit .ms-pilot-portrait img,
+.mobilearmor .ms-pilot-portrait img,
+.mobileweapon .ms-pilot-portrait img {
+  width: 140px !important;
+  height: 140px !important;
   object-fit: cover;
   border: none;
   border-radius: 0;
   display: block;
 }
 
-.mobilesuit .ms-pilot-info {
+.mobilesuit .ms-pilot-info,
+.mobilearmor .ms-pilot-info,
+.mobileweapon .ms-pilot-info {
   width: 100%;
   text-align: center;
   padding: 3px 4px;
@@ -4828,7 +4842,9 @@ form.mobilesuit .container.ms-pilot-block {
   flex-shrink: 0;
 }
 
-.mobilesuit .ms-pilot-name {
+.mobilesuit .ms-pilot-name,
+.mobilearmor .ms-pilot-name,
+.mobileweapon .ms-pilot-name {
   font-weight: bold;
   display: block;
   font-size: 0.75em;
@@ -4837,37 +4853,49 @@ form.mobilesuit .container.ms-pilot-block {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.mobilesuit .ms-pilot-name:hover {
+.mobilesuit .ms-pilot-name:hover,
+.mobilearmor .ms-pilot-name:hover,
+.mobileweapon .ms-pilot-name:hover {
   color: #7cb3ff;
   text-decoration: underline;
 }
 
-.mobilesuit .ms-pilot-mode {
+.mobilesuit .ms-pilot-mode,
+.mobilearmor .ms-pilot-mode,
+.mobileweapon .ms-pilot-mode {
   font-size: 0.65em;
   color: rgba(255, 255, 255, 0.7);
   font-style: italic;
 }
 
-.mobilesuit .ms-pilot-controls {
+.mobilesuit .ms-pilot-controls,
+.mobilearmor .ms-pilot-controls,
+.mobileweapon .ms-pilot-controls {
   position: absolute;
   top: 1px;
   right: 3px;
   z-index: 10;
 }
 
-.mobilesuit .ms-pilot-controls a {
+.mobilesuit .ms-pilot-controls a,
+.mobilearmor .ms-pilot-controls a,
+.mobileweapon .ms-pilot-controls a {
   cursor: pointer;
   color: rgb(255, 0, 0);
   font-size: 10px;
 }
 
-.mobilesuit .ms-pilot-controls a:hover {
+.mobilesuit .ms-pilot-controls a:hover,
+.mobilearmor .ms-pilot-controls a:hover,
+.mobileweapon .ms-pilot-controls a:hover {
   color: #ff6b6b;
 }
 
 /* ── Empty pilot dropzone ── */
 
-.mobilesuit .ms-pilot-empty {
+.mobilesuit .ms-pilot-empty,
+.mobilearmor .ms-pilot-empty,
+.mobileweapon .ms-pilot-empty {
   width: 100%;
   height: 100%;
   display: flex;
@@ -4875,7 +4903,9 @@ form.mobilesuit .container.ms-pilot-block {
   justify-content: center;
 }
 
-.mobilesuit .ms-pilot-dropzone {
+.mobilesuit .ms-pilot-dropzone,
+.mobilearmor .ms-pilot-dropzone,
+.mobileweapon .ms-pilot-dropzone {
   border: 2px dashed rgba(65, 80, 100, 0.5);
   border-radius: 0;
   padding: 15px 10px;
@@ -4890,17 +4920,23 @@ form.mobilesuit .container.ms-pilot-block {
   cursor: pointer;
 }
 
-.mobilesuit .ms-pilot-dropzone:hover {
+.mobilesuit .ms-pilot-dropzone:hover,
+.mobilearmor .ms-pilot-dropzone:hover,
+.mobileweapon .ms-pilot-dropzone:hover {
   border-color: #7cb3ff;
   color: #7cb3ff;
   background: rgba(124, 179, 255, 0.05);
 }
 
-.mobilesuit .ms-pilot-dropzone i {
+.mobilesuit .ms-pilot-dropzone i,
+.mobilearmor .ms-pilot-dropzone i,
+.mobileweapon .ms-pilot-dropzone i {
   font-size: 20px;
 }
 
-.mobilesuit .pilot-linked-readonly {
+.mobilesuit .pilot-linked-readonly,
+.mobilearmor .pilot-linked-readonly,
+.mobileweapon .pilot-linked-readonly {
   opacity: 0.7;
   background: rgba(255, 255, 255, 0.05);
   cursor: not-allowed;
@@ -5069,7 +5105,7 @@ form.mobilesuit .container.ms-pilot-block {
   background-color: #e2e2e2;
 }
 
-.mobilesuit .ms-frame-location .ms-frame-location-armor-label 
+.mobilesuit .ms-frame-location .ms-frame-location-armor-label, 
 .mobilearmor .ms-frame-location .ms-frame-location-armor-label,
 .mobileweapon .ms-frame-location .ms-frame-location-armor-label {
   font-size: 0.55rem;
@@ -5298,16 +5334,16 @@ form.mobileweapon .ms-pilot-talent-desc table {
 }
 
 /* ============================================================================
- * 5. MOBILE ARMOR — MA-SPECIFIC LAYOUT
+ * 5. HANGAR SPECIFIC CHROME
  * ----------------------------------------------------------------------------
- * MA's frame-location grid (Funnels/Fuel, Fore/Aft, Port/Starboard) uses
- * the standard .grid.grid-2col wrappers from the FFG base theme, so no
- * MA-specific grid CSS is needed — the shared .ms-frame-location chrome
- * styles each cell. This section is reserved for future MA-only overrides.
- *
- * One MA-specific rule lives in Section 3c: the :first-of-type override
- * for .ms-profile-info that keeps the "Identifying Scheme" subtitle at
- * the top of the profile frame instead of being auto-pushed to the bottom.
+ * For hangar Capacity, Unit Count, etc. Self explanatory and small.
  * ============================================================================ */
 
-/* (empty for now — MA fully uses shared chrome) */
+.hangar-capacity-bar { display:flex; align-items:center; gap:1em; padding:.5em; border:1px solid #444; border-radius:4px; margin-bottom:.5em; }
+.hangar-capacity-bar.hangar-over { border-color:#7c151e; background:rgba(124,21,30,.12); }
+.hangar-capacity-readout { font-size:1.4em; font-weight:bold; }
+.hangar-capacity-bar.hangar-over .hangar-used { color:#c0392b; }
+.hangar-warning { color:#c0392b; font-weight:bold; }
+.hangar-dropzone-hint { text-align:center; opacity:.6; padding:.5em; border:1px dashed #666; border-radius:4px; margin-bottom:.5em; }
+.hangar-empty { text-align:center; opacity:.6; padding:1em; }
+.hangar-unit-img { border-radius:3px; margin-right:.4em; vertical-align:middle; }
